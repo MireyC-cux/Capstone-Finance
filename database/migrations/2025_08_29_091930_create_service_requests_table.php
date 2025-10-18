@@ -8,6 +8,7 @@ return new class extends Migration {
     public function up(): void {
         Schema::create('service_requests', function (Blueprint $table) {
             $table->id('service_request_id');
+            $table->string('service_request_number')->nullable()->unique();
 
             // Customer
             $table->foreignId('customer_id')
@@ -21,12 +22,8 @@ return new class extends Migration {
                   ->nullOnDelete()
                   ->cascadeOnUpdate();
 
-            // Booking schedule (order-level defaults)
-            $table->date('service_date'); // general booking date
-            $table->date('start_date')->nullable();
-            $table->date('end_date')->nullable();
-            $table->time('start_time')->nullable();
-            $table->time('end_time')->nullable();
+            $table->decimal('order_total', 12, 2)->nullable();
+            $table->decimal('overall_discount', 12, 2)->default(0);
 
             // Payment & status
             $table->string('type_of_payment')->nullable();
@@ -37,24 +34,18 @@ return new class extends Migration {
             // Extra info
             $table->text('remarks')->nullable();
 
-            // External (HR/Finance) references - allow null and null on delete
-            /*$table->foreignId('billing_id')->nullable()
-                  ->constrained('billings', 'billings_id')
-                  ->nullOnDelete()
-                  ->cascadeOnUpdate();
+            // PDF storage fields
+            $table->string('pdf_name')->nullable();            // e.g., "ServiceRequest_1234.pdf"
+            $table->string('pdf_mime')->default('application/pdf');
+            $table->binary('pdf_file')->nullable();            // stores the actual PDF content
+            $table->timestamp('pdf_generated_at')->nullable(); // when the PDF was created
 
-            $table->foreignId('quotation_id')->nullable()
-                  ->constrained('quotations', 'quotation_id')
-                  ->nullOnDelete()
-                  ->cascadeOnUpdate();*/
 
             // friendly ref number
-            $table->string('service_request_number')->nullable()->unique();
-
             $table->timestamps();
 
             // useful indexes
-            $table->index(['customer_id', 'service_date', 'order_status']);
+            $table->index(['customer_id', 'order_status']);
         });
     }
 

@@ -17,6 +17,7 @@ class Payroll extends Model
         'basic_salary',
         'overtime_pay',
         'deductions',
+        'cash_advance',
         'net_pay',
         'status',
     ];
@@ -27,6 +28,7 @@ class Payroll extends Model
         'basic_salary' => 'decimal:2',
         'overtime_pay' => 'decimal:2',
         'deductions' => 'decimal:2',
+        'cash_advance' => 'decimal:2',
         'net_pay' => 'decimal:2',
     ];
 

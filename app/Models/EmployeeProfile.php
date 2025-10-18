@@ -9,6 +9,7 @@ class EmployeeProfile extends Model
 {
     use HasFactory;
 
+    protected $table = 'employeeprofiles';
     protected $primaryKey = 'employeeprofiles_id';
     protected $fillable = [
         'first_name',
@@ -47,6 +48,21 @@ class EmployeeProfile extends Model
     public function payrolls()
     {
         return $this->hasMany(Payroll::class, 'employeeprofiles_id');
+    }
+
+    public function cashAdvances()
+    {
+        return $this->hasMany(CashAdvance::class, 'employeeprofiles_id');
+    }
+
+    public function deductions()
+    {
+        return $this->hasMany(Deduction::class, 'employeeprofiles_id');
+    }
+
+    public function salaryRates()
+    {
+        return $this->hasMany(EmployeeSalaryRate::class, 'employeeprofiles_id');
     }
 
     public function assignedServiceRequestItems()

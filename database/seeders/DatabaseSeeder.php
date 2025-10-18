@@ -3,46 +3,40 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
-    {
-        // Seed the database in the correct order to maintain referential integrity
-        $this->call([
-            // Core data first
-            EmployeeprofilesTableSeeder::class,
-            CustomersTableSeeder::class,
-            
-            // Dependencies for other tables
-            CustomerAddressesTableSeeder::class,
-            SalariesTableSeeder::class,
-            AdministrativeAccountsTableSeeder::class,
-            
-            // Service related
-            AirconTypesTableSeeder::class,
-            ServicesTableSeeder::class,
-            ServiceRequestsTableSeeder::class,
-            ServiceRequestItemsTableSeeder::class,
-            
-            // Billing and payments
-            BillingsTableSeeder::class,
-            AccountsReceivableTableSeeder::class,
-            InvoicesTableSeeder::class,
-            PaymentsReceivedTableSeeder::class,
-            
-            // Employee related
-            AttendancesTableSeeder::class,
-            LeaveOvertimeRequestsTableSeeder::class,
-            PayrollsTableSeeder::class,
-            ExpensesTableSeeder::class,
-            
-            // Financial summaries
-            CashFlowTableSeeder::class,
-            FinancialReportsTableSeeder::class,
-        ]);
+{
+    DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+    $this->call([
+        EmployeeProfileSeeder::class,
+        AdministrativeAccountSeeder::class,
+        SalaryRateSeeder::class,
+        EmployeeSalaryRateSeeder::class,
+        AttendanceSeeder::class,
+        LeaveOvertimeRequestSeeder::class,
+        CashAdvanceSeeder::class,
+        DeductionSeeder::class,
+        PayrollSeeder::class,
+        CustomerSeeder::class,
+        ServiceSeeder::class,
+        AirconTypeSeeder::class,
+        ServiceRequestSeeder::class,
+        ServiceRequestItemSeeder::class,
+        BillingSeeder::class,
+        InvoiceSeeder::class,
+        AccountsReceivableSeeder::class,
+        PaymentsReceivedSeeder::class,
+        CashFlowSeeder::class,
+        SupplierSeeder::class,
+        PurchaseOrderSeeder::class,
+        AccountsPayableSeeder::class,
+        PaymentsMadeSeeder::class,
+        InventorySeeder::class,
+    ]);
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
     }
 }

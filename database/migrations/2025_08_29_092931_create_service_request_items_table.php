@@ -28,7 +28,6 @@ return new class extends Migration {
                   ->cascadeOnUpdate();
 
             $table->string('service_type')->nullable(); // fallback / human readable
-            $table->string('unit_type')->nullable(); // small readable detail if needed
             $table->integer('quantity')->default(1);
 
             // Price snapshot - store at creation (immutable history)
@@ -50,10 +49,6 @@ return new class extends Migration {
                   ->cascadeOnUpdate();
 
             $table->enum('status', ['Pending', 'In Progress', 'Completed'])->default('Pending');
-
-            // Billing flags
-            $table->boolean('bill_separately')->default(false);
-            $table->boolean('billed')->default(false);
 
             // Notes
             $table->text('service_notes')->nullable();

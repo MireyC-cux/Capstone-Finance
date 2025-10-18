@@ -1,0 +1,27 @@
+{
+  "resources/css/app.css": {
+    "file": "assets/app-Dc7V5kcz.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/css/finance_sidebar.css": {
+    "file": "assets/finance_sidebar-DN3TfgPp.css",
+    "src": "resources/css/finance_sidebar.css",
+    "isEntry": true,
+    "names": [
+      "finance_sidebar.css"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-bw-6dw15.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "css": [
+      "assets/finance_sidebar-DN3TfgPp.css"
+    ]
+  }
+}

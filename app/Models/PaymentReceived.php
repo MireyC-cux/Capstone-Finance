@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PaymentReceived extends Model
 {
+    protected $table = 'payments_received';
     protected $primaryKey = 'payment_id';
     protected $fillable = [
         'ar_id',
@@ -27,5 +28,11 @@ class PaymentReceived extends Model
     public function accountsReceivable()
     {
         return $this->belongsTo(AccountsReceivable::class, 'ar_id');
+    }
+
+    public function cashFlow()
+    {
+        return $this->hasOne(CashFlow::class, 'source_id', 'payment_id')
+            ->where('source_type', 'Invoice Payment');
     }
 }

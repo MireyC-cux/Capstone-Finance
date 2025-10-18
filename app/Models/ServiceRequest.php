@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ServiceRequest extends Model
 {
-    public $incrementing = false;
+    public $incrementing = true;
     protected $primaryKey = 'service_request_id';
     protected $fillable = [
         'customer_id',

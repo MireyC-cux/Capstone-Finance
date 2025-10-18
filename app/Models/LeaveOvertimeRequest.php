@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LeaveOvertimeRequest extends Model
-{
+{   
+    protected $table = 'leave_overtime_requests';
     protected $primaryKey = 'request_id';
     protected $fillable = [
         'employeeprofiles_id',

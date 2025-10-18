@@ -17,12 +17,30 @@
     <!-- Finance Sidebar CSS -->
     <link href="{{ asset('css/finance_sidebar.css') }}" rel="stylesheet">
 
+    <!-- Tailwind CSS (CDN for quick styling) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            500: '#06b6d4',
+                            600: '#0891b2',
+                            700: '#0e7490',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <!-- SweetAlert2 -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 
     @stack('styles')
 </head>
-<body class="has-sidebar" data-theme="modern">
+<body class="has-sidebar font-[Inter,ui-sans-serif,system-ui]" data-theme="modern">
 
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
@@ -41,10 +59,17 @@
                 <li><a href="{{ route('finance.accounts-receivable') }}" class="menu-item {{ request()->routeIs('finance.accounts-receivable') ? 'active' : '' }}"><i class="fas fa-receipt"></i> <span class="label">Accounts Receivable (AR)</span></a></li>
                 <li><a href="{{ route('finance.accounts-payable') }}" class="menu-item {{ request()->routeIs('finance.accounts-payable') ? 'active' : '' }}"><i class="fas fa-file-invoice"></i> <span class="label">Accounts Payable (AP)</span></a></li>
                 <li><a href="{{ route('finance.payroll') }}" class="menu-item {{ request()->routeIs('finance.payroll') ? 'active' : '' }}"><i class="fas fa-money-check-alt"></i> <span class="label">Payroll Management</span></a></li>
-                <li><a href="{{ route('finance.expenses') }}" class="menu-item {{ request()->routeIs('finance.expenses') ? 'active' : '' }}"><i class="fas fa-chart-line"></i> <span class="label">Cash Flow & Expense Tracking</span></a></li>
+                <li><a href="{{ route('finance.cashflow') }}" class="menu-item {{ request()->routeIs('finance.cashflow') ? 'active' : '' }}"><i class="fas fa-chart-line"></i> <span class="label">Cash Flow & Expense Tracking</span></a></li>
                 <li><a href="{{ route('finance.reports') }}" class="menu-item {{ request()->routeIs('finance.reports') ? 'active' : '' }}"><i class="fas fa-chart-bar"></i> <span class="label">Reporting</span></a></li>
-                <li><a href="{{ route('finance.inventory') }}" class="menu-item {{ request()->routeIs('finance.inventory') ? 'active' : '' }}"><i class="fas fa-boxes"></i> <span class="label">Inventory Management</span></a></li>
+                <li><a href="{{ route('finance.inventory.dashboard') }}" class="menu-item {{ request()->routeIs('finance.inventory.*') ? 'active' : '' }}"><i class="fas fa-boxes"></i> <span class="label">Inventory Management</span></a></li>
             </ul>
+           <ul>
+
+            <li>
+                <a href="http://Humanresource.test/HR">Admin</a>
+            </li>
+           </ul>
+           
         </nav>
     </div>
 

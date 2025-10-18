@@ -2,227 +2,325 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Billing;
-use App\Models\Invoice;
-use App\Models\ServiceRequest;
-use App\Models\ServiceRequestItem;
-use App\Models\AccountsReceivable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+use App\Models\ServiceRequest;
+use App\Models\ServiceRequestItem;
+use App\Models\ServiceRequestItemExtra;
+use App\Models\Billing;
+use App\Models\Invoice;
+use App\Models\AccountsReceivable;
 
 class BillingController extends Controller
 {
-    /**
-     * Display the billing slip.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function showSlip($id)
+    // Dashboard: list completed, unbilled SRs with filters
+    public function index(Request $request)
     {
-        $billing = Billing::with(['customer', 'serviceRequest', 'invoice.accountsReceivable'])
-            ->findOrFail($id);
-            
-        return view('billing_slip', compact('billing'));
-    }
+        $query = ServiceRequestItem::with(['serviceRequest.customer', 'service'])
+            ->where('status', 'Completed');
 
-    public function index()
-    {
-        // Fetch all service requests with completed status
-        $requests = ServiceRequest::where('order_status', 'Completed')
-            ->with(['customer', 'items'])
-            ->get()
-            ->map(function($request) {
-                // Ensure service_date is a Carbon instance
-                if (is_string($request->service_date)) {
-                    $request->service_date = \Carbon\Carbon::parse($request->service_date);
-                }
-                return $request;
+        if (Schema::hasColumn('service_request_items', 'billed')) {
+            $query->where(function ($q) {
+                $q->whereNull('billed')->orWhere('billed', false);
             });
-            
-        // Debug output - you can remove this after confirming it works
-        \Log::info('Fetched service requests:', $requests->toArray());
-        
-        return view('billing', compact('requests'));
-    }
-    
-    public function viewItems($id = null)
-    {
-        try {
-            if (!$id) {
-                throw new \Exception('No service request ID provided');
-            }
-
-            \Log::info('Fetching items for service request ID: ' . $id);
-            
-            // Use raw SQL query to avoid relationship issues
-            $items = \DB::table('service_request_items')
-                ->select(
-                    'service_request_items.*',
-                    'services.service_type',
-                    'aircon_types.name as aircon_type_name'
-                )
-                ->leftJoin('services', 'service_request_items.services_id', '=', 'services.services_id')
-                ->leftJoin('aircon_types', 'service_request_items.aircon_type_id', '=', 'aircon_types.aircon_type_id')
-                ->where('service_request_items.service_request_id', $id)
-                ->get()
-                ->map(function ($item) {
-                    // Convert to array for easier manipulation
-                    $itemArray = (array) $item;
-                    
-                    // Set default values
-                    $itemArray['unit_type'] = $item->aircon_type_name ?? $item->unit_type ?? 'N/A';
-                    $itemArray['service_type'] = $item->service_type ?? 'N/A';
-                    
-                    // Format dates
-                    if (!empty($item->start_date)) {
-                        $itemArray['start_date'] = \Carbon\Carbon::parse($item->start_date)->toDateString();
-                    }
-                    if (!empty($item->end_date)) {
-                        $itemArray['end_date'] = \Carbon\Carbon::parse($item->end_date)->toDateString();
-                    }
-                    
-                    // Ensure numeric fields have values
-                    $itemArray['quantity'] = $item->quantity ?? 0;
-                    $itemArray['unit_price'] = $item->unit_price ?? 0;
-                    $itemArray['discount'] = $item->discount ?? 0;
-                    $itemArray['tax'] = $item->tax ?? 0;
-                    $itemArray['line_total'] = $item->line_total ?? 0;
-                    
-                    return (object) $itemArray;
-                });
-                
-            \Log::info('Items found: ' . $items->count());
-            
-            if ($items->isEmpty()) {
-                return response()->json([
-                    'html' => '<div class="alert alert-warning">No items found for this request.</div>',
-                    'success' => true
-                ]);
-            }
-            
-            $html = view('partials.items_table', ['items' => $items])->render();
-            
-            return response()->json([
-                'html' => $html,
-                'success' => true
-            ]);
-            
-        } catch (\Exception $e) {
-            \Log::error('Error in viewItems: ' . $e->getMessage());
-            \Log::error($e->getTraceAsString());
-            
-            return response()->json([
-                'html' => '<div class="alert alert-danger">Error: ' . $e->getMessage() . '</div>',
-                'success' => false,
-                'error' => $e->getMessage()
-            ], 500);
         }
+
+        if ($request->filled('customer')) {
+            $customer = $request->string('customer');
+            $query->whereHas('serviceRequest.customer', function ($q) use ($customer) {
+                $q->where('full_name', 'like', "%{$customer}%");
+            });
+        }
+        if ($request->filled('sr_number')) {
+            $srn = $request->string('sr_number');
+            $query->whereHas('serviceRequest', function ($q) use ($srn) {
+                $q->where('service_request_number', 'like', "%{$srn}%");
+            });
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('end_date', '>=', $request->date('date_from'));
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('end_date', '<=', $request->date('date_to'));
+        }
+
+        $items = $query->get()->groupBy('service_request_id');
+
+        return view('finance.billing.index', [
+            'groups' => $items,
+            'filters' => $request->only(['customer', 'sr_number', 'date_from', 'date_to']),
+        ]);
     }
-    
-    /**
-     * Store a newly created billing in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
+
+    // View items for a service request (for modal)
+    public function viewItems($id)
+    {
+        $sr = ServiceRequest::with(['customer', 'items.service', 'items' => function ($q) {
+            $q->where('status', 'Completed')->where(function ($qq) {
+                $qq->whereNull('billed')->orWhere('billed', false);
+            });
+        }])->findOrFail($id);
+
+        foreach ($sr->items as $item) {
+            $item->extras = ServiceRequestItemExtra::where('item_id', $item->item_id)->get();
+        }
+
+        return response()->json($sr);
+    }
+
+    // Create a billing for one service request
     public function store(Request $request)
     {
-        // Validate the request
-        $validated = $request->validate([
-            'service_request_id' => 'required|exists:service_requests,service_request_id',
-            'customer_id' => 'required|exists:customers,customer_id',
-            'total_amount' => 'required|numeric|min:0',
-            'discount' => 'nullable|numeric|min:0',
-            'tax' => 'nullable|numeric|min:0',
+        $data = $request->validate([
+            'service_request_id' => 'required|integer|exists:service_requests,service_request_id',
+            'billing_date' => 'required|date',
+            'due_date' => 'required|date|after_or_equal:billing_date',
+            'generate_invoice' => 'sometimes|boolean',
         ]);
 
-        try {
-            // Start database transaction
-            \DB::beginTransaction();
-
-            // Create the billing record
-            $billing = Billing::create([
-                'service_request_id' => $validated['service_request_id'],
-                'customer_id' => $validated['customer_id'],
-                'billing_date' => now()->toDateString(),
-                'due_date' => now()->addDays(15)->toDateString(),
-                'total_amount' => $validated['total_amount'],
-                'discount' => $validated['discount'] ?? 0,
-                'tax' => $validated['tax'] ?? 0,
-                'status' => 'Billed' // Matches ENUM in database
-            ]);
-
-            // Create an accounts receivable entry
-            $ar = AccountsReceivable::create([
-                'customer_id' => $validated['customer_id'],
-                'service_request_id' => $validated['service_request_id'],
-                'invoice_number' => 'INV-' . now()->format('Ymd') . '-' . strtoupper(Str::random(6)),
-                'invoice_date' => now()->toDateString(),
-                'due_date' => now()->addDays(15)->toDateString(),
-                'total_amount' => $validated['total_amount'],
-                'amount_paid' => 0,
-                'status' => 'Unpaid',
-                'payment_terms' => 'Net 15',
-                'balance' => $validated['total_amount']
-            ]);
-
-            // Create an invoice for the billing
-            $invoice = new Invoice([
-                'billing_id' => $billing->billing_id,
-                'ar_id' => $ar->ar_id,
-                'invoice_number' => $ar->invoice_number, // Use the same invoice number as AR
-                'invoice_date' => now()->toDateString(),
-                'due_date' => now()->addDays(15)->toDateString(),
-                'amount' => $validated['total_amount'],
-                'status' => 'Unpaid' // Matches ENUM in database
-            ]);
-            
-            // Save the invoice
-            $billing->invoice()->save($invoice);
-
-            // Mark service request items as billed
-            ServiceRequestItem::where('service_request_id', $validated['service_request_id'])
-                ->update(['billed' => true]);
-
-            // Delete the service request and its items after successful billing
-            $serviceRequest = ServiceRequest::find($validated['service_request_id']);
-            if ($serviceRequest) {
-                // First delete the items to maintain referential integrity
-                $serviceRequest->items()->delete();
-                // Then delete the service request
-                $serviceRequest->delete();
+        return DB::transaction(function () use ($data) {
+            $sr = ServiceRequest::with(['items' => function($q){ $q->where('status','Completed'); }])->findOrFail($data['service_request_id']);
+            $items = $sr->items()->where(function($q){ $q->whereNull('billed')->orWhere('billed', false); })->get();
+            if ($items->isEmpty()) {
+                return response()->json(['message' => 'No completed unbilled items.'], 422);
             }
 
-            // Commit the transaction
-            \DB::commit();
+            $subtotal = 0; $discount = 0; $tax = 0;
+            foreach ($items as $item) {
+                $line = ($item->quantity ?? 1) * (float)$item->unit_price;
+                $lineDiscount = (float)($item->discount ?? 0);
+                $lineTax = (float)($item->tax ?? 0);
+                $extras = ServiceRequestItemExtra::where('item_id', $item->item_id)->get();
+                $extraSum = $extras->sum(fn($e) => (float)$e->qty * (float)$e->price);
+                $subtotal += $line + $extraSum;
+                $discount += $lineDiscount;
+                $tax += $lineTax;
+            }
 
+            $total = round($subtotal - $discount + $tax, 2);
+
+            $billingData = [
+                'service_request_id' => $sr->service_request_id,
+                'customer_id' => $sr->customer_id ?? ($sr->customer->customer_id ?? null),
+                'billing_date' => $data['billing_date'],
+                'due_date' => $data['due_date'],
+                'discount' => 0,
+                'tax' => 0,
+                'total_amount' => $total,
+            ];
+
+            if (Schema::hasColumn('billings', 'approval_status')) {
+                $billingData['approval_status'] = 'Pending';
+            }
+            if (Schema::hasColumn('billings', 'generate_invoice_after_approval')) {
+                $billingData['generate_invoice_after_approval'] = !empty($data['generate_invoice']);
+            }
+
+            $billing = Billing::create($billingData);
+
+            $message = Schema::hasColumn('billings','approval_status') ? 'Billing submitted for admin approval.' : 'Billing created.';
             return response()->json([
-                'success' => true,
-                'message' => 'Billing generated successfully!',
-                'redirect' => route('finance.billing.slip', $billing->billing_id),
-                'print_url' => route('finance.billing.slip', ['id' => $billing->billing_id, 'print' => '1'])
+                'message' => $message,
+                'billing_id' => $billing->billing_id,
             ]);
+        });
+    }
 
-        } catch (\Exception $e) {
-            // Rollback the transaction on error
-            \DB::rollBack();
-            \Log::error('Error generating billing: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
-            
-            // Log the input data for debugging
-            \Log::error('Input data: ', $request->all());
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to generate billing: ' . $e->getMessage(),
-                'error_details' => [
-                    'message' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]
-            ], 500);
+    // Bulk bill generation for multiple SR IDs
+    public function bulkStore(Request $request)
+    {
+        $data = $request->validate([
+            'service_request_ids' => 'required|array',
+            'service_request_ids.*' => 'integer|exists:service_requests,service_request_id',
+            'billing_date' => 'required|date',
+            'due_date' => 'required|date|after_or_equal:billing_date',
+            'generate_invoice' => 'sometimes|boolean',
+        ]);
+
+        $results = [];
+        foreach ($data['service_request_ids'] as $srId) {
+            $req = new Request([
+                'service_request_id' => $srId,
+                'billing_date' => $data['billing_date'],
+                'due_date' => $data['due_date'],
+                'generate_invoice' => $data['generate_invoice'] ?? false,
+            ]);
+            $resp = $this->store($req);
+            $results[] = json_decode($resp->getContent(), true);
         }
+        return response()->json(['results' => $results]);
+    }
+
+    // Manual invoice generation endpoint for a billing
+    public function generateInvoice(Billing $billing)
+    {
+        $invoice = $this->createInvoiceFromBilling($billing);
+        return response()->json([
+            'message' => 'Invoice generated successfully.',
+            'invoice_id' => $invoice->invoice_id,
+        ]);
+    }
+
+    // Printable billing slip (placeholder)
+    public function showSlip($id)
+    {
+        $billing = Billing::with(['serviceRequest.customer', 'invoice'])->findOrFail($id);
+        $items = ServiceRequestItem::with('service')
+            ->where('service_request_id', $billing->service_request_id)
+            ->get()
+            ->map(function($it){
+                $it->extras = ServiceRequestItemExtra::where('item_id', $it->item_id)->get();
+                return $it;
+            });
+        return view('finance.billing.slip', compact('billing','items'));
+    }
+
+    // Export billing slip as PDF
+    public function exportSlipPdf($id)
+    {
+        $billing = Billing::with(['serviceRequest.customer', 'invoice'])->findOrFail($id);
+        $items = ServiceRequestItem::with('service')
+            ->where('service_request_id', $billing->service_request_id)
+            ->get()
+            ->map(function($it){
+                $it->extras = ServiceRequestItemExtra::where('item_id', $it->item_id)->get();
+                return $it;
+            });
+        $forPdf = true;
+        $signatureDataUrl = null;
+        $sigPath = storage_path('app/public/esignature.png');
+        if (is_file($sigPath)) {
+            $signatureDataUrl = 'data:image/png;base64,'.base64_encode(file_get_contents($sigPath));
+        }
+        // Use DomPDF if available
+        if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+            ])->loadView('finance.billing.slip', compact('billing','items','forPdf','signatureDataUrl'))
+              ->setPaper('A4', 'portrait');
+            $file = 'BillingSlip_'.$billing->billing_id.'.pdf';
+            return $pdf->stream($file);
+        }
+        // Fallback: simple HTML (printable)
+        return view('finance.billing.slip', compact('billing','items','forPdf','signatureDataUrl'));
+    }
+
+    // Approval form page (separate screen)
+    public function approvalShow($id)
+    {
+        $billing = Billing::with(['serviceRequest.customer', 'invoice'])
+            ->findOrFail($id);
+        $items = ServiceRequestItem::with('service')
+            ->where('service_request_id', $billing->service_request_id)
+            ->get();
+        return view('finance.billing.approvals.show', compact('billing','items'));
+    }
+
+    // Admin: list pending approvals
+    public function approvalsIndex(Request $request)
+    {
+        $query = Billing::with('serviceRequest.customer')->orderByDesc('created_at');
+        if (Schema::hasColumn('billings', 'approval_status')) {
+            $query->where('approval_status', 'Pending');
+        }
+        $billings = $query->paginate(15);
+        return view('finance.billing.approvals.index', compact('billings'));
+    }
+
+    // Admin: approve billing
+    public function approve(Request $request, $id)
+    {
+        if (!Schema::hasColumn('billings', 'approval_status')) {
+            return back()->with('success', 'Approvals are not enabled (missing approval_status column).');
+        }
+        return DB::transaction(function() use ($request, $id){
+            $billing = Billing::with('serviceRequest.items')->findOrFail($id);
+            if ($billing->approval_status !== 'Pending') {
+                return back()->with('success', 'Nothing to do.');
+            }
+            // Mark items as billed
+            $itemIds = ServiceRequestItem::where('service_request_id', $billing->service_request_id)
+                ->pluck('item_id');
+            ServiceRequestItem::whereIn('item_id', $itemIds)->update(['billed' => true]);
+
+            $billing->approval_status = 'Approved';
+            $billing->approval_note = $request->input('note');
+            $billing->approved_by = optional(auth()->user())->id;
+            $billing->approved_at = now();
+            $billing->save();
+
+            if ($billing->generate_invoice_after_approval && !$billing->invoice) {
+                $this->createInvoiceFromBilling($billing);
+            }
+            return back()->with('success', 'Billing approved.');
+        });
+    }
+
+    // Admin: reject billing
+    public function reject(Request $request, $id)
+    {
+        if (!Schema::hasColumn('billings', 'approval_status')) {
+            return back()->with('success', 'Approvals are not enabled (missing approval_status column).');
+        }
+        $request->validate(['note' => 'nullable|string|max:500']);
+        $billing = Billing::findOrFail($id);
+        if ($billing->approval_status !== 'Pending') {
+            return back()->with('success', 'Nothing to do.');
+        }
+        $billing->approval_status = 'Rejected';
+        $billing->approval_note = $request->input('note');
+        $billing->approved_by = optional(auth()->user())->id;
+        $billing->approved_at = now();
+        $billing->save();
+        return back()->with('success', 'Billing rejected.');
+    }
+
+    // Helper: create invoice + AR from billing
+    protected function createInvoiceFromBilling(Billing $billing)
+    {
+        // Avoid duplicate invoices
+        if ($billing->invoice) {
+            return $billing->invoice;
+        }
+
+        $now = Carbon::now();
+        $invoiceNumber = $this->nextInvoiceNumber();
+
+        $ar = AccountsReceivable::create([
+            'customer_id' => $billing->customer_id,
+            'service_request_id' => $billing->service_request_id,
+            'invoice_number' => $invoiceNumber,
+            'invoice_date' => $now->toDateString(),
+            'due_date' => Carbon::parse($billing->due_date)->toDateString(),
+            'total_amount' => $billing->total_amount,
+            'amount_paid' => 0,
+            'status' => 'Unpaid',
+        ]);
+
+        $invoice = Invoice::create([
+            'billing_id' => $billing->billing_id,
+            'ar_id' => $ar->ar_id,
+            'invoice_number' => $invoiceNumber,
+            'invoice_date' => $now->toDateString(),
+            'due_date' => Carbon::parse($billing->due_date)->toDateString(),
+            'amount' => $billing->total_amount,
+            'status' => 'Unpaid',
+        ]);
+
+        return $invoice;
+    }
+
+    // Very simple sequential number; consider using your invoice_sequence table if needed
+    protected function nextInvoiceNumber(): string
+    {
+        $prefix = 'INV-'.Carbon::now()->format('Ymd').'-';
+        $last = Invoice::whereDate('created_at', Carbon::today())
+            ->orderByDesc('invoice_id')->first();
+        $seq = $last ? ((int)substr($last->invoice_number, -4)) + 1 : 1;
+        return $prefix . str_pad((string)$seq, 4, '0', STR_PAD_LEFT);
     }
 }

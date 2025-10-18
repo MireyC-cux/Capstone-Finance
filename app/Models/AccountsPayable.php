@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class AccountsPayable extends Model
 {
+    protected $table = 'accounts_payable';
     protected $primaryKey = 'ap_id';
     protected $fillable = [
         'supplier_id',
@@ -38,5 +40,22 @@ class AccountsPayable extends Model
     public function payments()
     {
         return $this->hasMany(PaymentMade::class, 'ap_id');
+    }
+
+    public function purchaseOrder()
+    {
+        return $this->belongsTo(PurchaseOrder::class, 'purchase_order_id', 'po_id');
+    }
+
+    public function getIsOverdueAttribute(): bool
+    {
+        if ($this->status === 'Paid') return false;
+        return Carbon::parse($this->due_date)->isPast();
+    }
+
+    public function getTotalPaidAttribute(): string
+    {
+        $sum = (float) $this->payments()->sum('amount');
+        return number_format($sum, 2, '.', '');
     }
 }

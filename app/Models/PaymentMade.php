@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PaymentMade extends Model
 {
+    protected $table = 'payments_made';
     protected $primaryKey = 'payment_id';
     protected $fillable = [
         'ap_id',

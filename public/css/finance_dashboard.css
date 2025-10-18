@@ -1,0 +1,113 @@
+/* Base card */
+.card {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+}
+
+/* Dashboard header */
+.dashboard-header { margin-bottom: 2rem; }
+
+/* Stats grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stats-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem !important;
+}
+
+.card-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.card-content h3 {
+  font-size: 0.9rem;
+  color: #78716c;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.stats-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #dc2626, #ea580c);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.25rem;
+}
+
+.stats-change { font-size: 0.85rem; font-weight: 600; }
+.stats-change.positive { color: #16a34a; }
+.stats-change.negative { color: #dc2626; }
+
+/* Split row */
+.dashboard-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+.chart-card, .activity-card { padding: 2rem !important; }
+
+.chart-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  background: linear-gradient(135deg, #fef2f2, #fff7ed);
+  border-radius: 12px;
+  margin-top: 1.5rem;
+}
+
+.activity-list { margin-top: 1.5rem; }
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  margin-bottom: 0.75rem;
+}
+
+.activity-item:hover {
+  background: linear-gradient(135deg, #fef2f2, #fff7ed);
+  transform: translateX(5px);
+}
+
+.activity-icon {
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.activity-content { flex: 1; }
+.activity-title { font-weight: 600; color: #333; margin-bottom: 0.25rem; }
+.activity-time { font-size: 0.85rem; color: #78716c; }
+
+@media (max-width: 1024px) {
+  .dashboard-row { grid-template-columns: 1fr; }
+}

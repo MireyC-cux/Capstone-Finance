@@ -11,15 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('leaveovertimerequests', function (Blueprint $table) {
-            $table->id('request_id');
-            $table->foreignId('employeeprofiles_id')->constrained('employeeprofiles', 'employeeprofiles_id')->onDelete('cascade');
-            $table->integer('leave_days')->nullable();
-            $table->integer('overtime_hours')->nullable();
-            $table->string('status')->nullable();
-            $table->dateTime('request_date')->nullable();
-            
+        Schema::create('leave_overtime_requests', function (Blueprint $table) {
+        $table->id('request_id');
+        $table->foreignId('employeeprofiles_id')->constrained('employeeprofiles', 'employeeprofiles_id')->onDelete('cascade');
+        $table->integer('leave_days')->nullable();
+        $table->integer('overtime_hours')->nullable();
+        $table->string('status')->nullable();
+        $table->dateTime('request_date')->nullable();
         });
+
     }
 
     /**
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('leaveovertimerequests');
+        Schema::dropIfExists('leave_overtime_requests');
     }
 };
