@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Inventory;
 use App\Http\Controllers\Controller;
 use App\Models\InventoryItem;
 use Illuminate\Http\Request;
+use App\Models\ActivityLog;
 
 class InventoryItemController extends Controller
 {
@@ -27,7 +28,20 @@ class InventoryItemController extends Controller
             'selling_price'=>'nullable|numeric|min:0',
             'status'=>'required|in:active,inactive',
         ]);
-        InventoryItem::create($data);
+        $item = InventoryItem::create($data);
+
+        ActivityLog::create([
+            'event_type' => 'inventory_item_created',
+            'title' => 'New inventory item added: '.$item->item_name,
+            'context_type' => 'InventoryItem',
+            'context_id' => $item->item_id ?? $item->getKey(),
+            'amount' => $item->unit_cost ?? null,
+            'meta' => [
+                'category' => $item->category,
+                'unit' => $item->unit,
+                'reorder_level' => $item->reorder_level,
+            ],
+        ]);
         return redirect()->route('finance.inventory.items.index')->with('success','Item created.');
     }
 
@@ -45,12 +59,36 @@ class InventoryItemController extends Controller
             'status'=>'required|in:active,inactive',
         ]);
         $item->update($data);
+
+        ActivityLog::create([
+            'event_type' => 'inventory_item_updated',
+            'title' => 'Inventory item updated: '.$item->item_name,
+            'context_type' => 'InventoryItem',
+            'context_id' => $item->item_id ?? $item->getKey(),
+            'amount' => $item->unit_cost ?? null,
+            'meta' => [
+                'category' => $item->category,
+                'unit' => $item->unit,
+                'reorder_level' => $item->reorder_level,
+            ],
+        ]);
         return redirect()->route('finance.inventory.items.index')->with('success','Item updated.');
     }
 
     public function destroy(InventoryItem $item)
     {
+        $name = $item->item_name;
+        $id = $item->item_id ?? $item->getKey();
         $item->delete();
+
+        ActivityLog::create([
+            'event_type' => 'inventory_item_deleted',
+            'title' => 'Inventory item deleted: '.$name,
+            'context_type' => 'InventoryItem',
+            'context_id' => $id,
+            'amount' => null,
+            'meta' => null,
+        ]);
         return back()->with('success','Item deleted.');
     }
 }

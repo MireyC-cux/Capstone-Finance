@@ -72,6 +72,9 @@ class FinanceController extends Controller
             'capital_injected' => ['icon' => 'fas fa-arrow-down', 'bg' => '#ecfdf5', 'color' => '#10b981'],
             'capital_withdrawn' => ['icon' => 'fas fa-arrow-up', 'bg' => '#fef2f2', 'color' => '#ef4444'],
             'expense_recorded' => ['icon' => 'fas fa-receipt', 'bg' => '#fef3c7', 'color' => '#f59e0b'],
+            'inventory_item_created' => ['icon' => 'fas fa-box-open', 'bg' => '#eef2ff', 'color' => '#6366f1'],
+            'inventory_item_updated' => ['icon' => 'fas fa-edit', 'bg' => '#f0fdf4', 'color' => '#22c55e'],
+            'inventory_item_deleted' => ['icon' => 'fas fa-trash', 'bg' => '#fef2f2', 'color' => '#ef4444'],
         ];
 
         $activities = [];
