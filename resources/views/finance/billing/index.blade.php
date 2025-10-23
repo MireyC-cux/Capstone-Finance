@@ -22,7 +22,6 @@
       <h3 class="mb-0">Billing Dashboard</h3>
       <div class="ms-auto d-flex gap-2">
         <a class="btn btn-outline-secondary btn-rounded" href="{{ route('invoices.index') }}">Invoices</a>
-        <a class="btn btn-outline-primary btn-rounded" href="{{ route('finance.billing.approvals.index') }}">Billing Approvals</a>
       </div>
     </div>
 
@@ -34,13 +33,7 @@
             <div class="col-md-3">
                 <input type="text" class="form-control" name="sr_number" placeholder="Service Request #" value="{{ $filters['sr_number'] ?? '' }}">
             </div>
-            <div class="col-md-2">
-                <input type="date" class="form-control" name="date_from" value="{{ $filters['date_from'] ?? '' }}">
-            </div>
-            <div class="col-md-2">
-                <input type="date" class="form-control" name="date_to" value="{{ $filters['date_to'] ?? '' }}">
-            </div>
-            <div class="col-md-2 d-grid">
+            <div class="col-md-2 d-grid ms-auto">
                 <button class="btn btn-primary btn-rounded">Search</button>
             </div>
         </div>
@@ -49,17 +42,13 @@
     <div class="card shadow-soft">
         <div class="card-body">
             <div class="d-flex align-items-center mb-3">
-                <div class="fw-semibold">Completed, Unbilled Service Requests</div>
-                <div class="ms-auto d-flex gap-2">
-                    <button id="btnBulkBill" class="btn btn-success btn-rounded">Generate Bills (Selected)</button>
-                </div>
+                <div class="fw-semibold">Completed, Unbilled Service Requests (Quotation: Approved)</div>
             </div>
 
             <div class="table-responsive">
                 <table class="table table-striped table-hover align-middle">
                     <thead class="table-light">
                     <tr>
-                        <th><input type="checkbox" id="chkAll"></th>
                         <th>Service Request #</th>
                         <th>Customer</th>
                         <th>Service Date</th>
@@ -83,18 +72,16 @@
                             $total = round($subtotal - $discount + $tax, 2);
                         @endphp
                         <tr>
-                            <td><input type="checkbox" class="chkRow" value="{{ $service_request_id }}"></td>
                             <td>{{ $sr->service_request_number ?? $service_request_id }}</td>
                             <td>{{ $sr->customer->full_name ?? 'N/A' }}</td>
                             <td>{{ \Carbon\Carbon::parse($sr->end_date ?? $sr->service_date)->format('Y-m-d') }}</td>
                             <td>₱ {{ number_format($total, 2) }}</td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary btn-rounded" data-view-items data-srid="{{ $service_request_id }}">View Details</button>
-                                <button class="btn btn-sm btn-primary btn-rounded" data-generate-bill data-srid="{{ $service_request_id }}">Generate Bill</button>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="text-center text-muted">No completed unbilled items found.</td></tr>
+                        <tr><td colspan="5" class="text-center text-muted">No completed unbilled items found.</td></tr>
                     @endforelse
                     </tbody>
                 </table>
@@ -103,36 +90,30 @@
     </div>
 </div>
 
-<!-- Generate Bill Modal -->
+<!-- Details Modal -->
 <div class="modal fade" id="modalGenerateBill" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content shadow-soft">
       <div class="modal-header">
-        <h5 class="modal-title">Generate Bill</h5>
+        <h5 class="modal-title">Service Request Details</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <div id="billItems"></div>
-        <div class="row g-3 mt-2">
-            <div class="col-md-4">
-                <label class="form-label">Billing Date</label>
-                <input type="date" class="form-control" id="billing_date" value="{{ now()->format('Y-m-d') }}">
+        <div class="mt-3">
+          <div class="d-flex justify-content-end">
+            <div class="text-end">
+              <div><span class="text-muted">Subtotal:</span> <strong id="total_subtotal">₱ 0.00</strong></div>
+              <div><span class="text-muted">Discount:</span> <strong id="total_discount">₱ 0.00</strong></div>
+              <div><span class="text-muted">Tax:</span> <strong id="total_tax">₱ 0.00</strong></div>
+              <div class="fs-5"><span class="text-muted">Total:</span> <strong id="total_grand">₱ 0.00</strong></div>
             </div>
-            <div class="col-md-4">
-                <label class="form-label">Due Date</label>
-                <input type="date" class="form-control" id="due_date" value="{{ now()->addDays(7)->format('Y-m-d') }}">
-            </div>
-            <div class="col-md-4 d-flex align-items-end">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="generate_invoice" checked>
-                    <label class="form-check-label" for="generate_invoice">Generate Invoice</label>
-                </div>
-            </div>
+          </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary btn-rounded" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary btn-rounded" id="btnConfirmGenerate">Submit for Approval</button>
+        <button type="button" class="btn btn-outline-secondary btn-rounded" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary btn-rounded" id="btnGenerateFromDetails">Generate Bill</button>
       </div>
     </div>
   </div>
@@ -141,17 +122,33 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
-  const modal = new bootstrap.Modal(document.getElementById('modalGenerateBill'));
+  const modalEl = document.getElementById('modalGenerateBill');
+  if (modalEl && modalEl.parentElement !== document.body) {
+    document.body.appendChild(modalEl);
+  }
+  const modal = new bootstrap.Modal(modalEl);
   let currentSrId = null;
+  const mainContent = document.querySelector('.main-content');
+  if (modalEl && mainContent) {
+    modalEl.addEventListener('show.bs.modal', () => {
+      mainContent.setAttribute('inert', '');
+    });
+    modalEl.addEventListener('hidden.bs.modal', () => {
+      mainContent.removeAttribute('inert');
+    });
+  }
 
   function toastSuccess(msg){ Swal.fire({ icon:'success', title:'Success', text: msg, timer: 1400, showConfirmButton:false}); }
   function toastError(msg){ Swal.fire({ icon:'error', title:'Error', text: msg }); }
 
-  // Select all checkbox
-  const chkAll = document.getElementById('chkAll');
-  if (chkAll) chkAll.addEventListener('change', e => {
-      document.querySelectorAll('.chkRow').forEach(c => c.checked = e.target.checked);
-  });
+  function getMetaCsrf() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+  }
+  function getCookie(name){
+    const m = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)'));
+    return m ? decodeURIComponent(m[1]) : '';
+  }
 
   // View details
   addEventListener('click', async (e) => {
@@ -162,8 +159,17 @@ document.addEventListener('DOMContentLoaded', function(){
     if (!res.ok) return toastError('Failed to load items');
     const sr = await res.json();
     const rows = [];
+    let subtotal = 0, discount = 0, tax = 0;
     (sr.items || []).forEach(it => {
-      const extras = (it.extras || []).map(x => `${x.name} (x${x.qty}) - ₱${Number(x.price).toFixed(2)}`).join('<br>');
+      const extrasArr = (it.extras || []);
+      const extras = extrasArr.map(x => `${x.name} (x${x.qty}) - ₱${Number(x.price).toFixed(2)}`).join('<br>');
+      const qty = Number(it.quantity || 1);
+      const unit = Number(it.unit_price || 0);
+      const line = qty * unit;
+      const extraSum = extrasArr.reduce((s, x) => s + Number(x.qty || 0) * Number(x.price || 0), 0);
+      subtotal += line + extraSum;
+      discount += Number(it.discount || 0);
+      tax += Number(it.tax || 0);
       rows.push(`<tr>
           <td>${it.service?.service_name ?? it.service_type ?? ''}</td>
           <td class="text-end">${Number(it.quantity || 1)}</td>
@@ -176,59 +182,73 @@ document.addEventListener('DOMContentLoaded', function(){
     document.getElementById('billItems').innerHTML = `<div class="table-responsive"><table class="table table-sm">
       <thead><tr><th>Service</th><th class=\"text-end\">Qty</th><th class=\"text-end\">Unit</th><th class=\"text-end\">Discount</th><th class=\"text-end\">Tax</th><th>Extras</th></tr></thead>
       <tbody>${rows.join('')}</tbody></table></div>`;
+    const grand = Math.round((subtotal - discount + tax) * 100) / 100;
+    const fmt = (n) => `₱ ${n.toFixed(2)}`;
+    document.getElementById('total_subtotal').textContent = fmt(subtotal);
+    document.getElementById('total_discount').textContent = fmt(discount);
+    document.getElementById('total_tax').textContent = fmt(tax);
+    document.getElementById('total_grand').textContent = fmt(grand);
     currentSrId = id;
     modal.show();
   });
 
-  // Generate bill single
-  addEventListener('click', async (e) => {
-    const btn = e.target.closest('[data-generate-bill]');
-    if (!btn) return;
-    const id = btn.getAttribute('data-srid');
-    currentSrId = id;
-    // pre-load items
-    document.querySelector('[data-view-items][data-srid="'+id+'"]')?.click();
-  });
-
-  // Confirm generate single
-  const btnConfirm = document.getElementById('btnConfirmGenerate');
-  btnConfirm?.addEventListener('click', async () => {
+  // Generate bill from details
+  document.getElementById('btnGenerateFromDetails')?.addEventListener('click', async () => {
     if (!currentSrId) return;
-    const payload = {
-      service_request_id: Number(currentSrId),
-      billing_date: document.getElementById('billing_date').value,
-      due_date: document.getElementById('due_date').value,
-      generate_invoice: document.getElementById('generate_invoice').checked
-    };
-    const res = await fetch(`{{ route('finance.billing.store') }}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept':'application/json', 'X-Requested-With':'XMLHttpRequest', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-      body: JSON.stringify(payload)
+    const today = new Date();
+    const billing_date = today.toISOString().slice(0,10);
+    const due = new Date(today.getTime() + 7*86400000);
+    const due_date = due.toISOString().slice(0,10);
+    const form = new FormData();
+    form.append('service_request_id', String(Number(currentSrId)));
+    form.append('billing_date', billing_date);
+    form.append('due_date', due_date);
+    form.append('generate_invoice', '1');
+    form.append('_token', getMetaCsrf() || getCookie('XSRF-TOKEN'));
+    let res = await fetch(`{{ route('finance.billing.store') }}`, {
+      method: 'POST',
+      headers: {
+        'Accept':'application/json',
+        'X-Requested-With':'XMLHttpRequest',
+        'X-CSRF-TOKEN': getMetaCsrf() || getCookie('XSRF-TOKEN'),
+        'X-XSRF-TOKEN': getCookie('XSRF-TOKEN')
+      },
+      credentials: 'same-origin',
+      body: form
     });
+    // One-time retry on 419 in case of token rotation
+    if (res.status === 419) {
+      form.set('_token', getMetaCsrf() || getCookie('XSRF-TOKEN'));
+      res = await fetch(`{{ route('finance.billing.store') }}`, {
+        method: 'POST',
+        headers: {
+          'Accept':'application/json',
+          'X-Requested-With':'XMLHttpRequest',
+          'X-CSRF-TOKEN': getMetaCsrf() || getCookie('XSRF-TOKEN'),
+          'X-XSRF-TOKEN': getCookie('XSRF-TOKEN')
+        },
+        credentials: 'same-origin',
+        body: form
+      });
+    }
     let data = null, text = '';
     try { data = await res.clone().json(); } catch(e) { try { text = await res.text(); } catch(_) {} }
     if (res.ok) {
-      toastSuccess((data && data.message) || 'Submitted for approval');
-      setTimeout(()=> location.reload(), 900);
+      const billingId = data && data.billing_id;
+      toastSuccess((data && data.message) || 'Billing created successfully.');
+      if (billingId) {
+        const url = `{{ route('finance.billing.slip.pdf', 0) }}`.replace('/0', `/${billingId}`);
+        window.open(url, '_blank');
+      }
+      setTimeout(()=> {
+        try { if (document.activeElement) document.activeElement.blur(); } catch(_) {}
+        modal.hide();
+      }, 600);
     }
     else {
       const err = (data && (data.message || (data.errors && Object.values(data.errors).flat().join('\n')))) || text || `HTTP ${res.status}`;
       toastError(err);
     }
-  });
-
-  // Bulk generate
-  const btnBulk = document.getElementById('btnBulkBill');
-  btnBulk?.addEventListener('click', async () => {
-    const ids = Array.from(document.querySelectorAll('.chkRow:checked')).map(x => Number(x.value));
-    if (!ids.length) return toastError('Select at least one service request');
-    const billing_date = new Date().toISOString().slice(0,10);
-    const due_date = new Date(Date.now()+7*86400000).toISOString().slice(0,10);
-    const res = await fetch(`{{ route('finance.billing.bulk-store') }}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept':'application/json', 'X-Requested-With':'XMLHttpRequest', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-      body: JSON.stringify({ service_request_ids: ids, billing_date, due_date, generate_invoice: true })
-    });
-    if (res.ok) { toastSuccess('Submitted for approval'); setTimeout(()=> location.reload(), 900); }
-    else { toastError('Bulk billing failed'); }
   });
 });
 </script>

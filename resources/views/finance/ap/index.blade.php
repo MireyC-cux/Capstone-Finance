@@ -12,14 +12,6 @@
       <a href="{{ route('purchase-orders.index') }}" class="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 text-slate-700 hover:bg-slate-200 transition">
         <i class="fa fa-list"></i><span>View POs</span>
       </a>
-      <form method="POST" action="{{ route('accounts-payable.mark-overdues') }}">@csrf
-        <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-white shadow hover:bg-amber-600 transition">
-          <i class="fa fa-triangle-exclamation"></i><span>Mark Overdues</span>
-        </button>
-      </form>
-      <a href="{{ route('purchase-orders.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-white shadow hover:bg-brand-700 transition">
-        <i class="fa fa-plus"></i><span>Create PO</span>
-      </a>
     </div>
   </div>
 

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\AccountsReceivable;
 use App\Models\Customer;
+use App\Models\PaymentReceived;
 
 class AccountsReceivableController extends Controller
 {
@@ -38,6 +39,82 @@ class AccountsReceivableController extends Controller
     {
         $ar = AccountsReceivable::with(['customer', 'payments'])->findOrFail($id);
         return response()->json($ar);
+    }
+
+    public function totals(Request $request)
+    {
+        $metric = strtolower($request->get('metric', ''));
+        if (!in_array($metric, ['outstanding','paid','overdue'], true)) {
+            return response()->json(['error' => 'Invalid metric'], 422);
+        }
+
+        if ($metric === 'paid') {
+            $rows = PaymentReceived::query()
+                ->with(['accountsReceivable.customer'])
+                ->orderByDesc('payment_date')
+                ->limit(50)
+                ->get()
+                ->map(function ($p) {
+                    $ar = $p->accountsReceivable;
+                    $cust = $ar && $ar->customer ? ($ar->customer->business_name ?: $ar->customer->full_name) : '—';
+                    return [
+                        'when' => Carbon::parse($p->payment_date)->format('Y-m-d'),
+                        'amount' => (float)$p->amount,
+                        'method' => $p->payment_method,
+                        'reference' => $p->reference_number,
+                        'ar_id' => $p->ar_id,
+                        'customer' => $cust,
+                    ];
+                });
+            $total = (float) PaymentReceived::sum('amount');
+            return response()->json([
+                'title' => 'Total Paid Breakdown',
+                'metric' => 'paid',
+                'total' => $total,
+                'rows' => $rows,
+                'columns' => ['when','customer','method','reference','amount']
+            ]);
+        }
+
+        $base = AccountsReceivable::query()->with(['customer']);
+        if ($metric === 'overdue') {
+            $base->where('status', 'Overdue');
+        } else {
+            $base->whereIn('status', ['Unpaid','Partially Paid','Overdue']);
+        }
+
+        $ars = $base->get();
+        $rows = $ars->map(function ($ar) {
+            $customer = $ar->customer ? ($ar->customer->business_name ?: $ar->customer->full_name) : '—';
+            $balance = max(0.0, (float)$ar->total_amount - (float)$ar->amount_paid);
+            return [
+                'invoice' => $ar->invoice_number ?? '—',
+                'customer' => $customer,
+                'due' => Carbon::parse($ar->due_date)->format('Y-m-d'),
+                'status' => $ar->status,
+                'total' => (float)$ar->total_amount,
+                'paid' => (float)$ar->amount_paid,
+                'balance' => $balance,
+            ];
+        })->filter(function ($r) use ($metric) {
+            if ($metric === 'outstanding' || $metric === 'overdue') {
+                return $r['balance'] > 0;
+            }
+            return true;
+        })->values();
+
+        $total = $rows->sum(function ($r) use ($metric) {
+            if ($metric === 'outstanding' || $metric === 'overdue') { return $r['balance']; }
+            return $r['total'];
+        });
+
+        return response()->json([
+            'title' => $metric === 'overdue' ? 'Total Overdue Breakdown' : 'Total Outstanding Breakdown',
+            'metric' => $metric,
+            'total' => (float)$total,
+            'rows' => $rows,
+            'columns' => ['invoice','customer','due','status','total','paid','balance']
+        ]);
     }
 
     public function updateStatus()

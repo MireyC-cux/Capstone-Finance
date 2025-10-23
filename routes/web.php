@@ -34,6 +34,9 @@ Route::get('/', function () {
     return redirect()->route('finance.home');
 });
 
+// TEMP DEBUG: verify approve route is reachable and session is available
+// (Removed) Approve debug route
+
 // Redirect /login to Finance Home (no auth page yet)
 //Route::get('/login', function () {
 //    return redirect()->route('finance.home');
@@ -80,12 +83,8 @@ Route::prefix('finance')->name('finance.')->group(function () {
         Route::post('/generate-invoice/{billing}', [BillingController::class, 'generateInvoice'])
             ->where('billing', '[0-9]+')
             ->name('generate-invoice');
-
-        // Approvals
-        Route::get('/approvals', [BillingController::class, 'approvalsIndex'])->name('approvals.index');
-        Route::get('/approvals/{id}', [BillingController::class, 'approvalShow'])->where('id','[0-9]+')->name('approvals.show');
-        Route::post('/{id}/approve', [BillingController::class, 'approve'])->where('id','[0-9]+')->name('approve');
-        Route::post('/{id}/reject', [BillingController::class, 'reject'])->where('id','[0-9]+')->name('reject');
+        
+        // (Removed) Billing approvals routes
     });
 
     // -------------------- Accounts ---------------------
@@ -205,6 +204,7 @@ Route::prefix('payments')->name('payments.')->group(function () {
 // =======================================================
 
 Route::resource('accounts-receivable', AccountsReceivableController::class);
+Route::get('accounts-receivable/totals', [AccountsReceivableController::class, 'totals'])->name('accounts-receivable.totals');
 Route::post('accounts-receivable/{id}/payment', [PaymentController::class, 'store'])->name('payments.store');
 Route::get('accounts-receivable/aging-report', [ARReportController::class, 'agingReport'])->name('ar.aging');
 

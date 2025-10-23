@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Finance Logo</title>
+  <desc id="desc">Simple placeholder logo for Finance module</desc>
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#dc2626"/>
+      <stop offset="50%" stop-color="#ea580c"/>
+      <stop offset="100%" stop-color="#f97316"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="120" height="120" rx="20" fill="url(#g)"/>
+  <g transform="translate(20,20)">
+    <circle cx="40" cy="40" r="34" fill="#fff" opacity="0.15"/>
+    <path d="M12 52h56v8H12zM24 20h8v28h-8zM40 28h8v20h-8zM56 16h8v32h-8z" fill="#fff"/>
+  </g>
+</svg>

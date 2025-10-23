@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PurchaseOrder extends Model
 {
-    protected $primaryKey = 'po_id';
+    protected $primaryKey = 'purchase_order_id';
 
     protected $fillable = [
         'ap_id',

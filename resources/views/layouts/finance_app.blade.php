@@ -17,23 +17,7 @@
     <!-- Finance Sidebar CSS -->
     <link href="{{ asset('css/finance_sidebar.css') }}" rel="stylesheet">
 
-    <!-- Tailwind CSS (CDN for quick styling) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            500: '#06b6d4',
-                            600: '#0891b2',
-                            700: '#0e7490',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- Tailwind CDN removed for production safety -->
 
     <!-- SweetAlert2 -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">

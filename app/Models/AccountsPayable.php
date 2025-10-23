@@ -44,7 +44,7 @@ class AccountsPayable extends Model
 
     public function purchaseOrder()
     {
-        return $this->belongsTo(PurchaseOrder::class, 'purchase_order_id', 'po_id');
+        return $this->belongsTo(PurchaseOrder::class, 'purchase_order_id', 'purchase_order_id');
     }
 
     public function getIsOverdueAttribute(): bool

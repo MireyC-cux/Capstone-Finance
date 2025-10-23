@@ -13,5 +13,5 @@ class InventoryStockIn extends Model
     ];
 
     public function item() { return $this->belongsTo(InventoryItem::class, 'item_id', 'item_id'); }
-    public function purchaseOrder() { return $this->belongsTo(PurchaseOrder::class, 'po_id', 'po_id'); }
+    public function purchaseOrder() { return $this->belongsTo(PurchaseOrder::class, 'purchase_order_id', 'purchase_order_id'); }
 }

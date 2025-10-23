@@ -28,6 +28,13 @@ class BillingController extends Controller
             });
         }
 
+        // Only include service requests with Approved quotation
+        $query->whereHas('serviceRequest', function ($q) {
+            if (Schema::hasColumn('service_requests', 'quotation_status')) {
+                $q->where('quotation_status', 'Approved');
+            }
+        });
+
         if ($request->filled('customer')) {
             $customer = $request->string('customer');
             $query->whereHas('serviceRequest.customer', function ($q) use ($customer) {
@@ -40,18 +47,13 @@ class BillingController extends Controller
                 $q->where('service_request_number', 'like', "%{$srn}%");
             });
         }
-        if ($request->filled('date_from')) {
-            $query->whereDate('end_date', '>=', $request->date('date_from'));
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('end_date', '<=', $request->date('date_to'));
-        }
+        // Removed date range filtering as requested
 
         $items = $query->get()->groupBy('service_request_id');
 
         return view('finance.billing.index', [
             'groups' => $items,
-            'filters' => $request->only(['customer', 'sr_number', 'date_from', 'date_to']),
+            'filters' => $request->only(['customer', 'sr_number']),
         ]);
     }
 
@@ -210,74 +212,7 @@ class BillingController extends Controller
     }
 
     // Approval form page (separate screen)
-    public function approvalShow($id)
-    {
-        $billing = Billing::with(['serviceRequest.customer', 'invoice'])
-            ->findOrFail($id);
-        $items = ServiceRequestItem::with('service')
-            ->where('service_request_id', $billing->service_request_id)
-            ->get();
-        return view('finance.billing.approvals.show', compact('billing','items'));
-    }
-
-    // Admin: list pending approvals
-    public function approvalsIndex(Request $request)
-    {
-        $query = Billing::with('serviceRequest.customer')->orderByDesc('created_at');
-        if (Schema::hasColumn('billings', 'approval_status')) {
-            $query->where('approval_status', 'Pending');
-        }
-        $billings = $query->paginate(15);
-        return view('finance.billing.approvals.index', compact('billings'));
-    }
-
-    // Admin: approve billing
-    public function approve(Request $request, $id)
-    {
-        if (!Schema::hasColumn('billings', 'approval_status')) {
-            return back()->with('success', 'Approvals are not enabled (missing approval_status column).');
-        }
-        return DB::transaction(function() use ($request, $id){
-            $billing = Billing::with('serviceRequest.items')->findOrFail($id);
-            if ($billing->approval_status !== 'Pending') {
-                return back()->with('success', 'Nothing to do.');
-            }
-            // Mark items as billed
-            $itemIds = ServiceRequestItem::where('service_request_id', $billing->service_request_id)
-                ->pluck('item_id');
-            ServiceRequestItem::whereIn('item_id', $itemIds)->update(['billed' => true]);
-
-            $billing->approval_status = 'Approved';
-            $billing->approval_note = $request->input('note');
-            $billing->approved_by = optional(auth()->user())->id;
-            $billing->approved_at = now();
-            $billing->save();
-
-            if ($billing->generate_invoice_after_approval && !$billing->invoice) {
-                $this->createInvoiceFromBilling($billing);
-            }
-            return back()->with('success', 'Billing approved.');
-        });
-    }
-
-    // Admin: reject billing
-    public function reject(Request $request, $id)
-    {
-        if (!Schema::hasColumn('billings', 'approval_status')) {
-            return back()->with('success', 'Approvals are not enabled (missing approval_status column).');
-        }
-        $request->validate(['note' => 'nullable|string|max:500']);
-        $billing = Billing::findOrFail($id);
-        if ($billing->approval_status !== 'Pending') {
-            return back()->with('success', 'Nothing to do.');
-        }
-        $billing->approval_status = 'Rejected';
-        $billing->approval_note = $request->input('note');
-        $billing->approved_by = optional(auth()->user())->id;
-        $billing->approved_at = now();
-        $billing->save();
-        return back()->with('success', 'Billing rejected.');
-    }
+    // (Removed) Billing approval screens and actions
 
     // Helper: create invoice + AR from billing
     protected function createInvoiceFromBilling(Billing $billing)

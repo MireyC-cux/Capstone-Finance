@@ -75,7 +75,7 @@
     </form>
 
     <div class="grid md:grid-cols-3 gap-4 mb-6">
-        <div class="rounded-2xl border border-cyan-100 bg-gradient-to-br from-cyan-50 to-white p-5 shadow-sm">
+        <div class="rounded-2xl border border-cyan-100 bg-gradient-to-br from-cyan-50 to-white p-5 shadow-sm cursor-pointer metric-card" data-metric="outstanding" title="View outstanding breakdown">
             <div class="flex items-center gap-3">
                 <div class="h-10 w-10 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center"><i class="fa-solid fa-sack-dollar"></i></div>
                 <div>
@@ -84,7 +84,7 @@
                 </div>
             </div>
         </div>
-        <div class="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm">
+        <div class="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm cursor-pointer metric-card" data-metric="paid" title="View payments breakdown">
             <div class="flex items-center gap-3">
                 <div class="h-10 w-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center"><i class="fa-solid fa-circle-check"></i></div>
                 <div>
@@ -93,7 +93,7 @@
                 </div>
             </div>
         </div>
-        <div class="rounded-2xl border border-rose-100 bg-gradient-to-br from-rose-50 to-white p-5 shadow-sm">
+        <div class="rounded-2xl border border-rose-100 bg-gradient-to-br from-rose-50 to-white p-5 shadow-sm cursor-pointer metric-card" data-metric="overdue" title="View overdue breakdown">
             <div class="flex items-center gap-3">
                 <div class="h-10 w-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center"><i class="fa-solid fa-triangle-exclamation"></i></div>
                 <div>
@@ -146,16 +146,6 @@
                         <button type="button" data-id="{{ $ar->ar_id }}" class="view-details inline-flex items-center gap-2 border border-gray-200 hover:border-gray-300 px-3 py-1.5 rounded-lg text-sm">
                             <i class="fa-regular fa-eye"></i> View Details
                         </button>
-                        <a href="{{ route('payments.history') }}" class="inline-flex items-center gap-2 border border-gray-200 hover:border-gray-300 px-3 py-1.5 rounded-lg text-sm">
-                            <i class="fa-regular fa-clock"></i> View History
-                        </a>
-                        <form class="inline record-payment-form" method="POST" action="#" data-ar-id="{{ $ar->ar_id }}">
-                            @csrf
-                            <input type="hidden" name="ar_id" value="{{ $ar->ar_id }}" />
-                            <button type="button" class="open-payment-modal inline-flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white px-3 py-1.5 rounded-lg text-sm shadow-sm" data-ar-id="{{ $ar->ar_id }}">
-                                <i class="fa-solid fa-plus"></i> Record Payment
-                            </button>
-                        </form>
                     </td>
                 </tr>
                 @endforeach
@@ -253,11 +243,34 @@
         </div>
     </div>
 
+    <!-- Totals Breakdown Modal -->
+    <div id="totalsModal" class="fixed inset-0 z-[1000] hidden items-center justify-center bg-black/30 p-4">
+        <div class="w-full max-w-4xl rounded-2xl bg-white shadow-xl overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border-b">
+                <div>
+                    <h3 id="totalsTitle" class="text-lg font-semibold">Totals Breakdown</h3>
+                    <div class="text-sm text-gray-500">Sum: <span id="totalsSum">—</span></div>
+                </div>
+                <button class="close-totals-modal text-gray-500 hover:text-gray-700"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 overflow-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-gray-50 text-left" id="totalsHead"></thead>
+                    <tbody class="divide-y divide-gray-100" id="totalsBody"></tbody>
+                </table>
+            </div>
+            <div class="px-6 py-4 border-t flex justify-end">
+                <button class="close-totals-modal border border-gray-200 px-4 py-2 rounded-lg">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const arModal = document.getElementById('arModal');
         const paymentModal = document.getElementById('paymentModal');
+        const totalsModal = document.getElementById('totalsModal');
         let currentAR = null;
 
         function open(el){ el.classList.remove('hidden'); el.classList.add('flex'); }
@@ -284,6 +297,7 @@
 
         document.querySelectorAll('.close-ar-modal').forEach(x => x.addEventListener('click', () => close(arModal)));
         document.querySelectorAll('.close-payment-modal').forEach(x => x.addEventListener('click', () => close(paymentModal)));
+        document.querySelectorAll('.close-totals-modal').forEach(x => x.addEventListener('click', () => close(totalsModal)));
 
         // Open payment modal from list button
         document.querySelectorAll('.open-payment-modal').forEach(btn => {
@@ -357,6 +371,41 @@
                 gcashQrContainer.classList.add('hidden');
                 gcashQrCode.innerHTML = "";
             }
+        });
+
+        // Metric cards -> totals breakdown modal
+        function formatMoney(v){
+            const n = Number(v||0);
+            return '₱'+n.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2});
+        }
+        function renderTable(headCols, rows){
+            const thead = document.getElementById('totalsHead');
+            const tbody = document.getElementById('totalsBody');
+            thead.innerHTML = '<tr>' + headCols.map(c=>`<th class=\"px-3 py-2 text-xs font-semibold text-gray-600\">${c.replace('_',' ').toUpperCase()}</th>`).join('') + '</tr>';
+            const moneyCols = new Set(['amount','total','paid','balance']);
+            tbody.innerHTML = rows.map(r => {
+                return '<tr>' + headCols.map(c => {
+                    let val = r[c] ?? '';
+                    if (moneyCols.has(c)) val = formatMoney(val);
+                    return `<td class=\"px-3 py-2\">${String(val)}</td>`;
+                }).join('') + '</tr>';
+            }).join('');
+        }
+        document.querySelectorAll('.metric-card').forEach(card => {
+            card.addEventListener('click', async () => {
+                const metric = card.getAttribute('data-metric');
+                try {
+                    const res = await fetch(`/accounts-receivable/totals?metric=${encodeURIComponent(metric)}`);
+                    if (!res.ok) { throw new Error('failed'); }
+                    const data = await res.json();
+                    document.getElementById('totalsTitle').textContent = data.title || 'Totals Breakdown';
+                    document.getElementById('totalsSum').textContent = formatMoney(data.total || 0);
+                    renderTable(data.columns || [], data.rows || []);
+                    open(totalsModal);
+                } catch (e) {
+                    window.Swal && Swal.fire('Error','Unable to load totals breakdown','error');
+                }
+            });
         });
     });
     </script>

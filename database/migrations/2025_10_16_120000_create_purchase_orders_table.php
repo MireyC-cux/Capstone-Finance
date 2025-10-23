@@ -1,39 +1,30 @@
 <?php
-
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
-    public function up()
-    {
+return new class extends Migration {
+    public function up(): void {
         Schema::create('purchase_orders', function (Blueprint $table) {
-            $table->id('po_id');
-            $table->unsignedBigInteger('ap_id')->nullable();
+            $table->bigIncrements('purchase_order_id');
+            $table->string('po_number')->unique(); // PO-0001 continuous
             $table->unsignedBigInteger('supplier_id');
-            $table->unsignedBigInteger('service_request_id')->nullable();
-            $table->string('po_number', 50)->unique();
-            $table->date('po_date');
-            $table->enum('status', ['Pending', 'Approved', 'Rejected', 'Completed'])->default('Pending');
-            $table->decimal('total_amount', 12, 2);
-            $table->unsignedBigInteger('created_by')->nullable();
-            $table->unsignedBigInteger('approved_by')->nullable();
-            $table->text('remarks')->nullable();
+            $table->unsignedBigInteger('service_request_item_id')->nullable();
+            $table->date('order_date');
+            $table->date('delivery_date')->nullable();
+            $table->decimal('total_amount', 10, 2)->default(0);
+            $table->enum('status', ['pending','delivered','cancelled'])->default('pending');
+            $table->enum('payment_status', ['unpaid','partial','paid'])->default('unpaid');
+            $table->json('items')->nullable(); // unit/parts ordered
+            $table->unsignedBigInteger('created_by')->nullable(); // admin_id
             $table->timestamps();
 
-            $table->foreign('supplier_id')
-                ->references('supplier_id')->on('suppliers')
-                ->onDelete('cascade')->onUpdate('cascade');
-
-            $table->foreign('service_request_id')
-                ->references('service_request_id')->on('service_requests')
-                ->onDelete('set null')->onUpdate('cascade');
+            $table->foreign('supplier_id')->references('supplier_id')->on('suppliers');
+            $table->foreign('service_request_item_id')->references('item_id')->on('service_request_items');
+            $table->foreign('created_by')->references('admin_id')->on('administrativeaccounts');
         });
     }
-
-    public function down()
-    {
+    public function down(): void {
         Schema::dropIfExists('purchase_orders');
     }
 };

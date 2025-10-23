@@ -81,15 +81,13 @@
 
   <div class="card shadow-soft">
     <div class="card-body">
-      <form class="row g-3" method="POST" action="{{ route('finance.billing.approve', $billing->billing_id) }}">
-        @csrf
+      <form class="row g-3" method="GET" action="{{ route('finance.billing.approve', $billing->billing_id) }}">
         <div class="col-12">
           <label class="form-label">Approval Note (optional)</label>
           <textarea name="note" class="form-control" rows="2" placeholder="Add a note for this approval..."></textarea>
         </div>
         <div class="col-12 d-flex gap-2">
           <button class="btn btn-primary btn-rounded">Approve</button>
-          <button formaction="{{ route('finance.billing.reject', $billing->billing_id) }}" class="btn btn-outline-danger btn-rounded">Reject</button>
         </div>
       </form>
     </div>

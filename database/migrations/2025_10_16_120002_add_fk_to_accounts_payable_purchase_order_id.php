@@ -13,7 +13,7 @@ return new class extends Migration
                 $table->unsignedBigInteger('purchase_order_id')->nullable()->after('supplier_id');
             }
             $table->foreign('purchase_order_id')
-                ->references('po_id')->on('purchase_orders')
+                ->references('purchase_order_id')->on('purchase_orders')
                 ->onDelete('set null')
                 ->onUpdate('cascade');
         });

@@ -43,7 +43,7 @@
                 <div class="space-x-2">
                     <a class="px-3 py-1 text-sm rounded bg-slate-100 hover:bg-slate-200" href="{{ route('finance.cashflow.export.csv') }}">Export CSV</a>
                     <a class="px-3 py-1 text-sm rounded bg-slate-100 hover:bg-slate-200" href="{{ route('finance.cashflow.export.pdf') }}">Export PDF</a>
-                    <button id="openExpensesModal" type="button" class="px-3 py-1 text-sm rounded bg-amber-600 text-white hover:bg-amber-700">Expenses</button>
+                    <a href="{{ route('finance.expenses') }}" class="px-3 py-1 text-sm rounded bg-amber-600 text-white hover:bg-amber-700">Expenses</a>
                 </div>
             </div>
             <div class="w-full max-w-5xl mx-auto">
@@ -168,33 +168,7 @@
         },
         options: { responsive: false, maintainAspectRatio: true }
     });
-
-    const expensesModal = document.getElementById('expensesModal');
-    const openExpensesModalBtn = document.getElementById('openExpensesModal');
-    const closeExpensesModalBtns = document.querySelectorAll('[data-close-expenses]');
-    openExpensesModalBtn?.addEventListener('click', () => {
-        expensesModal?.classList.remove('hidden');
-    });
-    closeExpensesModalBtns.forEach(btn => btn.addEventListener('click', () => {
-        expensesModal?.classList.add('hidden');
-    }));
 </script>
 @endpush
 @endsection
 
-<div id="expensesModal" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 bg-black/40"></div>
-    <div class="relative mx-auto mt-24 w-full max-w-md bg-white rounded-lg shadow-lg">
-        <div class="p-4 border-b flex items-center justify-between">
-            <div class="font-semibold">Expenses Dashboard</div>
-            <button type="button" class="text-gray-500 hover:text-gray-700" data-close-expenses>&times;</button>
-        </div>
-        <div class="p-4 space-y-3">
-            <p class="text-sm text-gray-600">View and record expenses. Track outflows and link them to cash flow automatically.</p>
-        </div>
-        <div class="p-4 border-t flex items-center justify-end gap-2">
-            <button type="button" class="px-3 py-1 rounded bg-slate-100 hover:bg-slate-200" data-close-expenses>Close</button>
-            <a href="{{ route('finance.expenses') }}" class="px-3 py-1 rounded bg-amber-600 text-white hover:bg-amber-700">Go to Expenses</a>
-        </div>
-    </div>
-</div>

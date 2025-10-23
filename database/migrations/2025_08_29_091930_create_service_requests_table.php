@@ -22,10 +22,12 @@ return new class extends Migration {
                   ->nullOnDelete()
                   ->cascadeOnUpdate();
 
+            // Financial details
             $table->decimal('order_total', 12, 2)->nullable();
             $table->decimal('overall_discount', 12, 2)->default(0);
+            $table->decimal('overall_tax_amount', 12, 2)->default(0);
 
-            // Payment & status
+            // Payment & service status
             $table->string('type_of_payment')->nullable();
             $table->enum('order_status', ['Pending', 'Ongoing', 'Completed', 'Cancelled'])->default('Pending');
             $table->enum('payment_status', ['Unpaid','Partially Paid','Paid','Cancelled'])->default('Unpaid');
@@ -34,17 +36,16 @@ return new class extends Migration {
             // Extra info
             $table->text('remarks')->nullable();
 
-            // PDF storage fields
-            $table->string('pdf_name')->nullable();            // e.g., "ServiceRequest_1234.pdf"
-            $table->string('pdf_mime')->default('application/pdf');
-            $table->binary('pdf_file')->nullable();            // stores the actual PDF content
-            $table->timestamp('pdf_generated_at')->nullable(); // when the PDF was created
+            // --- Quotation Management & Approval System ---
+            // Track current quotation status and approval info
+            $table->enum('quotation_status', ['Pending', 'Approved'])->default('Pending');
+            $table->string('quotation_file_path')->nullable(); // e.g. 'quotations/ServiceRequest_1234.pdf'
+            $table->string('quotation_file_disk')->default('public')->nullable(); // storage disk reference
+            $table->timestamp('quotation_approved_at')->nullable(); // system approval time
+            // (Optional future field) $table->foreignId('quotation_approved_by')->nullable()->constrained('users');
 
-
-            // friendly ref number
+            // Friendly timestamps and indexes
             $table->timestamps();
-
-            // useful indexes
             $table->index(['customer_id', 'order_status']);
         });
     }
