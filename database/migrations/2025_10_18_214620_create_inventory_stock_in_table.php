@@ -10,7 +10,7 @@ return new class extends Migration {
             $table->bigIncrements('stock_in_id');
             
             // Linked to purchase_orders
-            $table->unsignedBigInteger('po_id')->nullable();
+            $table->unsignedBigInteger('purchase_order_id')->nullable();
             
             // Linked to inventory_items
             $table->unsignedBigInteger('item_id');
@@ -26,7 +26,7 @@ return new class extends Migration {
             $table->timestamps();
 
             // Foreign keys
-            $table->foreign('po_id')
+            $table->foreign('purchase_order_id')
                   ->references('purchase_order_id')
                   ->on('purchase_orders')
                   ->onDelete('set null');
@@ -43,7 +43,7 @@ return new class extends Migration {
 
             // Indexes
             $table->index(['item_id', 'received_date']);
-            $table->index(['po_id']);
+            $table->index(['purchase_order_id']);
         });
     }
 

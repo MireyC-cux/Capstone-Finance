@@ -26,7 +26,7 @@ class InventoryReportController extends Controller
             ->orderBy('i.category')->orderBy('i.item_name')->get();
 
         $purchases = DB::table('inventory_stock_in as si')
-            ->leftJoin('purchase_orders as po','po.po_id','=','si.po_id')
+            ->leftJoin('purchase_orders as po','po.purchase_order_id','=','si.purchase_order_id')
             ->leftJoin('suppliers as s','s.supplier_id','=','po.supplier_id')
             ->whereBetween('si.received_date', [$start, $end])
             ->select('s.supplier_name', DB::raw('SUM(si.total_cost) as total'), DB::raw('COUNT(si.stock_in_id) as entries'))

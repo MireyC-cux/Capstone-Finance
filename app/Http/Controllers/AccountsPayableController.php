@@ -5,14 +5,33 @@ namespace App\Http\Controllers;
 use App\Models\AccountsPayable;
 use App\Models\ServiceRequest;
 use App\Models\Supplier;
+use App\Models\Expenses;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Carbon\Carbon;
 
 class AccountsPayableController extends Controller
 {
     public function index(Request $request)
     {
+        if (!Schema::hasTable('accounts_payable')) {
+            $payables = new LengthAwarePaginator([], 0, 25);
+            $suppliers = Supplier::orderBy('supplier_name')->get();
+            $stats = [
+                'total' => 0,
+                'paid' => 0,
+                'overdue' => 0,
+                'unpaid' => 0,
+                'partial' => 0,
+            ];
+            $unpaidExpenses = Schema::hasTable('expenses')
+                ? Expenses::where('status','Unpaid')->orderByDesc('expense_date')->orderByDesc('expense_id')->paginate(10)->withQueryString()
+                : new LengthAwarePaginator([], 0, 10);
+            return view('finance.ap.index', compact('payables', 'suppliers', 'stats', 'unpaidExpenses'));
+        }
+
         $query = AccountsPayable::with(['supplier', 'purchaseOrder'])
             ->whereHas('purchaseOrder', function($q){
                 // Updated to new Purchase Order status enum values
@@ -35,7 +54,8 @@ class AccountsPayableController extends Controller
 
         $payables = $query->orderByDesc('ap_id')->paginate(25)->withQueryString();
         $suppliers = Supplier::orderBy('supplier_name')->get();
-        return view('finance.ap.index', compact('payables', 'suppliers', 'stats'));
+        $unpaidExpenses = Expenses::where('status','Unpaid')->orderByDesc('expense_date')->orderByDesc('expense_id')->paginate(10)->withQueryString();
+        return view('finance.ap.index', compact('payables', 'suppliers', 'stats', 'unpaidExpenses'));
     }
 
     public function show(AccountsPayable $accounts_payable)

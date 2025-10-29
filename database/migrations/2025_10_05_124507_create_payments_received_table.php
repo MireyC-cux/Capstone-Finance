@@ -13,8 +13,10 @@ return new class extends Migration
             $table->unsignedBigInteger('ar_id');
             $table->date('payment_date');
             $table->decimal('amount', 12, 2);
-            $table->enum('payment_method', ['Cash', 'Bank Transfer', 'GCash', 'Check', 'Other']);
+            $table->enum('payment_method', ['Cash', 'GCash', 'Bank Transfer', 'Check']);
+            $table->enum('payment_type', ['Full', 'Partial'])->default('Full');
             $table->string('reference_number', 255)->nullable();
+            $table->string('or_file_path')->nullable();
             $table->timestamps();
 
             $table->foreign('ar_id')

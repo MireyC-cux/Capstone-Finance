@@ -117,59 +117,201 @@
     </div>
   </div>
 
-  <!-- Data Table -->
-  <div class="card" style="padding: 0; overflow: hidden;">
-    <div class="table-responsive">
-      <table class="table table-hover align-middle" style="margin-bottom: 0;">
-        <thead class="table-dark">
-          <tr>
-            <th style="padding: 8px;">PO#</th>
-            <th style="padding: 8px;">Supplier</th>
-            <th style="padding: 8px;">Invoice#</th>
-            <th style="padding: 8px;">Due Date</th>
-            <th style="padding: 8px;">Total</th>
-            <th style="padding: 8px;">Paid</th>
-            <th style="padding: 8px;">Balance</th>
-            <th style="padding: 8px;">Status</th>
-            <th style="padding: 8px;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @foreach($payables as $ap)
-          <tr style="@if($ap->is_overdue && $ap->status!=='Paid') background: #FEF2F2; @endif">
-            <td style="padding: 8px; font-weight: 600;">{{ $ap->purchaseOrder->po_number ?? '—' }}</td>
-            <td style="padding: 8px;">{{ $ap->supplier->supplier_name ?? '—' }}</td>
-            <td style="padding: 8px; font-weight: 600;">{{ $ap->invoice_number }}</td>
-            <td style="padding: 8px;">{{ \Illuminate\Support\Carbon::parse($ap->due_date)->format('Y-m-d') }}</td>
-            <td style="padding: 8px; font-weight: 600;">₱{{ number_format($ap->total_amount,2) }}</td>
-            <td style="padding: 8px; color: var(--success);">₱{{ number_format($ap->amount_paid,2) }}</td>
-            <td style="padding: 8px; font-weight: 700; color: #2563EB;">₱{{ number_format(max(0, $ap->total_amount - $ap->amount_paid),2) }}</td>
-            <td style="padding: 8px;">
-              @if($ap->status === 'Paid')
-                <span class="badge badge-paid">{{ $ap->status }}</span>
-              @elseif($ap->status === 'Partially Paid')
-                <span class="badge badge-partially-paid">{{ $ap->status }}</span>
-              @elseif($ap->status === 'Overdue')
-                <span class="badge badge-unpaid">{{ $ap->status }}</span>
-              @elseif($ap->status === 'Cancelled')
-                <span class="badge badge-default">{{ $ap->status }}</span>
-              @else
-                <span class="badge badge-default">{{ $ap->status }}</span>
-              @endif
-            </td>
-            <td style="padding: 8px;">
-              <div class="d-flex flex-wrap gap-2">
-                <a class="btn btn-sm btn-info" href="{{ route('accounts-payable.show',$ap->ap_id) }}" style="gap: 0.5rem;"><i class="fa fa-eye"></i> View</a>
-                <a class="btn btn-sm btn-primary" href="{{ route('accounts-payable.show',$ap->ap_id) }}#record-payment" style="gap: 0.5rem;"><i class="fa fa-coins"></i> Pay</a>
-              </div>
-            </td>
-          </tr>
-          @endforeach
-        </tbody>
-      </table>
+  
+
+  <div style="margin-top: 1rem;">{{ $payables->links() }}</div>
+
+  <!-- Unpaid Expenses -->
+  <div style="margin-top: 2rem;">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="mb-0">Unpaid Expenses</h5>
+    </div>
+    <div class="card" style="padding: 0; overflow: hidden;">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle" style="margin-bottom: 0;">
+          <thead class="table-dark">
+            <tr>
+              <th style="padding:8px;">Expense</th>
+              <th style="padding:8px;">Category</th>
+              <th style="padding:8px;">Supplier</th>
+              <th style="padding:8px;">Date</th>
+              <th style="padding:8px;" class="text-end">Total</th>
+              <th style="padding:8px;">Status</th>
+              <th style="padding:8px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @forelse($unpaidExpenses as $ex)
+            <tr>
+              <td style="padding:8px; font-weight:600;">{{ $ex->expense_name }}</td>
+              <td style="padding:8px;">{{ $ex->category }}</td>
+              <td style="padding:8px;">{{ $ex->supplier->supplier_name ?? '—' }}</td>
+              <td style="padding:8px;">{{ \Illuminate\Support\Carbon::parse($ex->expense_date)->format('Y-m-d') }}</td>
+              <td style="padding:8px; font-weight:600;" class="text-end">₱{{ number_format($ex->amount,2) }}</td>
+              <td style="padding:8px;"><span class="badge badge-default">{{ $ex->status ?? 'Unpaid' }}</span></td>
+              <td style="padding:8px;">
+                <button class="btn btn-sm btn-info exp-view" data-exp-id="{{ $ex->expense_id }}" style="gap:.5rem;"><i class="fa fa-eye"></i> View</button>
+              </td>
+            </tr>
+            @empty
+            <tr><td colspan="7" class="text-center text-muted" style="padding:12px;">No unpaid expenses.</td></tr>
+            @endforelse
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div style="margin-top: 1rem;">{{ $unpaidExpenses->links() }}</div>
+  </div>
+
+  <!-- Expense Details Modal -->
+  <div id="expenseDetailsModal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Expense Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6"><div class="text-muted small">Expense</div><div id="exDetName" class="fw-semibold">—</div></div>
+            <div class="col-md-6"><div class="text-muted small">Category</div><div id="exDetCat" class="fw-semibold">—</div></div>
+            <div class="col-md-6"><div class="text-muted small">Supplier</div><div id="exDetSupp" class="fw-semibold">—</div></div>
+            <div class="col-md-6"><div class="text-muted small">Date</div><div id="exDetDate" class="fw-semibold">—</div></div>
+            <div class="col-md-6"><div class="text-muted small">Status</div><div id="exDetStatus" class="fw-semibold">—</div></div>
+            <div class="col-md-6"><div class="text-muted small">Total</div><div id="exDetTotal" class="fw-semibold">—</div></div>
+            <div class="col-12"><div class="text-muted small">Outstanding</div><div id="exDetOut" class="text-primary fw-bold fs-5">—</div></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="exDetRecordBtn">Record Payment</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div style="margin-top: 1rem;">{{ $payables->links() }}</div>
+  <!-- Expense Record Payment Modal -->
+  <div id="expensePaymentModal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Record Payment</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+        <form id="expensePaymentForm" method="POST" action="#" enctype="multipart/form-data">
+          <div class="modal-body">
+            @csrf
+            <input type="hidden" name="expense_id" id="exPmId" />
+            <div class="mb-3">
+              <label class="form-label">Payment Date</label>
+              <input type="date" class="form-control" name="payment_date" id="exPmDate" value="{{ now()->toDateString() }}" required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Payment Method</label>
+              <select class="form-select" name="payment_method" id="exPmMethod" required>
+                <option>Cash</option>
+                <option>GCash</option>
+                <option>Bank Transfer</option>
+                <option>Check</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Payment Type</label>
+              <select class="form-select" name="payment_type" id="exPmType" required>
+                <option value="Full">Full</option>
+                <option value="Partial">Partial</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Reference #</label>
+              <input type="text" class="form-control" name="reference_number" id="exPmRef" placeholder="Required if not cash" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Official Receipt (Image/PDF)</label>
+              <input type="file" class="form-control" name="or_file" id="exPmOr" accept="image/*,application/pdf" />
+              <div class="form-text">Required if not cash.</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Amount</label>
+              <input type="number" class="form-control" min="0.01" step="0.01" name="amount" id="exPmAmount" placeholder="0.00" required />
+              <small>Outstanding: <span id="exPmMax" data-value="0">—</span></small>
+            </div>
+          </div>
+          <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Save Payment</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const exDetailsModal = new bootstrap.Modal(document.getElementById('expenseDetailsModal'));
+    const exPayModal = new bootstrap.Modal(document.getElementById('expensePaymentModal'));
+    let currentExp = null;
+
+    document.querySelectorAll('.exp-view').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-exp-id');
+        try {
+          const res = await fetch(`/finance/expenses/${id}/summary`, { headers: { 'Accept': 'application/json' } });
+          if (!res.ok) throw new Error('Failed to load expense');
+          const ex = await res.json();
+          currentExp = ex;
+          document.getElementById('exDetName').textContent = ex.name;
+          document.getElementById('exDetCat').textContent = ex.category || '—';
+          document.getElementById('exDetSupp').textContent = ex.supplier || '—';
+          document.getElementById('exDetDate').textContent = ex.date;
+          document.getElementById('exDetStatus').textContent = ex.status;
+          document.getElementById('exDetTotal').textContent = `₱${Number(ex.total).toLocaleString(undefined,{minimumFractionDigits:2})}`;
+          document.getElementById('exDetOut').textContent = `₱${Number(ex.outstanding).toLocaleString(undefined,{minimumFractionDigits:2})}`;
+          exDetailsModal.show();
+        } catch (e) {
+          window.Swal && Swal.fire('Error','Unable to load expense details','error');
+        }
+      });
+    });
+
+    document.getElementById('exDetRecordBtn').addEventListener('click', () => {
+      if (!currentExp) return;
+      const form = document.getElementById('expensePaymentForm');
+      form.action = `/finance/expenses/${currentExp.id}/payment`;
+      document.getElementById('exPmId').value = currentExp.id;
+      const max = document.getElementById('exPmMax');
+      max.textContent = `₱${Number(currentExp.outstanding).toLocaleString(undefined,{minimumFractionDigits:2})}`;
+      max.dataset.value = String(Number(currentExp.outstanding).toFixed(2));
+      const amt = document.getElementById('exPmAmount');
+      const typ = document.getElementById('exPmType');
+      if ((typ.value||'Full') === 'Full') { amt.value = Number(currentExp.outstanding).toFixed(2); amt.readOnly = true; } else { amt.readOnly = false; amt.value = ''; }
+      exDetailsModal.hide();
+      exPayModal.show();
+    });
+
+    const pmMethod = document.getElementById('exPmMethod');
+    const pmRef = document.getElementById('exPmRef');
+    const pmOr = document.getElementById('exPmOr');
+    pmMethod.addEventListener('change', () => {
+      const isCash = (pmMethod.value||'').toLowerCase() === 'cash';
+      pmRef.required = !isCash; pmOr.required = !isCash;
+    });
+
+    const pmType = document.getElementById('exPmType');
+    pmType.addEventListener('change', () => {
+      const amt = document.getElementById('exPmAmount');
+      const out = parseFloat(document.getElementById('exPmMax').dataset.value || '0');
+      if ((pmType.value||'Full') === 'Full') { amt.value = out.toFixed(2); amt.readOnly = true; }
+      else { amt.readOnly = false; if (!amt.value || parseFloat(amt.value) >= out) amt.value = ''; }
+    });
+
+    document.getElementById('expensePaymentForm').addEventListener('submit', (e) => {
+      const out = parseFloat(document.getElementById('exPmMax').dataset.value || '0');
+      const amt = parseFloat(document.getElementById('exPmAmount').value || '0');
+      const isCash = (pmMethod.value||'').toLowerCase() === 'cash';
+      if (!isCash && !pmRef.value.trim()) { e.preventDefault(); return Swal && Swal.fire('Missing Reference','Reference number is required for non-cash payments.','warning'); }
+      if (!isCash && !pmOr.files.length) { e.preventDefault(); return Swal && Swal.fire('Missing OR','Please upload the Official Receipt (image/PDF).','warning'); }
+      if ((pmType.value||'Full') === 'Full') {
+        if (Math.abs(amt - out) > 0.009) { e.preventDefault(); return Swal && Swal.fire('Invalid Amount','Full payment must match the outstanding balance.','error'); }
+      } else {
+        if (!(amt > 0 && amt < out)) { e.preventDefault(); return Swal && Swal.fire('Invalid Amount','Partial payment must be > 0 and < outstanding.','error'); }
+      }
+    });
+  });
+  </script>
 </div>
 @endsection

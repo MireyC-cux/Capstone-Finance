@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('reference_number')->nullable();
             $table->text('description')->nullable();
             $table->text('remarks')->nullable();
+            $table->enum('status', ['Unpaid','Paid','Overdue'])->default('Unpaid');
             $table->timestamps();
 
             $table->index(['employeeprofiles_id']);

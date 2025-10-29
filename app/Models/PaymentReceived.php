@@ -13,6 +13,7 @@ class PaymentReceived extends Model
         'payment_date',
         'amount',
         'payment_method',
+        'payment_type',
         'reference_number',
         'or_file_path'
     ];

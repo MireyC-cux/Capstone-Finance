@@ -20,7 +20,7 @@ class StockInController extends Controller
     public function store(Request $request, BalanceService $balance)
     {
         $data = $request->validate([
-            'po_id'=>'nullable|integer|exists:purchase_orders,po_id',
+            'purchase_order_idase_order_id'=>'nullable|integer|exists:purchase_orders,purchase_order_idase_order_id',
             'item_id'=>'required|integer|exists:inventory_items,item_id',
             'quantity'=>'required|integer|min:1',
             'unit_cost'=>'required|numeric|min:0',

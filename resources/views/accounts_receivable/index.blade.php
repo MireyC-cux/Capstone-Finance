@@ -24,6 +24,26 @@
             });
         </script>
     @endif
+    @if(session('receipt_url'))
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                if (window.Swal) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Payment saved',
+                        text: 'Receipt is ready.',
+                        showCancelButton: true,
+                        confirmButtonText: 'View Receipt',
+                        cancelButtonText: 'Close'
+                    }).then(res => {
+                        if (res.isConfirmed) {
+                            window.open(@json(session('receipt_url')), '_blank');
+                        }
+                    });
+                }
+            });
+        </script>
+    @endif
     @if(session('info'))
         <script>
             document.addEventListener('DOMContentLoaded', () => {

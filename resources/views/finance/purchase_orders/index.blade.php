@@ -1,17 +1,12 @@
 @extends('layouts.finance_app')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6">
+<div style="padding: 20px;">
 
-  <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
-    <div>
-      <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-brand-600 to-cyan-500 bg-clip-text text-transparent">Purchase Orders</h1>
-      <p class="text-slate-600 mt-1">Create, review, and approve supplier POs.</p>
-    </div>
-    <div class="flex gap-2">
-      <a href="{{ route('finance.accounts-payable') }}" class="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 text-slate-700 hover:bg-slate-200 transition">
-        <i class="fa fa-file-invoice"></i><span>Accounts Payable</span>
-      </a>
+  <div style="margin-bottom: 2rem;">
+    <div class="d-flex justify-content-between align-items-center">
+      <h3 class="mb-0">Purchase Orders</h3>
+      <a href="{{ route('accounts-payable.index') }}" class="btn btn-primary" style="gap: 0.5rem;"><i class="fa fa-credit-card"></i><span>Accounts Payable</span></a>
     </div>
   </div>
 
@@ -22,97 +17,100 @@
     <script>window.addEventListener('DOMContentLoaded',()=>Swal.fire({icon:'error',title:'Error',text:'{{ session('error') }}'}));</script>
   @endif
 
-  <form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6 p-4 bg-white/70 backdrop-blur rounded-2xl shadow-sm border border-slate-200">
-    <div>
-      <label class="block text-xs font-medium text-slate-600 mb-1">Supplier</label>
-      <input type="text" name="supplier" value="{{ request('supplier') }}" class="w-full rounded-xl border-slate-300 focus:border-brand-600 focus:ring-brand-600" placeholder="Search supplier" />
-    </div>
-    <div>
-      <label class="block text-xs font-medium text-slate-600 mb-1">Status</label>
-      <select name="status" class="w-full rounded-xl border-slate-300 focus:border-brand-600 focus:ring-brand-600">
-        <option value="">All</option>
-        @foreach(['Pending','Approved','Rejected','Completed'] as $st)
-          <option value="{{ $st }}" @selected(request('status')==$st)>{{ $st }}</option>
-        @endforeach
-      </select>
-    </div>
-    <div>
-      <label class="block text-xs font-medium text-slate-600 mb-1">PO#</label>
-      <input type="text" name="po_number" value="{{ request('po_number') }}" class="w-full rounded-xl border-slate-300 focus:border-brand-600 focus:ring-brand-600" />
-    </div>
-    <div>
-      <label class="block text-xs font-medium text-slate-600 mb-1">From</label>
-      <input type="date" name="from" value="{{ request('from') }}" class="w-full rounded-xl border-slate-300 focus:border-brand-600 focus:ring-brand-600" />
-    </div>
-    <div>
-      <label class="block text-xs font-medium text-slate-600 mb-1">To</label>
-      <input type="date" name="to" value="{{ request('to') }}" class="w-full rounded-xl border-slate-300 focus:border-brand-600 focus:ring-brand-600" />
-    </div>
-    <div class="md:col-span-5 flex gap-2">
-      <button class="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-white shadow hover:bg-brand-700 transition"><i class="fa fa-filter"></i>Filter</button>
-      <a href="{{ route('purchase-orders.index') }}" class="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 text-slate-700 hover:bg-slate-200 transition"><i class="fa fa-rotate"></i>Reset</a>
+  <form method="GET" style="margin-bottom: 2rem;">
+    <div class="card" style="padding: 1.25rem;">
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md">
+          <label class="form-label">Supplier</label>
+          <input type="text" name="supplier" value="{{ request('supplier') }}" class="form-control" placeholder="Search supplier" />
+        </div>
+        <div class="col-12 col-md">
+          <label class="form-label">Status</label>
+          <select name="status" class="form-select">
+            <option value="">All</option>
+            @foreach(['Pending','Approved','Rejected','Completed'] as $st)
+              <option value="{{ $st }}" @selected(request('status')==$st)>{{ $st }}</option>
+            @endforeach
+          </select>
+        </div>
+        <div class="col-12 col-md">
+          <label class="form-label">PO#</label>
+          <input type="text" name="po_number" value="{{ request('po_number') }}" class="form-control" />
+        </div>
+        <div class="col-12 col-md">
+          <label class="form-label">From</label>
+          <input type="date" name="from" value="{{ request('from') }}" class="form-control" />
+        </div>
+        <div class="col-12 col-md">
+          <label class="form-label">To</label>
+          <input type="date" name="to" value="{{ request('to') }}" class="form-control" />
+        </div>
+      </div>
+      <div class="d-flex flex-wrap gap-2" style="margin-top: 1.5rem;">
+        <button type="submit" class="btn btn-primary" style="gap: 0.5rem;"><i class="fa fa-filter"></i><span>Apply Filters</span></button>
+        <a href="{{ route('purchase-orders.index') }}" class="btn" style="border: 1px solid var(--border-card); background: white; gap: 0.5rem;"><i class="fa fa-rotate"></i><span>Reset</span></a>
+      </div>
     </div>
   </form>
 
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-    <div class="rounded-2xl bg-gradient-to-br from-white to-sky-50 border border-sky-100 p-4 shadow-sm">
-      <div class="text-xs uppercase text-sky-600">Total POs</div>
-      <div class="text-2xl font-extrabold mt-1">{{ $pos->total() }}</div>
+  <div class="row g-4" style="margin-bottom: 2rem;">
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="card" style="min-height: 96px; padding: 1rem 1.25rem;">
+        <div class="d-flex justify-content-between align-items-center">
+          <div style="flex: 1;">
+            <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Total POs</div>
+            <div style="font-size: 24px; font-weight: 700; color: #2563EB; margin-top: 0.25rem;">{{ $pos->total() }}</div>
+          </div>
+          <div style="width: 48px; height: 48px; border-radius: 8px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center;"><i class="fa fa-file-signature" style="font-size: 20px;"></i></div>
+        </div>
+      </div>
     </div>
-    <div class="rounded-2xl bg-gradient-to-br from-white to-emerald-50 border border-emerald-100 p-4 shadow-sm">
-      <div class="text-xs uppercase text-emerald-600">Approved</div>
-      <div class="text-2xl font-extrabold mt-1">{{ $pos->filter(fn($p)=>$p->status==='Approved')->count() }}</div>
-    </div>
-    <div class="rounded-2xl bg-gradient-to-br from-white to-amber-50 border border-amber-100 p-4 shadow-sm">
-      <div class="text-xs uppercase text-amber-600">Pending</div>
-      <div class="text-2xl font-extrabold mt-1">{{ $pos->filter(fn($p)=>$p->status==='Pending')->count() }}</div>
-    </div>
-    <div class="rounded-2xl bg-gradient-to-br from-white to-rose-50 border border-rose-100 p-4 shadow-sm">
-      <div class="text-xs uppercase text-rose-600">Rejected</div>
-      <div class="text-2xl font-extrabold mt-1">{{ $pos->filter(fn($p)=>$p->status==='Rejected')->count() }}</div>
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="card" style="min-height: 96px; padding: 1rem 1.25rem;">
+        <div class="d-flex justify-content-between align-items-center">
+          <div style="flex: 1;">
+            <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Pending</div>
+            <div style="font-size: 24px; font-weight: 700; color: #F59E0B; margin-top: 0.25rem;">{{ $pos->filter(fn($p)=>$p->status==='Pending')->count() }}</div>
+          </div>
+          <div style="width: 48px; height: 48px; border-radius: 8px; background: #F59E0B; color: white; display: flex; align-items: center; justify-content: center;"><i class="fa fa-clock" style="font-size: 20px;"></i></div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-sm">
-        <thead class="bg-slate-50/80 backdrop-blur sticky top-0">
-          <tr class="text-left text-slate-600">
-            <th class="px-4 py-3 font-semibold">PO#</th>
-            <th class="px-4 py-3 font-semibold">Supplier</th>
-            <th class="px-4 py-3 font-semibold">Date</th>
-            <th class="px-4 py-3 font-semibold">Status</th>
-            <th class="px-4 py-3 font-semibold text-right">Total</th>
-            <th class="px-4 py-3 font-semibold">Actions</th>
+  <div class="card" style="padding: 0; overflow: hidden;">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle" style="margin-bottom: 0;">
+        <thead class="table-dark">
+          <tr>
+            <th style="padding: 8px;">PO#</th>
+            <th style="padding: 8px;">Supplier</th>
+            <th style="padding: 8px;">Date</th>
+            <th style="padding: 8px;">Payment Status</th>
+            <th style="padding: 8px;" class="text-end">Total</th>
+            <th style="padding: 8px;">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100">
+        <tbody>
           @foreach($pos as $po)
-          <tr class="hover:bg-slate-50 transition">
-            <td class="px-4 py-3 font-mono text-slate-700">{{ $po->po_number }}</td>
-            <td class="px-4 py-3">{{ $po->supplier->supplier_name ?? '—' }}</td>
-            <td class="px-4 py-3">{{ \Illuminate\Support\Carbon::parse($po->po_date)->format('Y-m-d') }}</td>
-            <td class="px-4 py-3">
+          <tr>
+            <td style="padding: 8px; font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">{{ $po->po_number }}</td>
+            <td style="padding: 8px;">{{ $po->supplier->supplier_name ?? '—' }}</td>
+            <td style="padding: 8px;">{{ \Illuminate\Support\Carbon::parse($po->po_date)->format('Y-m-d') }}</td>
+            <td style="padding: 8px;">
+              @php($payStatus = $po->accountsPayable->status ?? 'Unpaid')
               @php($badgeMap = [
-                'Pending' => 'bg-amber-100 text-amber-800 border-amber-200',
-                'Approved' => 'bg-emerald-100 text-emerald-800 border-emerald-200',
-                'Rejected' => 'bg-rose-100 text-rose-800 border-rose-200',
-                'Completed' => 'bg-sky-100 text-sky-800 border-sky-200',
+                'Unpaid' => 'badge badge-default',
+                'Partially Paid' => 'badge badge-partially-paid',
+                'Paid' => 'badge badge-paid',
+                'Overdue' => 'badge badge-unpaid',
               ])
-              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border {{ $badgeMap[$po->status] ?? 'bg-slate-100 text-slate-700 border-slate-200' }}">{{ $po->status }}</span>
+              <span class="{{ $badgeMap[$payStatus] ?? 'badge badge-default' }}">{{ $payStatus }}</span>
             </td>
-            <td class="px-4 py-3 text-right">₱{{ number_format($po->total_amount,2) }}</td>
-            <td class="px-4 py-3">
-              <div class="flex flex-wrap items-center gap-2">
-                <a class="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition" href="{{ route('purchase-orders.show',$po->po_id) }}"><i class="fa fa-eye"></i><span>View</span></a>
-                @if($po->status==='Pending')
-                <form method="POST" class="inline" action="{{ route('purchase-orders.approve',$po->po_id) }}">@csrf
-                  <button type="button" class="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition js-po-confirm" data-confirm-title="Approve this PO?" data-confirm-text="This will approve the PO and create Accounts Payable." data-confirm-icon="question"><i class="fa fa-check"></i><span>Approve</span></button>
-                </form>
-                <form method="POST" class="inline" action="{{ route('purchase-orders.reject',$po->po_id) }}">@csrf
-                  <button type="button" class="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 bg-rose-600 text-white hover:bg-rose-700 shadow-sm transition js-po-confirm" data-confirm-title="Reject this PO?" data-confirm-text="This will mark the PO as Rejected." data-confirm-icon="warning"><i class="fa fa-xmark"></i><span>Reject</span></button>
-                </form>
-                @endif
+            <td style="padding: 8px; font-weight: 600;" class="text-end">₱{{ number_format($po->total_amount,2) }}</td>
+            <td style="padding: 8px;">
+              <div class="d-flex flex-wrap gap-2">
+                <a href="#" class="btn btn-sm btn-info po-view" data-po-id="{{ $po->purchase_order_id }}" style="gap: 0.5rem;"><i class="fa fa-eye"></i> View</a>
               </div>
             </td>
           </tr>
@@ -125,33 +123,181 @@
   <div class="mt-6">{{ $pos->links() }}</div>
 </div>
 
+<!-- PO Details Modal -->
+<div id="poDetailsModal" class="modal fade" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Purchase Order Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="text-muted small">PO#</div>
+            <div class="fw-semibold" id="poDetNumber">—</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">Supplier</div>
+            <div class="fw-semibold" id="poDetSupplier">—</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">Date</div>
+            <div class="fw-semibold" id="poDetDate">—</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">Payment Status</div>
+            <div class="fw-semibold" id="poDetStatus">—</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">Total</div>
+            <div class="fw-semibold" id="poDetTotal">—</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">Paid</div>
+            <div class="fw-semibold" id="poDetPaid">—</div>
+          </div>
+          <div class="col-12">
+            <div class="text-muted small">Outstanding</div>
+            <div class="text-primary fw-bold fs-5" id="poDetOut">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="poDetRecordBtn">Record Payment</button>
+      </div>
+    </div>
+  </div>
+ </div>
+
+<!-- Record Payment Modal -->
+<div id="poPaymentModal" class="modal fade" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Record Payment</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <form id="poPaymentForm" method="POST" action="#" enctype="multipart/form-data">
+      <div class="modal-body">
+        @csrf
+        <input type="hidden" name="po_id" id="poPmId" />
+        <div class="mb-3">
+          <label class="form-label">Payment Date</label>
+          <input type="date" class="form-control" name="payment_date" id="poPmDate" value="{{ now()->toDateString() }}" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Payment Method</label>
+          <select class="form-select" name="payment_method" id="poPmMethod" required>
+            <option>Cash</option>
+            <option>GCash</option>
+            <option>Bank Transfer</option>
+            <option>Check</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Payment Type</label>
+          <select class="form-select" name="payment_type" id="poPmType" required>
+            <option value="Full">Full</option>
+            <option value="Partial">Partial</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Reference #</label>
+          <input type="text" class="form-control" name="reference_number" id="poPmRef" placeholder="Required if not cash" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Official Receipt (Image/PDF)</label>
+          <input type="file" class="form-control" name="or_file" id="poPmOr" accept="image/*,application/pdf" />
+          <div class="form-text">Required if not cash.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Amount</label>
+          <input type="number" class="form-control" min="0.01" step="0.01" name="amount" id="poPmAmount" placeholder="0.00" required />
+          <small>Outstanding: <span id="poPmMax" data-value="0">—</span></small>
+        </div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Save Payment</button></div>
+      </form>
+    </div>
+  </div>
+ </div>
+
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const buttons = document.querySelectorAll('.js-po-confirm');
-    buttons.forEach(btn => {
-      btn.addEventListener('click', function (e) {
-        const form = e.currentTarget.closest('form');
-        if (!form) return;
-        const title = e.currentTarget.getAttribute('data-confirm-title') || 'Are you sure?';
-        const text = e.currentTarget.getAttribute('data-confirm-text') || '';
-        const icon = e.currentTarget.getAttribute('data-confirm-icon') || 'question';
-        if (typeof Swal === 'undefined') { form.submit(); return; }
-        Swal.fire({
-          title: title,
-          text: text,
-          icon: icon,
-          showCancelButton: true,
-          confirmButtonText: 'Yes, proceed',
-          cancelButtonText: 'Cancel',
-          confirmButtonColor: '#059669',
-          cancelButtonColor: '#6b7280'
-        }).then(result => {
-          if (result.isConfirmed) {
-            form.submit();
-          }
-        });
-      });
+document.addEventListener('DOMContentLoaded', () => {
+  const detailsModal = new bootstrap.Modal(document.getElementById('poDetailsModal'));
+  const payModal = new bootstrap.Modal(document.getElementById('poPaymentModal'));
+  let currentPO = null;
+
+  // Open details modal
+  document.querySelectorAll('.po-view').forEach(a => {
+    a.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const id = a.getAttribute('data-po-id');
+      try {
+        const res = await fetch(`/purchase-orders/${id}/summary`, { headers: { 'Accept': 'application/json' } });
+        if (!res.ok) throw new Error('Failed to load PO');
+        const po = await res.json();
+        currentPO = po;
+        document.getElementById('poDetNumber').textContent = po.po_number;
+        document.getElementById('poDetSupplier').textContent = po.supplier || '—';
+        document.getElementById('poDetDate').textContent = po.po_date;
+        document.getElementById('poDetStatus').textContent = po.payment_status;
+        document.getElementById('poDetTotal').textContent = `₱${Number(po.total).toLocaleString(undefined,{minimumFractionDigits:2})}`;
+        document.getElementById('poDetPaid').textContent = `₱${Number(po.paid).toLocaleString(undefined,{minimumFractionDigits:2})}`;
+        document.getElementById('poDetOut').textContent = `₱${Number(po.outstanding).toLocaleString(undefined,{minimumFractionDigits:2})}`;
+        detailsModal.show();
+      } catch (err) {
+        window.Swal && Swal.fire('Error','Unable to load PO details','error');
+      }
     });
   });
+
+  // From details -> open payment modal
+  document.getElementById('poDetRecordBtn').addEventListener('click', () => {
+    if (!currentPO) return;
+    document.getElementById('poPmId').value = currentPO.id;
+    const form = document.getElementById('poPaymentForm');
+    form.action = `/purchase-orders/${currentPO.id}/payment`;
+    const pmMax = document.getElementById('poPmMax');
+    pmMax.textContent = `₱${Number(currentPO.outstanding).toLocaleString(undefined,{minimumFractionDigits:2})}`;
+    pmMax.dataset.value = String(Number(currentPO.outstanding).toFixed(2));
+    const pmAmount = document.getElementById('poPmAmount');
+    const pmType = document.getElementById('poPmType');
+    if ((pmType.value||'Full') === 'Full') { pmAmount.value = Number(currentPO.outstanding).toFixed(2); pmAmount.readOnly = true; } else { pmAmount.readOnly = false; pmAmount.value = ''; }
+    detailsModal.hide();
+    payModal.show();
+  });
+
+  // Payment method requirements
+  const pmMethod = document.getElementById('poPmMethod');
+  const pmRef = document.getElementById('poPmRef');
+  const pmOr = document.getElementById('poPmOr');
+  pmMethod.addEventListener('change', () => {
+    const isCash = (pmMethod.value||'').toLowerCase() === 'cash';
+    pmRef.required = !isCash; pmOr.required = !isCash;
+  });
+
+  // Payment type behavior
+  const pmType = document.getElementById('poPmType');
+  pmType.addEventListener('change', () => {
+    const pmAmount = document.getElementById('poPmAmount');
+    const out = parseFloat(document.getElementById('poPmMax').dataset.value || '0');
+    if ((pmType.value||'Full') === 'Full') { pmAmount.value = out.toFixed(2); pmAmount.readOnly = true; }
+    else { pmAmount.readOnly = false; if (!pmAmount.value || parseFloat(pmAmount.value) >= out) pmAmount.value = ''; }
+  });
+
+  // Validate on submit
+  document.getElementById('poPaymentForm').addEventListener('submit', (e) => {
+    const out = parseFloat(document.getElementById('poPmMax').dataset.value || '0');
+    const amt = parseFloat(document.getElementById('poPmAmount').value || '0');
+    const isCash = (pmMethod.value||'').toLowerCase() === 'cash';
+    if (!isCash && !pmRef.value.trim()) { e.preventDefault(); return Swal && Swal.fire('Missing Reference','Reference number is required for non-cash payments.','warning'); }
+    if (!isCash && !pmOr.files.length) { e.preventDefault(); return Swal && Swal.fire('Missing OR','Please upload the Official Receipt (image/PDF).','warning'); }
+    if ((pmType.value||'Full') === 'Full') {
+      if (Math.abs(amt - out) > 0.009) { e.preventDefault(); return Swal && Swal.fire('Invalid Amount','Full payment must match the outstanding balance.','error'); }
+    } else {
+      if (!(amt > 0 && amt < out)) { e.preventDefault(); return Swal && Swal.fire('Invalid Amount','Partial payment must be > 0 and < outstanding.','error'); }
+    }
+  });
+});
 </script>
 @endsection

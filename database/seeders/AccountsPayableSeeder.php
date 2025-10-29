@@ -23,10 +23,10 @@ class AccountsPayableSeeder extends Seeder
         }
 
         // Create APs from some existing POs
-        $pos = PurchaseOrder::orderBy('po_id')->take(8)->get();
+        $pos = PurchaseOrder::orderBy('purchase_order_id')->take(8)->get();
         foreach ($pos as $po) {
             // Avoid duplicate AP for PO if already created
-            $existing = AccountsPayable::where('purchase_order_id', $po->po_id)->first();
+            $existing = AccountsPayable::where('purchase_order_id', $po->purchase_order_id)->first();
             if ($existing) continue;
 
             $invNo = $this->invoiceNumber();
@@ -35,7 +35,7 @@ class AccountsPayableSeeder extends Seeder
 
             AccountsPayable::create([
                 'supplier_id' => $po->supplier_id,
-                'purchase_order_id' => $po->po_id,
+                'purchase_order_id' => $po->purchase_order_id,
                 'invoice_number' => $invNo,
                 'invoice_date' => $invoiceDate->toDateString(),
                 'due_date' => $dueDate->toDateString(),

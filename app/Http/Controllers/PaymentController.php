@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use App\Models\AccountsReceivable;
 use App\Models\PaymentReceived;
@@ -62,14 +64,20 @@ class PaymentController extends Controller
                 $orPath = $request->file('or_file')->store('or_uploads', 'public');
             }
 
-            $payment = PaymentReceived::create([
+            $paymentData = [
                 'ar_id' => $ar->ar_id,
                 'payment_date' => Carbon::parse($data['payment_date'])->toDateString(),
                 'amount' => $data['amount'],
                 'payment_method' => $data['payment_method'],
                 'reference_number' => $data['reference_number'] ?? null,
-                'or_file_path' => $orPath,
-            ]);
+            ];
+            if (Schema::hasColumn('payments_received', 'payment_type')) {
+                $paymentData['payment_type'] = $data['payment_type'];
+            }
+            if ($orPath && Schema::hasColumn('payments_received', 'or_file_path')) {
+                $paymentData['or_file_path'] = $orPath;
+            }
+            $payment = PaymentReceived::create($paymentData);
 
             $ar->amount_paid = round($ar->amount_paid + $payment->amount, 2);
             $ar->status = $this->deriveArStatus($ar->total_amount, $ar->amount_paid, $ar->due_date);
@@ -116,7 +124,7 @@ class PaymentController extends Controller
             // Log to payment_history as well
             $billingId = \App\Models\Billing::where('service_request_id', $ar->service_request_id)
                 ->orderByDesc('billing_id')->value('billing_id');
-            PaymentHistory::create([
+            $histData = [
                 'billing_id' => $billingId,
                 'service_request_id' => $ar->service_request_id,
                 'payment_date' => $payment->payment_date,
@@ -124,10 +132,39 @@ class PaymentController extends Controller
                 'type_of_payment' => $data['payment_method'],
                 'amount' => $payment->amount,
                 'status' => $ar->status,
-                'or_file_path' => $orPath,
-            ]);
+            ];
+            if ($orPath && Schema::hasColumn('payment_history', 'or_file_path')) {
+                $histData['or_file_path'] = $orPath;
+            }
+            PaymentHistory::create($histData);
 
-            return redirect()->back()->with('success', 'Payment recorded successfully.');
+            // Generate PDF receipt and store it publicly
+            try {
+                $ar->loadMissing('customer');
+                $balanceBefore = $outstanding;
+                $balanceAfter = max(0.0, (float)$ar->total_amount - (float)$ar->amount_paid);
+                $invoice = $invoice ?? Invoice::where('ar_id', $ar->ar_id)->first();
+                $html = view('finance.payments.receipt', [
+                    'payment' => $payment,
+                    'ar' => $ar,
+                    'invoice' => $invoice,
+                    'customer' => $ar->customer ?? null,
+                    'balanceBefore' => $balanceBefore,
+                    'balanceAfter' => $balanceAfter,
+                ])->render();
+                $pdf = Pdf::setOptions(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => true])->loadHTML($html)->setPaper('A5', 'portrait');
+                $dir = 'payment_receipts';
+                if (!Storage::disk('public')->exists($dir)) {
+                    Storage::disk('public')->makeDirectory($dir);
+                }
+                $file = $dir.'/Receipt_'.$payment->payment_id.'.pdf';
+                Storage::disk('public')->put($file, $pdf->output());
+                $receiptUrl = asset('storage/'.$file);
+                return redirect()->back()->with('success', 'Payment recorded successfully.')->with('receipt_url', $receiptUrl);
+            } catch (\Throwable $e) {
+                // Fallback: if PDF generation fails, still succeed without the receipt
+                return redirect()->back()->with('success', 'Payment recorded successfully.');
+            }
         });
     }
 

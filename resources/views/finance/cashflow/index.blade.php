@@ -100,64 +100,7 @@
             </div>
         </div>
 
-        <div class="col-12 col-lg-4">
-            <div class="card" style="padding: 1.25rem;">
-                <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 1rem;">Capital Management</h2>
-                
-                <form style="margin-bottom: 1.5rem;" method="post" action="{{ route('finance.capital.set') }}">
-                    @csrf
-                    <label class="form-label" style="font-weight: 600;">Set Capital</label>
-                    <div class="mb-2">
-                        <input type="number" step="0.01" name="amount" class="form-control" placeholder="Amount" required>
-                    </div>
-                    <div class="mb-2">
-                        <input type="text" name="remarks" class="form-control" placeholder="Remarks (optional)">
-                    </div>
-                    <button class="btn btn-warning w-100">Set Capital</button>
-                </form>
 
-                <form style="margin-bottom: 1.5rem;" method="post" action="{{ route('finance.capital.inject') }}">
-                    @csrf
-                    <label class="form-label" style="font-weight: 600;">Capital Injection</label>
-                    <div class="row g-2 mb-2">
-                        <div class="col-6">
-                            <input type="number" step="0.01" name="amount" class="form-control" placeholder="Amount" required>
-                        </div>
-                        <div class="col-6">
-                            <input type="date" name="date" class="form-control" value="{{ now()->toDateString() }}" required>
-                        </div>
-                        <div class="col-6">
-                            <input type="text" name="account_id" class="form-control" placeholder="Account ID">
-                        </div>
-                        <div class="col-6">
-                            <input type="text" name="remarks" class="form-control" placeholder="Remarks">
-                        </div>
-                    </div>
-                    <button class="btn btn-success w-100">Record Injection</button>
-                </form>
-
-                <form method="post" action="{{ route('finance.capital.withdraw') }}">
-                    @csrf
-                    <label class="form-label" style="font-weight: 600;">Capital Withdrawal</label>
-                    <div class="row g-2 mb-2">
-                        <div class="col-6">
-                            <input type="number" step="0.01" name="amount" class="form-control" placeholder="Amount" required>
-                        </div>
-                        <div class="col-6">
-                            <input type="date" name="date" class="form-control" value="{{ now()->toDateString() }}" required>
-                        </div>
-                        <div class="col-6">
-                            <input type="text" name="account_id" class="form-control" placeholder="Account ID">
-                        </div>
-                        <div class="col-6">
-                            <input type="text" name="remarks" class="form-control" placeholder="Remarks">
-                        </div>
-                    </div>
-                    <button class="btn btn-danger w-100">Record Withdrawal</button>
-                </form>
-            </div>
-        </div>
-    </div>
 
     <!-- Recent Cash Flow Table -->
     <div class="card" style="padding: 0; overflow: hidden; margin-top: 2rem;">

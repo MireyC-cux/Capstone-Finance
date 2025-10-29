@@ -32,16 +32,16 @@ class InventorySeeder extends Seeder
 
         // Stock-In samples
         $ins = [
-            ['po_id'=>null,'item_name'=>'Split-Type Aircon 1.5HP','quantity'=>3,'unit_cost'=>25000,'received_date'=>Carbon::now()->subDays(7)->toDateString(),'remarks'=>'Initial stock'],
-            ['po_id'=>null,'item_name'=>'Compressor (1.5HP Compatible)','quantity'=>6,'unit_cost'=>8000,'received_date'=>Carbon::now()->subDays(6)->toDateString(),'remarks'=>'Initial stock'],
-            ['po_id'=>null,'item_name'=>'Copper Tube 1/4"','quantity'=>10,'unit_cost'=>1500,'received_date'=>Carbon::now()->subDays(5)->toDateString(),'remarks'=>'Initial stock'],
-            ['po_id'=>null,'item_name'=>'Refrigerant R410A','quantity'=>20,'unit_cost'=>600,'received_date'=>Carbon::now()->subDays(5)->toDateString(),'remarks'=>'Initial stock'],
+            ['purchase_order_id'=>null,'item_name'=>'Split-Type Aircon 1.5HP','quantity'=>3,'unit_cost'=>25000,'received_date'=>Carbon::now()->subDays(7)->toDateString(),'remarks'=>'Initial stock'],
+            ['purchase_order_id'=>null,'item_name'=>'Compressor (1.5HP Compatible)','quantity'=>6,'unit_cost'=>8000,'received_date'=>Carbon::now()->subDays(6)->toDateString(),'remarks'=>'Initial stock'],
+            ['purchase_order_id'=>null,'item_name'=>'Copper Tube 1/4"','quantity'=>10,'unit_cost'=>1500,'received_date'=>Carbon::now()->subDays(5)->toDateString(),'remarks'=>'Initial stock'],
+            ['purchase_order_id'=>null,'item_name'=>'Refrigerant R410A','quantity'=>20,'unit_cost'=>600,'received_date'=>Carbon::now()->subDays(5)->toDateString(),'remarks'=>'Initial stock'],
         ];
         foreach ($ins as $row) {
             $itemId = $map[$row['item_name']] ?? null;
             if (!$itemId) continue;
             DB::table('inventory_stock_in')->insert([
-                'po_id'=>$row['po_id'],
+                'purchase_order_id'=>$row['purchase_order_id'],
                 'item_id'=>$itemId,
                 'quantity'=>$row['quantity'],
                 'unit_cost'=>$row['unit_cost'],

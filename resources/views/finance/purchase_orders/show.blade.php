@@ -21,10 +21,10 @@
         ])
       ">{{ $po->status }}</span>
       @if($po->status==='Pending')
-        <form method="POST" action="{{ route('purchase-orders.approve',$po->po_id) }}">@csrf
+        <form method="POST" action="{{ route('purchase-orders.approve',$po->purchase_order_id) }}">@csrf
           <button class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-white shadow hover:bg-emerald-700 transition"><i class="fa fa-check"></i><span>Approve</span></button>
         </form>
-        <form method="POST" action="{{ route('purchase-orders.reject',$po->po_id) }}">@csrf
+        <form method="POST" action="{{ route('purchase-orders.reject',$po->purchase_order_id) }}">@csrf
           <button class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-white shadow hover:bg-rose-700 transition"><i class="fa fa-xmark"></i><span>Reject</span></button>
         </form>
       @endif

@@ -20,6 +20,7 @@ class Expenses extends Model
         'payment_method',
         'reference_number',
         'remarks',
+        'status',
     ];
 
     protected $casts = [

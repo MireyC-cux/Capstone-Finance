@@ -16,6 +16,7 @@ return new class extends Migration
             $table->decimal('amount', 12, 2);
             $table->date('transaction_date');
             $table->string('description', 255)->nullable();
+            $table->string('or_file_path')->nullable();
             $table->timestamps();
             
             // Index for polymorphic relationship

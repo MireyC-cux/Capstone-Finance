@@ -16,6 +16,7 @@ class CashFlow extends Model
         'amount',
         'transaction_date',
         'description',
+        'or_file_path',
     ];
 
     protected $casts = [

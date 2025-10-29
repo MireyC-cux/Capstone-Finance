@@ -39,7 +39,7 @@
             <td class="px-4 py-3 text-right">{{ $r->quantity }}</td>
             <td class="px-4 py-3 text-right">₱{{ number_format($r->unit_cost,2) }}</td>
             <td class="px-4 py-3 text-right">₱{{ number_format($r->quantity * $r->unit_cost,2) }}</td>
-            <td class="px-4 py-3">{{ $r->po_id ? ('PO#'.$r->po_id) : '—' }}</td>
+            <td class="px-4 py-3">{{ $r->purchase_order_id ? ('PO#'.$r->purchase_order_id) : '—' }}</td>
             <td class="px-4 py-3">{{ $r->remarks }}</td>
           </tr>
           @endforeach
@@ -86,7 +86,7 @@
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">PO (optional)</label>
-            <input type="number" min="1" name="po_id" class="w-full rounded-xl border-slate-300 focus:border-brand-600 focus:ring-brand-600" placeholder="PO ID" />
+            <input type="number" min="1" name="purchase_order_id" class="w-full rounded-xl border-slate-300 focus:border-brand-600 focus:ring-brand-600" placeholder="PO ID" />
           </div>
         </div>
         <div>

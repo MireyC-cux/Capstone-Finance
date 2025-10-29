@@ -119,6 +119,8 @@ Route::prefix('finance')->name('finance.')->group(function () {
     // Expenses
     Route::get('/expenses', [ExpenseController::class, 'index'])->name('expenses');
     Route::post('/expenses/store', [ExpenseController::class, 'store'])->name('expenses.store');
+    Route::get('/expenses/{id}/summary', [ExpenseController::class, 'summary'])->where('id','[0-9]+')->name('expenses.summary');
+    Route::post('/expenses/{id}/payment', [ExpenseController::class, 'recordPayment'])->where('id','[0-9]+')->name('expenses.payment');
 
     // Capital Management
     Route::post('/capital/set', [CapitalController::class, 'setCapital'])->name('capital.set');
@@ -213,6 +215,11 @@ Route::resource('accounts-receivable', AccountsReceivableController::class);
 // 📗 ACCOUNTS PAYABLE & PURCHASE ORDERS
 // =======================================================
 
+// Place custom PO routes before resource to avoid conflicts
+Route::get('purchase-orders/{id}/summary', [PurchaseOrderController::class, 'summary'])
+    ->where('id','[0-9]+')->name('purchase-orders.summary');
+Route::post('purchase-orders/{id}/payment', [PurchaseOrderController::class, 'recordPayment'])
+    ->where('id','[0-9]+')->name('purchase-orders.payment');
 Route::resource('purchase-orders', PurchaseOrderController::class);
 Route::resource('accounts-payable', AccountsPayableController::class);
 Route::resource('payments-made', PaymentsMadeController::class)->only(['index','store']);

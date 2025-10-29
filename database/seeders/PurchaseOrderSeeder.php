@@ -44,7 +44,7 @@ class PurchaseOrderSeeder extends Seeder
                 $price = rand(500, 5000) / 1.0;
                 $total += $qty * $price;
                 PurchaseOrderItem::create([
-                    'purchase_order_id' => $po->po_id,
+                    'purchase_order_id' => $po->purchase_order_idase_order_id,
                     'item_id' => null,
                     'description' => 'Seeded Item '.($l+1),
                     'quantity' => $qty,

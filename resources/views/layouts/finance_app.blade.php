@@ -58,30 +58,17 @@
                 <!-- BILLING & INVOICES -->
                 <li class="menu-group" x-data="{ open: {{ (request()->routeIs('finance.billing.*') || request()->routeIs('invoices.*') || request()->routeIs('finance.accounts-receivable') || request()->routeIs('finance.ar.aging')) ? 'true' : 'false' }} }">
                     <button class="menu-header" @click="open = !open">
-                        <i class="fa-solid fa-file-invoice-dollar"></i><span class="label">Billing & Invoices</span>
+                        <i class="fa-solid fa-file-invoice-dollar"></i><span class="label">Billing </span>
                         <i class="fa-solid fa-chevron-down caret" :class="{ 'rotate-180': open }"></i>
                     </button>
                     <hr class="section-divider" />
                     <div class="submenu" x-show="open" x-transition>
                         <a class="menu-item {{ request()->routeIs('finance.billing.index') ? 'active' : '' }}" href="{{ route('finance.billing.index') }}"><i class="fa-solid fa-file-invoice"></i><span class="label">Billing</span></a>
                         <a class="menu-item {{ request()->routeIs('finance.accounts-receivable') ? 'active' : '' }}" href="{{ route('finance.accounts-receivable') }}"><i class="fa-solid fa-hand-holding-dollar"></i><span class="label">Accounts Receivable</span></a>
-                        <a class="menu-item {{ request()->routeIs('invoices.index') ? 'active' : '' }}" href="{{ route('invoices.index') }}"><i class="fa-solid fa-clock-rotate-left"></i><span class="label">Invoice History</span></a>
+                        <a class="menu-item {{ request()->routeIs('invoices.index') ? 'active' : '' }}" href="{{ route('invoices.index') }}"><i class="fa-solid fa-clock-rotate-left"></i><span class="label">Billing History</span></a>
                     </div>
                 </li>
 
-                <!-- ACCOUNTS PAYABLE -->
-                <li class="menu-group" x-data="{ open: {{ (request()->routeIs('accounts-payable.*') || request()->routeIs('reports.ap-aging') || request()->routeIs('finance.disbursement.*')) ? 'true' : 'false' }} }">
-                    <button class="menu-header" @click="open = !open">
-                        <i class="fa-solid fa-file-invoice"></i><span class="label">Accounts Payable</span>
-                        <i class="fa-solid fa-chevron-down caret" :class="{ 'rotate-180': open }"></i>
-                    </button>
-                    <hr class="section-divider" />
-                    <div class="submenu" x-show="open" x-transition>
-                        <a class="menu-item {{ request()->routeIs('accounts-payable.index') ? 'active' : '' }}" href="{{ route('accounts-payable.index') }}"><i class="fa-solid fa-credit-card"></i><span class="label">AP Ledger</span></a>
-                        <a class="menu-item {{ request()->routeIs('reports.ap-aging') ? 'active' : '' }}" href="{{ route('reports.ap-aging') }}"><i class="fa-solid fa-hourglass-end"></i><span class="label">AP Aging</span></a>
-                        <a class="menu-item {{ request()->routeIs('finance.disbursement.index') ? 'active' : '' }}" href="{{ route('finance.disbursement.index') }}"><i class="fa-solid fa-wallet"></i><span class="label">Disbursement History</span></a>
-                    </div>
-                </li>
 
                 <!-- PURCHASE ORDERS -->
                 <li class="menu-group" x-data="{ open: {{ (request()->routeIs('purchase-orders.*')) ? 'true' : 'false' }} }">
@@ -92,7 +79,7 @@
                     <hr class="section-divider" />
                     <div class="submenu" x-show="open" x-transition>
                         <a class="menu-item {{ request()->routeIs('purchase-orders.index') ? 'active' : '' }}" href="{{ route('purchase-orders.index') }}"><i class="fa-solid fa-list"></i><span class="label">All POs</span></a>
-                        <a class="menu-item {{ request()->routeIs('purchase-orders.create') ? 'active' : '' }}" href="{{ route('purchase-orders.create') }}"><i class="fa-solid fa-plus-circle"></i><span class="label">Create PO</span></a>
+                        <a class="menu-item {{ request()->routeIs('accounts-payable.index') ? 'active' : '' }}" href="{{ route('accounts-payable.index') }}"><i class="fa-solid fa-credit-card"></i><span class="label">Accounts Payable</span></a>
                     </div>
                 </li>
 
@@ -106,50 +93,24 @@
                     <div class="submenu" x-show="open" x-transition>
                         <a class="menu-item {{ request()->routeIs('finance.payroll') ? 'active' : '' }}" href="{{ route('finance.payroll') }}"><i class="fa-solid fa-money-bill-wave"></i><span class="label">Payroll</span></a>
                         <a class="menu-item {{ request()->routeIs('finance.payroll.approvals') ? 'active' : '' }}" href="{{ route('finance.payroll.approvals') }}"><i class="fa-solid fa-circle-check"></i><span class="label">Payroll Approvals</span></a>
+                        <a class="menu-item {{ request()->routeIs('finance.disbursement.index') ? 'active' : '' }}" href="{{ route('finance.disbursement.index') }}"><i class="fa-solid fa-wallet"></i><span class="label">Disbursement History</span></a>
                     </div>
                 </li>
 
                 <!-- CASH FLOW & EXPENSES -->
                 <li class="menu-group" x-data="{ open: {{ (request()->routeIs('finance.cashflow') || request()->routeIs('finance.expenses')) ? 'true' : 'false' }} }">
                     <button class="menu-header" @click="open = !open">
-                        <i class="fa-solid fa-chart-pie"></i><span class="label">Cash Flow & Expenses</span>
+                        <i class="fa-solid fa-chart-pie"></i><span class="label">Finance Overview</span>
                         <i class="fa-solid fa-chevron-down caret" :class="{ 'rotate-180': open }"></i>
                     </button>
                     <hr class="section-divider" />
                     <div class="submenu" x-show="open" x-transition>
                         <a class="menu-item {{ request()->routeIs('finance.cashflow') ? 'active' : '' }}" href="{{ route('finance.cashflow') }}"><i class="fa-solid fa-sack-dollar"></i><span class="label">Cash Flow</span></a>
-                        <a class="menu-item {{ request()->routeIs('finance.expenses') ? 'active' : '' }}" href="{{ route('finance.expenses') }}"><i class="fa-solid fa-money-bill"></i><span class="label">Expenses</span></a>
-                    </div>
-                </li>
-
-                <!-- INVENTORY -->
-                <li class="menu-group" x-data="{ open: {{ (request()->routeIs('finance.inventory.*')) ? 'true' : 'false' }} }">
-                    <button class="menu-header" @click="open = !open">
-                        <i class="fa-solid fa-boxes-stacked"></i><span class="label">Inventory & Supplies</span>
-                        <i class="fa-solid fa-chevron-down caret" :class="{ 'rotate-180': open }"></i>
-                    </button>
-                    <hr class="section-divider" />
-                    <div class="submenu" x-show="open" x-transition>
                         <a class="menu-item {{ request()->routeIs('finance.inventory.dashboard') ? 'active' : '' }}" href="{{ route('finance.inventory.dashboard') }}"><i class="fa-solid fa-chart-bar"></i><span class="label">Inventory Dashboard</span></a>
-                        <a class="menu-item {{ request()->routeIs('finance.inventory.items.index') ? 'active' : '' }}" href="{{ route('finance.inventory.items.index') }}"><i class="fa-solid fa-cubes"></i><span class="label">Items</span></a>
-                        <a class="menu-item {{ request()->routeIs('finance.inventory.stock-in.index') ? 'active' : '' }}" href="{{ route('finance.inventory.stock-in.index') }}"><i class="fa-solid fa-arrow-down"></i><span class="label">Stock-In</span></a>
-                        <a class="menu-item {{ request()->routeIs('finance.inventory.stock-out.index') ? 'active' : '' }}" href="{{ route('finance.inventory.stock-out.index') }}"><i class="fa-solid fa-arrow-up"></i><span class="label">Stock-Out</span></a>
-                        <a class="menu-item {{ request()->routeIs('finance.inventory.adjustments.index') ? 'active' : '' }}" href="{{ route('finance.inventory.adjustments.index') }}"><i class="fa-solid fa-sliders"></i><span class="label">Adjustments</span></a>
-                        <a class="menu-item {{ request()->routeIs('finance.inventory.reports.index') ? 'active' : '' }}" href="{{ route('finance.inventory.reports.index') }}"><i class="fa-solid fa-file-lines"></i><span class="label">Inventory Reports</span></a>
-                    </div>
-                </li>
-
-                <!-- REPORTS -->
-                <li class="menu-group" x-data="{ open: {{ (request()->routeIs('finance.reports')) ? 'true' : 'false' }} }">
-                    <button class="menu-header" @click="open = !open">
-                        <i class="fa-solid fa-chart-line"></i><span class="label">Reports & Analytics</span>
-                        <i class="fa-solid fa-chevron-down caret" :class="{ 'rotate-180': open }"></i>
-                    </button>
-                    <hr class="section-divider" />
-                    <div class="submenu" x-show="open" x-transition>
                         <a class="menu-item {{ request()->routeIs('finance.reports') ? 'active' : '' }}" href="{{ route('finance.reports') }}"><i class="fa-solid fa-coins"></i><span class="label">Finance Reports Hub</span></a>
                     </div>
                 </li>
+
 
                 <!-- ACCOUNT -->
                 <li class="menu-group" x-data="{ open: false }">
