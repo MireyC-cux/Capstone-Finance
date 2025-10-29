@@ -1,7 +1,14 @@
 @extends('layouts.finance_app')
 
+@section('title', 'Inventory Dashboard')
+
 @section('content')
 <div class="container-fluid py-4">
+
+   <div>
+      <h1 class="h3 fw-bold mb-1">Inventory Management</h1>
+      <div class="text-muted small">Managing inventory via purchase order.</div>
+    </div>
   <!-- Top Actions -->
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div class="d-flex flex-wrap gap-2">

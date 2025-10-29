@@ -135,7 +135,7 @@
     <div class="card" style="padding: 0; overflow: hidden;">
         <div class="table-responsive">
             <table class="table table-hover align-middle" style="margin-bottom: 0;">
-                <thead class="table-dark">
+                <thead class="table-white">
                     <tr>
                         <th style="width: 40px; padding: 8px;"><input type="checkbox" /></th>
                         <th style="padding: 8px; font-weight: bold;">Invoice #</th>

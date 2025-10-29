@@ -217,15 +217,26 @@ class FinanceController extends Controller
         $cfSeries=[];$cfTable=[];$totIn=0.0;$totOut=0.0; foreach ($months as $m) { $in=(float)($cfRows[$m]->inflow??0); $out=(float)($cfRows[$m]->outflow??0); $net=$in-$out; $cfSeries[]=['ym'=>$m,'inflow'=>$in,'outflow'=>$out,'net'=>$net]; $cfTable[]=['month'=>$m,'inflow'=>$in,'outflow'=>$out,'net'=>$net]; $totIn+=$in; $totOut+=$out; }
         $cash = ['series'=>$cfSeries,'table'=>$cfTable,'totals'=>['inflow'=>$totIn,'outflow'=>$totOut,'net'=>$totIn-$totOut]];
 
-        $payrolls = DB::table('payrolls')->whereBetween('pay_period_start', [$s, $e])->select('payroll_id','pay_period','basic_salary','overtime_pay','deductions','net_pay','status')->orderBy('pay_period')->get();
+        $payrolls = DB::table('payrolls')
+            ->whereBetween('pay_period_start', [$s, $e])
+            ->select('payroll_id','pay_period','salary_rate','total_days_of_work','overtime_pay','deductions','status')
+            ->orderBy('pay_period')
+            ->get();
         $paidIds = DB::table('payroll_disbursements')->where('status','Paid')->whereBetween('payment_date', [$s, $e])->pluck('payroll_id')->unique()->toArray();
-        $byPeriod=[]; foreach ($payrolls as $p) { $period=$p->pay_period; if (!isset($byPeriod[$period])) { $byPeriod[$period]=['period'=>$period,'total'=>0.0,'paid'=>0.0]; } $amount = (float)($p->net_pay ?? ((float)$p->basic_salary + (float)($p->overtime_pay ?? 0) - (float)($p->deductions ?? 0))); $byPeriod[$period]['total'] += $amount; if (in_array($p->payroll_id, $paidIds, true) || strcasecmp($p->status,'Paid')===0) { $byPeriod[$period]['paid'] += $amount; } }
+        $byPeriod=[]; foreach ($payrolls as $p) { $period=$p->pay_period; if (!isset($byPeriod[$period])) { $byPeriod[$period]=['period'=>$period,'total'=>0.0,'paid'=>0.0]; } $base=(float)$p->salary_rate * (float)$p->total_days_of_work; $ot=(float)($p->overtime_pay ?? 0); $ded=(float)($p->deductions ?? 0); $amount=max(0.0, $base + $ot - $ded); $byPeriod[$period]['total'] += $amount; if (in_array($p->payroll_id, $paidIds, true) || strcasecmp($p->status,'Paid')===0) { $byPeriod[$period]['paid'] += $amount; } }
         $pyRows = array_values(array_map(function($r){ $r['pending']=max(0.0,$r['total']-$r['paid']); return $r; }, $byPeriod));
         $payroll = ['rows'=>$pyRows,'totals'=>['total'=>array_sum(array_column($pyRows,'total')),'paid'=>array_sum(array_column($pyRows,'paid')),'pending'=>array_sum(array_column($pyRows,'pending'))]];
 
         $incomeMap = $paidRows->pluck('paid','ym');
         $expenseMap = $expMonthMap;
-        $payrollPaidMap = DB::table('payroll_disbursements as pd')->join('payrolls as p','p.payroll_id','=','pd.payroll_id')->where('pd.status','Paid')->whereBetween('pd.payment_date', [$s, $e])->selectRaw('DATE_FORMAT(pd.payment_date, "%Y-%m") as ym, SUM(COALESCE(p.net_pay, p.basic_salary + COALESCE(p.overtime_pay,0) - COALESCE(p.deductions,0))) as total')->groupBy('ym')->orderBy('ym')->pluck('total','ym');
+        $payrollPaidMap = DB::table('payroll_disbursements as pd')
+            ->join('payrolls as p','p.payroll_id','=','pd.payroll_id')
+            ->where('pd.status','Paid')
+            ->whereBetween('pd.payment_date', [$s, $e])
+            ->selectRaw('DATE_FORMAT(pd.payment_date, "%Y-%m") as ym, SUM(COALESCE((p.salary_rate * p.total_days_of_work) + COALESCE(p.overtime_pay,0) - COALESCE(p.deductions,0), 0)) as total')
+            ->groupBy('ym')
+            ->orderBy('ym')
+            ->pluck('total','ym');
         $apPaidMap = DB::table('payments_made')->whereBetween('payment_date', [$s, $e])->selectRaw('DATE_FORMAT(payment_date, "%Y-%m") as ym, SUM(amount) as total')->groupBy('ym')->orderBy('ym')->pluck('total','ym');
         $pnlTable=[]; $iTot=0.0;$xTot=0.0;$pyTot=0.0;$apTot=0.0;$netTot=0.0; foreach ($months as $m) { $i=(float)($incomeMap[$m]??0); $x=(float)($expenseMap[$m]??0); $py=(float)($payrollPaidMap[$m]??0); $apv=(float)($apPaidMap[$m]??0); $n=$i-($x+$py+$apv); $pnlTable[]=['month'=>$m,'income'=>$i,'expense'=>$x,'payroll'=>$py,'ap_payments'=>$apv,'net'=>$n]; $iTot+=$i; $xTot+=$x; $pyTot+=$py; $apTot+=$apv; $netTot+=$n; }
         $pnl = ['table'=>$pnlTable,'totals'=>['income'=>$iTot,'expense'=>$xTot,'payroll'=>$pyTot,'ap_payments'=>$apTot,'net'=>$netTot]];

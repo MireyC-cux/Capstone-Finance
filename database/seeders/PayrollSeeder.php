@@ -61,7 +61,7 @@ class PayrollSeeder extends Seeder
                 [
                     'total_days_of_work' => $daysWorked,
                     'pay_period' => $start->format('Y-m-d').' to '.$end->format('Y-m-d'),
-                    'basic_salary' => round($base,2),
+                    'salary_rate' => round($base,2),
                     'overtime_pay' => round($otPay,2),
                     'deductions' => round($deductions,2),
                     'cash_advance' => round($cashAdvanceApplied,2),

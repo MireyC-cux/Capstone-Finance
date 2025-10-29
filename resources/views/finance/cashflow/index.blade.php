@@ -109,7 +109,7 @@
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle" style="margin-bottom: 0;">
-                <thead class="table-dark">
+                <thead class="table-white">
                     <tr>
                         <th style="padding: 8px;">Date</th>
                         <th style="padding: 8px;">Type</th>

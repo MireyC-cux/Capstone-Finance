@@ -92,7 +92,6 @@
                     <hr class="section-divider" />
                     <div class="submenu" x-show="open" x-transition>
                         <a class="menu-item {{ request()->routeIs('finance.payroll') ? 'active' : '' }}" href="{{ route('finance.payroll') }}"><i class="fa-solid fa-money-bill-wave"></i><span class="label">Payroll</span></a>
-                        <a class="menu-item {{ request()->routeIs('finance.payroll.approvals') ? 'active' : '' }}" href="{{ route('finance.payroll.approvals') }}"><i class="fa-solid fa-circle-check"></i><span class="label">Payroll Approvals</span></a>
                         <a class="menu-item {{ request()->routeIs('finance.disbursement.index') ? 'active' : '' }}" href="{{ route('finance.disbursement.index') }}"><i class="fa-solid fa-wallet"></i><span class="label">Disbursement History</span></a>
                     </div>
                 </li>
@@ -150,8 +149,8 @@
             </div>
 
             <div class="account-menu" id="accountMenu">
-                <div class="account-avatar">AD</div>
-                <span class="account-name">Admin</span>
+                <div class="account-avatar">F</div>
+                <span class="account-name">Finance</span>
                 <i class="fas fa-chevron-down dropdown-icon"></i>
             </div>
         </div>

@@ -4,6 +4,11 @@
 
 @section('content')
 <div class="container-fluid py-4">
+
+  <div>
+      <h1 class="h3 fw-bold mb-1">Payroll Management</h1>
+      <div class="text-muted small">Managing payroll via semi-monthly.</div>
+    </div>
     <!-- Action Bar -->
     <div class="d-flex justify-content-end mb-3">
         <div class="d-flex flex-wrap gap-2">
@@ -16,7 +21,6 @@
                 <button type="submit" class="btn btn-dark btn-sm">Export PDF</button>
             </form>
             <a href="{{ route('finance.disbursement.index') }}" class="btn btn-success btn-sm">Disbursed Payroll</a>
-            <a href="{{ route('finance.payroll.approvals') }}" class="btn btn-primary btn-sm">Approval Form</a>
             <button id="openGenerateModal" type="button" class="btn btn-warning btn-sm text-dark fw-semibold" data-bs-toggle="modal" data-bs-target="#generateModal">Generate Payroll</button>
         </div>
     </div>

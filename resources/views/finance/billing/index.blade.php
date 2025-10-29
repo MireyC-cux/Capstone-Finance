@@ -5,7 +5,7 @@
     <div class="d-flex justify-content-end align-items-center mb-3">
         <a href="{{ route('invoices.index') }}" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2">
             <i class="fas fa-file-invoice"></i>
-            <span>Invoice History</span>
+            <span>Billing History</span>
         </a>
     </div>
 

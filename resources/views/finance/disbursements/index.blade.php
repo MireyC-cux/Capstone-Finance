@@ -3,67 +3,74 @@
 @section('title', 'Disbursed Payroll')
 
 @section('content')
-<div class="max-w-7xl mx-auto">
-  <div class="flex items-center justify-between mb-6">
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-      <h1 class="text-3xl font-bold">Disbursed Payroll</h1>
-      <p class="text-slate-500">All payroll disbursements within the selected period.</p>
+      <h1 class="h3 fw-bold mb-1">Disbursed Payroll</h1>
+      <div class="text-muted small">All payroll disbursements within the selected period.</div>
     </div>
-    <div class="flex gap-2">
-      <form method="GET" action="{{ route('finance.disbursement.export') }}">
+    <div class="d-flex flex-wrap gap-2">
+      <form method="GET" action="{{ route('finance.disbursement.export') }}" class="d-inline">
         <input type="hidden" name="start" value="{{ $start }}">
         <input type="hidden" name="end" value="{{ $end }}">
-        <button class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-2xl shadow">Export PDF</button>
+        <button class="btn btn-dark btn-sm">Export PDF</button>
       </form>
-      <a href="{{ route('finance.payroll') }}" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-2xl shadow">Back to Payroll</a>
+      <a href="{{ route('finance.payroll') }}" class="btn btn-success btn-sm">Payroll</a>
+      <a href="{{ route('finance.inventory.dashboard') }}" class="btn btn-outline-primary btn-sm">Inventory Dashboard</a>
     </div>
   </div>
 
-  <form method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-white p-4 rounded-xl shadow mb-6">
-    <div>
-      <label class="block text-sm text-slate-600">Start</label>
-      <input type="date" name="start" value="{{ $start }}" class="w-full mt-1 border rounded-lg px-3 py-2">
-    </div>
-    <div>
-      <label class="block text-sm text-slate-600">End</label>
-      <input type="date" name="end" value="{{ $end }}" class="w-full mt-1 border rounded-lg px-3 py-2">
-    </div>
-    <div class="md:col-span-1 flex items-end">
-      <button class="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900">Apply Filters</button>
+  <form method="GET" class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+      <div class="row g-2 align-items-end">
+        <div class="col-6 col-md-3">
+          <label class="form-label small fw-semibold mb-1">Start</label>
+          <input type="date" name="start" value="{{ $start }}" class="form-control form-control-sm">
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label small fw-semibold mb-1">End</label>
+          <input type="date" name="end" value="{{ $end }}" class="form-control form-control-sm">
+        </div>
+        <div class="col-12 col-md-2">
+          <button class="btn btn-primary btn-sm w-100">Apply Filters</button>
+        </div>
+      </div>
     </div>
   </form>
 
-  <div class="bg-white rounded-xl shadow overflow-hidden">
-    <table class="min-w-full">
-      <thead>
-        <tr class="bg-slate-50 text-left text-slate-600">
-          <th class="px-4 py-3">Payment Date</th>
-          <th class="px-4 py-3">Employee</th>
-          <th class="px-4 py-3">Method</th>
-          <th class="px-4 py-3">Reference</th>
-          <th class="px-4 py-3 text-right">Amount</th>
-          <th class="px-4 py-3">Status</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y">
-        @forelse($rows as $d)
-        <tr>
-          <td class="px-4 py-3">{{ $d->payment_date }}</td>
-          <td class="px-4 py-3">{{ $d->employeeProfile->last_name }}, {{ $d->employeeProfile->first_name }}</td>
-          <td class="px-4 py-3">{{ $d->payment_method }}</td>
-          <td class="px-4 py-3">{{ $d->reference_number }}</td>
-          <td class="px-4 py-3 text-right">₱ {{ number_format($d->payroll->net_pay ?? 0, 2) }}</td>
-          <td class="px-4 py-3">
-            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700">{{ $d->status }}</span>
-          </td>
-        </tr>
-        @empty
-        <tr>
-          <td colspan="6" class="px-4 py-6 text-center text-slate-500">No disbursements found for this period.</td>
-        </tr>
-        @endforelse
-      </tbody>
-    </table>
+  <div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr class="text-nowrap">
+            <th>Payment Date</th>
+            <th>Employee</th>
+            <th>Method</th>
+            <th>Reference</th>
+            <th class="text-end">Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($rows as $d)
+          <tr>
+            <td>{{ $d->payment_date }}</td>
+            <td>{{ $d->employeeProfile->last_name }}, {{ $d->employeeProfile->first_name }}</td>
+            <td>{{ $d->payment_method }}</td>
+            <td>{{ $d->reference_number }}</td>
+            <td class="text-end fw-bold text-primary">₱ {{ number_format($d->payroll->net_pay ?? 0, 2) }}</td>
+            <td>
+              <span class="badge {{ $d->status==='Paid' ? 'bg-success' : ($d->status==='Pending' ? 'bg-warning text-dark' : 'bg-secondary') }}">{{ $d->status }}</span>
+            </td>
+          </tr>
+          @empty
+          <tr>
+            <td colspan="6" class="py-4 text-center text-muted">No disbursements found for this period.</td>
+          </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <div class="mt-4">
@@ -71,3 +78,4 @@
   </div>
 </div>
 @endsection
+
