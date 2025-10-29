@@ -7,7 +7,7 @@ use App\Models\EmployeeProfile;
 use App\Models\SalaryRate;
 use App\Models\EmployeeSalaryRate;
 use App\Models\Attendance;
-use App\Models\LeaveOvertimeRequest;
+use App\Models\OvertimeRequest;
 use App\Models\CashAdvance;
 use App\Models\Deduction;
 use App\Models\Payroll;
@@ -29,10 +29,10 @@ class PayrollSeeder extends Seeder
             $totalDaysInSemiMonth = $start->diffInDays($end) + 1;
             $rate = $this->getEffectiveDailyRate($emp, $start);
 
-            $otHours = (int) (LeaveOvertimeRequest::where('employeeprofiles_id', $emp->employeeprofiles_id)
+            $otHours = (int) (OvertimeRequest::where('employeeprofiles_id', $emp->employeeprofiles_id)
                 ->where('status', 'approved')
-                ->whereBetween('request_date', [$start->copy()->startOfDay(), $end->copy()->endOfDay()])
-                ->sum('overtime_hours') ?? 0);
+                ->whereBetween('approved_date', [$start->copy()->startOfDay(), $end->copy()->endOfDay()])
+                ->sum('hours') ?? 0);
             $otCap = min($otHours, 5 * $daysWorked);
             $otPay = ($rate / 8) * $otCap;
 

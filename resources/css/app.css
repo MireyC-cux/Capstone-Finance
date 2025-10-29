@@ -1,2 +1,5 @@
 @import "tailwindcss/preflight";
 @import "tailwindcss/utilities";
+
+/* Import custom color scheme */
+@import './finance_colors.css';

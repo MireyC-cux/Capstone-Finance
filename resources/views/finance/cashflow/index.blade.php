@@ -3,115 +3,192 @@
 @section('title', 'Cash Flow Dashboard')
 
 @section('content')
-<div class="max-w-7xl mx-auto">
-    <h1 class="mb-6">Cash Flow & Expense Tracking</h1>
+<div style="padding: 20px;">
+
 
     @if(session('success'))
-        <div class="mb-4 p-3 rounded bg-green-100 text-green-800">{{ session('success') }}</div>
+        <div class="alert alert-success" style="margin-bottom: 1rem;">{{ session('success') }}</div>
     @endif
     @if(session('error'))
-        <div class="mb-4 p-3 rounded bg-red-100 text-red-800">{{ session('error') }}</div>
+        <div class="alert alert-danger" style="margin-bottom: 1rem;">{{ session('error') }}</div>
     @endif
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div class="p-4 rounded-lg bg-white shadow">
-            <div class="text-sm text-gray-500">Total Inflows</div>
-            <div class="text-2xl font-bold text-emerald-600">₱ {{ number_format($totalInflows, 2) }}</div>
+    <!-- Metrics Cards -->
+    <div class="row g-4" style="margin-bottom: 2rem;">
+        <div class="col-12 col-md-6 col-xl">
+            <div class="card" style="min-height: 96px; padding: 1rem 1.25rem;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Total Inflows</div>
+                        <div style="font-size: 24px; font-weight: 700; color: #10B981; margin-top: 0.25rem;">₱ {{ number_format($totalInflows, 2) }}</div>
+                    </div>
+                    <div style="width: 48px; height: 48px; border-radius: 8px; background: #10B981; color: white; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa fa-arrow-trend-up" style="font-size: 20px;"></i>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="p-4 rounded-lg bg-white shadow">
-            <div class="text-sm text-gray-500">Total Outflows</div>
-            <div class="text-2xl font-bold text-rose-600">₱ {{ number_format($totalOutflows, 2) }}</div>
+        <div class="col-12 col-md-6 col-xl">
+            <div class="card" style="min-height: 96px; padding: 1rem 1.25rem;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Total Outflows</div>
+                        <div style="font-size: 24px; font-weight: 700; color: #EF4444; margin-top: 0.25rem;">₱ {{ number_format($totalOutflows, 2) }}</div>
+                    </div>
+                    <div style="width: 48px; height: 48px; border-radius: 8px; background: #EF4444; color: white; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa fa-arrow-trend-down" style="font-size: 20px;"></i>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="p-4 rounded-lg bg-white shadow">
-            <div class="text-sm text-gray-500">Current Balance</div>
-            <div class="text-2xl font-bold text-sky-600">₱ {{ number_format($currentBalance, 2) }}</div>
+        <div class="col-12 col-md-6 col-xl">
+            <div class="card" style="min-height: 96px; padding: 1rem 1.25rem;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Current Balance</div>
+                        <div style="font-size: 24px; font-weight: 700; color: #2563EB; margin-top: 0.25rem;">₱ {{ number_format($currentBalance, 2) }}</div>
+                    </div>
+                    <div style="width: 48px; height: 48px; border-radius: 8px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa fa-wallet" style="font-size: 20px;"></i>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="p-4 rounded-lg bg-white shadow">
-            <div class="text-sm text-gray-500">Profit</div>
-            <div class="text-2xl font-bold {{ $profit >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">₱ {{ number_format($profit, 2) }}</div>
+        <div class="col-12 col-md-6 col-xl">
+            <div class="card" style="min-height: 96px; padding: 1rem 1.25rem;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Profit</div>
+                        <div style="font-size: 24px; font-weight: 700; color: {{ $profit >= 0 ? '#10B981' : '#EF4444' }}; margin-top: 0.25rem;">₱ {{ number_format($profit, 2) }}</div>
+                    </div>
+                    <div style="width: 48px; height: 48px; border-radius: 8px; background: {{ $profit >= 0 ? '#10B981' : '#EF4444' }}; color: white; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa fa-chart-line" style="font-size: 20px;"></i>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="p-4 rounded-lg bg-white shadow">
-            <div class="text-sm text-gray-500">Capital</div>
-            <div class="text-2xl font-bold text-amber-600">₱ {{ number_format((float)($bf->capital ?? 0), 2) }}</div>
+        <div class="col-12 col-md-6 col-xl">
+            <div class="card" style="min-height: 96px; padding: 1rem 1.25rem;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Capital</div>
+                        <div style="font-size: 24px; font-weight: 700; color: #F59E0B; margin-top: 0.25rem;">₱ {{ number_format((float)($bf->capital ?? 0), 2) }}</div>
+                    </div>
+                    <div style="width: 48px; height: 48px; border-radius: 8px; background: #F59E0B; color: white; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa fa-coins" style="font-size: 20px;"></i>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 p-4 bg-white rounded-lg shadow">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="font-semibold">Monthly Income vs Expenses</h2>
-                <div class="space-x-2">
-                    <a class="px-3 py-1 text-sm rounded bg-slate-100 hover:bg-slate-200" href="{{ route('finance.cashflow.export.csv') }}">Export CSV</a>
-                    <a class="px-3 py-1 text-sm rounded bg-slate-100 hover:bg-slate-200" href="{{ route('finance.cashflow.export.pdf') }}">Export PDF</a>
-                    <a href="{{ route('finance.expenses') }}" class="px-3 py-1 text-sm rounded bg-amber-600 text-white hover:bg-amber-700">Expenses</a>
+    <!-- Main Content Grid -->
+    <div class="row g-4">
+        <div class="col-12 col-lg-8">
+            <div class="card" style="padding: 1.25rem;">
+                <div class="d-flex justify-content-between align-items-center" style="margin-bottom: 1.5rem;">
+                    <h2 style="font-size: 20px; font-weight: 600; margin: 0;">Monthly Income vs Expenses</h2>
+                    <div class="d-flex gap-2">
+                        <a class="btn btn-sm" style="border: 1px solid var(--border-card); background: white; font-size: 13px;" href="{{ route('finance.cashflow.export.csv') }}">CSV</a>
+                        <a class="btn btn-sm" style="border: 1px solid var(--border-card); background: white; font-size: 13px;" href="{{ route('finance.cashflow.export.pdf') }}">PDF</a>
+                        <a href="{{ route('finance.expenses') }}" class="btn btn-sm btn-warning">Expenses</a>
+                    </div>
                 </div>
-            </div>
-            <div class="w-full max-w-5xl mx-auto">
-                <canvas id="cashChart" class="w-full h-64"></canvas>
+                <div style="height: 300px;">
+                    <canvas id="cashChart" height="300"></canvas>
+                </div>
             </div>
         </div>
 
-        <div class="p-4 bg-white rounded-lg shadow">
-            <h2 class="font-semibold mb-3">Capital Management</h2>
-            <form class="mb-4" method="post" action="{{ route('finance.capital.set') }}">
-                @csrf
-                <div class="text-sm text-gray-500 mb-1">Set Capital</div>
-                <div class="flex gap-2">
-                    <input type="number" step="0.01" name="amount" class="border rounded px-2 py-1 w-full" placeholder="Amount" required>
-                    <input type="text" name="remarks" class="border rounded px-2 py-1 w-full" placeholder="Remarks (optional)">
-                    <button class="px-3 py-1 bg-amber-600 text-white rounded">Set</button>
-                </div>
-            </form>
+        <div class="col-12 col-lg-4">
+            <div class="card" style="padding: 1.25rem;">
+                <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 1rem;">Capital Management</h2>
+                
+                <form style="margin-bottom: 1.5rem;" method="post" action="{{ route('finance.capital.set') }}">
+                    @csrf
+                    <label class="form-label" style="font-weight: 600;">Set Capital</label>
+                    <div class="mb-2">
+                        <input type="number" step="0.01" name="amount" class="form-control" placeholder="Amount" required>
+                    </div>
+                    <div class="mb-2">
+                        <input type="text" name="remarks" class="form-control" placeholder="Remarks (optional)">
+                    </div>
+                    <button class="btn btn-warning w-100">Set Capital</button>
+                </form>
 
-            <form class="mb-4" method="post" action="{{ route('finance.capital.inject') }}">
-                @csrf
-                <div class="text-sm text-gray-500 mb-1">Capital Injection</div>
-                <div class="grid grid-cols-2 gap-2 mb-2">
-                    <input type="number" step="0.01" name="amount" class="border rounded px-2 py-1" placeholder="Amount" required>
-                    <input type="date" name="date" class="border rounded px-2 py-1" value="{{ now()->toDateString() }}" required>
-                    <input type="text" name="account_id" class="border rounded px-2 py-1" placeholder="Account ID (optional)">
-                    <input type="text" name="remarks" class="border rounded px-2 py-1" placeholder="Remarks (optional)">
-                </div>
-                <button class="px-3 py-1 bg-emerald-600 text-white rounded">Record Injection</button>
-            </form>
+                <form style="margin-bottom: 1.5rem;" method="post" action="{{ route('finance.capital.inject') }}">
+                    @csrf
+                    <label class="form-label" style="font-weight: 600;">Capital Injection</label>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <input type="number" step="0.01" name="amount" class="form-control" placeholder="Amount" required>
+                        </div>
+                        <div class="col-6">
+                            <input type="date" name="date" class="form-control" value="{{ now()->toDateString() }}" required>
+                        </div>
+                        <div class="col-6">
+                            <input type="text" name="account_id" class="form-control" placeholder="Account ID">
+                        </div>
+                        <div class="col-6">
+                            <input type="text" name="remarks" class="form-control" placeholder="Remarks">
+                        </div>
+                    </div>
+                    <button class="btn btn-success w-100">Record Injection</button>
+                </form>
 
-            <form method="post" action="{{ route('finance.capital.withdraw') }}">
-                @csrf
-                <div class="text-sm text-gray-500 mb-1">Capital Withdrawal</div>
-                <div class="grid grid-cols-2 gap-2 mb-2">
-                    <input type="number" step="0.01" name="amount" class="border rounded px-2 py-1" placeholder="Amount" required>
-                    <input type="date" name="date" class="border rounded px-2 py-1" value="{{ now()->toDateString() }}" required>
-                    <input type="text" name="account_id" class="border rounded px-2 py-1" placeholder="Account ID (optional)">
-                    <input type="text" name="remarks" class="border rounded px-2 py-1" placeholder="Remarks (optional)">
-                </div>
-                <button class="px-3 py-1 bg-rose-600 text-white rounded">Record Withdrawal</button>
-            </form>
+                <form method="post" action="{{ route('finance.capital.withdraw') }}">
+                    @csrf
+                    <label class="form-label" style="font-weight: 600;">Capital Withdrawal</label>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <input type="number" step="0.01" name="amount" class="form-control" placeholder="Amount" required>
+                        </div>
+                        <div class="col-6">
+                            <input type="date" name="date" class="form-control" value="{{ now()->toDateString() }}" required>
+                        </div>
+                        <div class="col-6">
+                            <input type="text" name="account_id" class="form-control" placeholder="Account ID">
+                        </div>
+                        <div class="col-6">
+                            <input type="text" name="remarks" class="form-control" placeholder="Remarks">
+                        </div>
+                    </div>
+                    <button class="btn btn-danger w-100">Record Withdrawal</button>
+                </form>
+            </div>
         </div>
     </div>
 
-    <div class="mt-6 p-4 bg-white rounded-lg shadow">
-        <h2 class="font-semibold mb-3">Recent Cash Flow</h2>
-        <div class="overflow-x-auto">
-            <table class="min-w-full text-sm">
-                <thead>
-                    <tr class="text-left border-b">
-                        <th class="py-2 pr-4">Date</th>
-                        <th class="py-2 pr-4">Type</th>
-                        <th class="py-2 pr-4">Source</th>
-                        <th class="py-2 pr-4 text-right">Amount</th>
-                        <th class="py-2 pr-4">Description</th>
+    <!-- Recent Cash Flow Table -->
+    <div class="card" style="padding: 0; overflow: hidden; margin-top: 2rem;">
+        <div style="padding: 1.25rem; border-bottom: 1px solid var(--border-card);">
+            <h2 style="font-size: 20px; font-weight: 600; margin: 0;">Recent Cash Flow</h2>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" style="margin-bottom: 0;">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="padding: 8px;">Date</th>
+                        <th style="padding: 8px;">Type</th>
+                        <th style="padding: 8px;">Source</th>
+                        <th style="padding: 8px; text-align: right;">Amount</th>
+                        <th style="padding: 8px;">Description</th>
                     </tr>
                 </thead>
                 <tbody>
                 @foreach($recent as $row)
-                    <tr class="border-b last:border-0">
-                        <td class="py-2 pr-4">{{ \Illuminate\Support\Carbon::parse($row->transaction_date)->format('Y-m-d') }}</td>
-                        <td class="py-2 pr-4">
-                            <span class="px-2 py-0.5 rounded text-white text-xs {{ $row->transaction_type === 'Inflow' ? 'bg-emerald-600' : 'bg-rose-600' }}">{{ $row->transaction_type }}</span>
+                    <tr>
+                        <td style="padding: 8px;">{{ \Illuminate\Support\Carbon::parse($row->transaction_date)->format('Y-m-d') }}</td>
+                        <td style="padding: 8px;">
+                            @if($row->transaction_type === 'Inflow')
+                                <span class="badge" style="background: #D1FAE5; color: #065F46; padding: 0.25rem 0.5rem; border-radius: 6px; font-weight: 600;">{{ $row->transaction_type }}</span>
+                            @else
+                                <span class="badge" style="background: #FEE2E2; color: #991B1B; padding: 0.25rem 0.5rem; border-radius: 6px; font-weight: 600;">{{ $row->transaction_type }}</span>
+                            @endif
                         </td>
-                        <td class="py-2 pr-4">{{ $row->source_type }}</td>
-                        <td class="py-2 pr-4 text-right">₱ {{ number_format((float)$row->amount, 2) }}</td>
-                        <td class="py-2 pr-4">{{ $row->description }}</td>
+                        <td style="padding: 8px;">{{ $row->source_type }}</td>
+                        <td style="padding: 8px; text-align: right; font-weight: 600;">₱ {{ number_format((float)$row->amount, 2) }}</td>
+                        <td style="padding: 8px;">{{ $row->description }}</td>
                     </tr>
                 @endforeach
                 </tbody>
@@ -119,11 +196,14 @@
         </div>
     </div>
 
-    <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="p-4 bg-white rounded-lg shadow">
-            <h2 class="font-semibold mb-3">Expense Breakdown (YTD)</h2>
-            <div class="w-full max-w-xl mx-auto">
-                <canvas id="categoryChart" class="w-full h-64"></canvas>
+    <!-- Expense Breakdown -->
+    <div class="row g-4" style="margin-top: 2rem;">
+        <div class="col-12 col-lg-6">
+            <div class="card" style="padding: 1.25rem;">
+                <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 1rem;">Expense Breakdown (YTD)</h2>
+                <div style="height: 300px; display: flex; align-items: center; justify-content: center;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
             </div>
         </div>
     </div>

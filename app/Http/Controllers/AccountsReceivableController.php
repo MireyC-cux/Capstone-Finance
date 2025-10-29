@@ -19,9 +19,13 @@ class AccountsReceivableController extends Controller
                     $cq->where('full_name', 'like', "%$term%");
                 })->orWhere('invoice_number', 'like', "%$term%");
             })
+            // Exclude Paid by default unless explicitly filtered to Paid
+            ->when(!$request->filled('status'), fn($q) => $q->where('status', '<>', 'Paid'))
             ->when($request->input('status'), fn($q, $s) => $q->where('status', $s))
             ->when($request->input('from'), fn($q, $from) => $q->whereDate('invoice_date', '>=', $from))
             ->when($request->input('to'), fn($q, $to) => $q->whereDate('invoice_date', '<=', $to))
+            // Prioritize Unpaid, Overdue, then Partially Paid; then by latest ar_id
+            ->orderByRaw("FIELD(status, 'Unpaid','Overdue','Partially Paid') ASC")
             ->orderByDesc('ar_id');
 
         $ars = $query->paginate(20)->withQueryString();

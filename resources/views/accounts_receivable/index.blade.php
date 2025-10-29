@@ -1,16 +1,15 @@
 @extends('layouts.finance_app')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">Accounts Receivable</h1>
-            <p class="text-sm text-gray-500 mt-1">Track invoices, balances, and incoming payments in real time.</p>
+<div style="padding: 20px;">
+    <!-- Page Header -->
+    <div style="margin-bottom: 2rem;">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ route('finance.ar.aging') }}" class="btn btn-primary" style="min-height: 38px; gap: 0.5rem;">
+                <i class="fa-solid fa-table-cells-large"></i>
+                <span>Aging Report</span>
+            </a>
         </div>
-        <a href="{{ route('finance.ar.aging') }}" class="inline-flex items-center gap-2 rounded-lg border border-cyan-200 bg-white px-4 py-2 text-cyan-700 hover:bg-cyan-50 transition">
-            <i class="fa-solid fa-table-cells-large"></i>
-            <span>Aging Report</span>
-        </a>
     </div>
 
     @if(session('success'))
@@ -35,232 +34,263 @@
         </script>
     @endif
 
-    <form method="GET" class="mb-6">
-        <div class="bg-white/80 backdrop-blur rounded-2xl border border-gray-100 shadow-sm p-4 md:p-5">
-            <div class="grid md:grid-cols-5 gap-4 items-end">
-                <div class="md:col-span-2">
-                    <label class="block text-xs font-medium text-gray-500">Search</label>
-                    <div class="relative">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" name="q" value="{{ request('q') }}" placeholder="Customer or Invoice #" class="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:outline-none" />
+    <!-- Filter Section -->
+    <form method="GET" style="margin-bottom: 2rem;">
+        <div class="card" style="padding: 1.25rem;">
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-md-5">
+                    <label class="form-label" style="font-size: 14px; font-weight: 500; margin-bottom: 0.5rem;">Search</label>
+                    <div style="position: relative;">
+                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                        <input type="text" name="q" value="{{ request('q') }}" placeholder="Customer or Invoice #" class="form-control" style="padding-left: 2.5rem;" />
                     </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-500">Status</label>
-                    <select name="status" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                <div class="col-12 col-md">
+                    <label class="form-label" style="font-size: 14px; font-weight: 500; margin-bottom: 0.5rem;">Status</label>
+                    <select name="status" class="form-select">
                         <option value="">All</option>
                         @foreach(['Unpaid','Partially Paid','Paid','Overdue'] as $s)
                             <option value="{{ $s }}" @selected(request('status')===$s)>{{ $s }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-500">From</label>
-                    <input type="date" name="from" value="{{ request('from') }}" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:outline-none" />
+                <div class="col-12 col-md">
+                    <label class="form-label" style="font-size: 14px; font-weight: 500; margin-bottom: 0.5rem;">From</label>
+                    <input type="date" name="from" value="{{ request('from') }}" class="form-control" />
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-500">To</label>
-                    <input type="date" name="to" value="{{ request('to') }}" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:outline-none" />
+                <div class="col-12 col-md">
+                    <label class="form-label" style="font-size: 14px; font-weight: 500; margin-bottom: 0.5rem;">To</label>
+                    <input type="date" name="to" value="{{ request('to') }}" class="form-control" />
                 </div>
             </div>
-            <div class="flex flex-wrap gap-2 mt-4">
-                <button class="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg shadow-sm">
-                    <i class="fa-solid fa-sliders"></i><span>Filter</span>
+            <div class="d-flex flex-wrap gap-2" style="margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary" style="gap: 0.5rem;">
+                    <i class="fa-solid fa-sliders"></i><span>Apply Filters</span>
                 </button>
-                <a href="{{ route('accounts-receivable.index') }}" class="inline-flex items-center gap-2 border border-gray-200 hover:border-gray-300 px-4 py-2 rounded-lg">
+                <a href="{{ route('accounts-receivable.index') }}" class="btn" style="border: 1px solid var(--border-card); background: white; gap: 0.5rem;">
                     <i class="fa-solid fa-rotate-left"></i><span>Reset</span>
                 </a>
             </div>
         </div>
     </form>
 
-    <div class="grid md:grid-cols-3 gap-4 mb-6">
-        <div class="rounded-2xl border border-cyan-100 bg-gradient-to-br from-cyan-50 to-white p-5 shadow-sm cursor-pointer metric-card" data-metric="outstanding" title="View outstanding breakdown">
-            <div class="flex items-center gap-3">
-                <div class="h-10 w-10 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center"><i class="fa-solid fa-sack-dollar"></i></div>
-                <div>
-                    <div class="text-xs text-gray-500">Total Outstanding</div>
-                    <div class="text-2xl font-bold text-cyan-700">₱{{ number_format($totals['total_outstanding'] ?? 0, 2) }}</div>
+    <!-- Metrics Cards -->
+    <div class="row g-4" style="margin-bottom: 2rem;">
+        <div class="col-12 col-lg-4">
+            <div class="card metric-card" style="min-height: 96px; padding: 1rem 1.25rem; cursor: pointer; transition: all 0.2s ease-in-out;" data-metric="outstanding" title="View outstanding breakdown">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Total Outstanding</div>
+                        <div style="font-size: 24px; font-weight: 700; color: #2563EB; margin-top: 0.25rem;">₱{{ number_format($totals['total_outstanding'] ?? 0, 2) }}</div>
+                    </div>
+                    <div style="width: 48px; height: 48px; border-radius: 8px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-sack-dollar" style="font-size: 20px;"></i></div>
                 </div>
             </div>
         </div>
-        <div class="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm cursor-pointer metric-card" data-metric="paid" title="View payments breakdown">
-            <div class="flex items-center gap-3">
-                <div class="h-10 w-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center"><i class="fa-solid fa-circle-check"></i></div>
-                <div>
-                    <div class="text-xs text-gray-500">Total Paid</div>
-                    <div class="text-2xl font-bold text-emerald-700">₱{{ number_format($totals['total_paid'] ?? 0, 2) }}</div>
+        <div class="col-12 col-lg-4">
+            <div class="card metric-card" style="min-height: 96px; padding: 1rem 1.25rem; cursor: pointer; transition: all 0.2s ease-in-out;" data-metric="paid" title="View payments breakdown">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Total Paid</div>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--success); margin-top: 0.25rem;">₱{{ number_format($totals['total_paid'] ?? 0, 2) }}</div>
+                    </div>
+                    <div style="width: 48px; height: 48px; border-radius: 8px; background: var(--success); color: white; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-circle-check" style="font-size: 20px;"></i></div>
                 </div>
             </div>
         </div>
-        <div class="rounded-2xl border border-rose-100 bg-gradient-to-br from-rose-50 to-white p-5 shadow-sm cursor-pointer metric-card" data-metric="overdue" title="View overdue breakdown">
-            <div class="flex items-center gap-3">
-                <div class="h-10 w-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                <div>
-                    <div class="text-xs text-gray-500">Total Overdue</div>
-                    <div class="text-2xl font-bold text-rose-700">₱{{ number_format($totals['total_overdue'] ?? 0, 2) }}</div>
+        <div class="col-12 col-lg-4">
+            <div class="card metric-card" style="min-height: 96px; padding: 1rem 1.25rem; cursor: pointer; transition: all 0.2s ease-in-out;" data-metric="overdue" title="View overdue breakdown">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Total Overdue</div>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--danger); margin-top: 0.25rem;">₱{{ number_format($totals['total_overdue'] ?? 0, 2) }}</div>
+                    </div>
+                    <div style="width: 48px; height: 48px; border-radius: 8px; background: var(--danger); color: white; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-triangle-exclamation" style="font-size: 20px;"></i></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="bg-white/90 backdrop-blur rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <table class="min-w-full whitespace-nowrap">
-            <thead class="bg-gray-50/70 text-left">
-                <tr>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500"><input type="checkbox" class="rounded" /></th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500">Invoice #</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500">Customer</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500">Invoice Date</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500">Due Date</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500">Total</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500">Paid</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500">Balance</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500">Status</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
+    <!-- Data Table -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" style="margin-bottom: 0;">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width: 40px; padding: 8px;"><input type="checkbox" /></th>
+                        <th style="padding: 8px; font-weight: bold;">Invoice #</th>
+                        <th style="padding: 8px; font-weight: bold;">Customer</th>
+                        <th style="padding: 8px; font-weight: bold;">Invoice Date</th>
+                        <th style="padding: 8px; font-weight: bold;">Due Date</th>
+                        <th style="padding: 8px; font-weight: bold;">Total</th>
+                        <th style="padding: 8px; font-weight: bold;">Paid</th>
+                        <th style="padding: 8px; font-weight: bold;">Balance</th>
+                        <th style="padding: 8px; font-weight: bold;">Status</th>
+                        <th style="padding: 8px; font-weight: bold;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
                 @foreach($ars as $ar)
-                <tr class="hover:bg-gray-50/60">
-                    <td class="px-4 py-3"><input type="checkbox" class="rounded" /></td>
-                    <td class="px-4 py-3">{{ $ar->invoice_number ?? $ar->invoice->invoice_number ?? '—' }}</td>
-                    <td class="px-4 py-3">{{ $ar->customer->business_name ?? $ar->customer->full_name }}</td>
-                    <td class="px-4 py-3">{{ \Illuminate\Support\Carbon::parse($ar->invoice_date)->format('Y-m-d') }}</td>
-                    <td class="px-4 py-3">{{ \Illuminate\Support\Carbon::parse($ar->due_date)->format('Y-m-d') }}</td>
-                    <td class="px-4 py-3">₱{{ number_format($ar->total_amount, 2) }}</td>
-                    <td class="px-4 py-3">₱{{ number_format($ar->amount_paid, 2) }}</td>
-                    <td class="px-4 py-3">₱{{ number_format($ar->balance, 2) }}</td>
-                    <td class="px-4 py-3">
-                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border
-                            @class([
-                                'bg-gray-50 text-gray-700 border-gray-200' => $ar->status==='Unpaid',
-                                'bg-amber-50 text-amber-700 border-amber-200' => $ar->status==='Partially Paid',
-                                'bg-emerald-50 text-emerald-700 border-emerald-200' => $ar->status==='Paid',
-                                'bg-rose-50 text-rose-700 border-rose-200' => $ar->status==='Overdue',
-                            ])">
-                            {{ $ar->status }}
-                        </span>
+                <tr>
+                    <td style="padding: 8px;"><input type="checkbox" /></td>
+                    <td style="padding: 8px; font-weight: 600;">{{ $ar->invoice_number ?? $ar->invoice->invoice_number ?? '—' }}</td>
+                    <td style="padding: 8px;">{{ $ar->customer->business_name ?? $ar->customer->full_name }}</td>
+                    <td style="padding: 8px;">{{ \Illuminate\Support\Carbon::parse($ar->invoice_date)->format('Y-m-d') }}</td>
+                    <td style="padding: 8px;">{{ \Illuminate\Support\Carbon::parse($ar->due_date)->format('Y-m-d') }}</td>
+                    <td style="padding: 8px; font-weight: 600;">₱{{ number_format($ar->total_amount, 2) }}</td>
+                    <td style="padding: 8px; color: var(--success);">₱{{ number_format($ar->amount_paid, 2) }}</td>
+                    <td style="padding: 8px; font-weight: 700; color: #2563EB;">₱{{ number_format($ar->balance, 2) }}</td>
+                    <td style="padding: 8px;">
+                        @if($ar->status === 'Paid')
+                            <span class="badge badge-paid">{{ $ar->status }}</span>
+                        @elseif($ar->status === 'Partially Paid')
+                            <span class="badge badge-partially-paid">{{ $ar->status }}</span>
+                        @elseif($ar->status === 'Overdue')
+                            <span class="badge badge-unpaid">{{ $ar->status }}</span>
+                        @else
+                            <span class="badge badge-default">{{ $ar->status }}</span>
+                        @endif
                     </td>
-                    <td class="px-4 py-3 flex flex-wrap gap-2">
-                        <button type="button" data-id="{{ $ar->ar_id }}" class="view-details inline-flex items-center gap-2 border border-gray-200 hover:border-gray-300 px-3 py-1.5 rounded-lg text-sm">
-                            <i class="fa-regular fa-eye"></i> View Details
+                    <td style="padding: 8px;">
+                        <button type="button" data-id="{{ $ar->ar_id }}" class="btn btn-sm btn-info view-details" style="gap: 0.5rem;">
+                            <i class="fa-regular fa-eye"></i> View
                         </button>
                     </td>
                 </tr>
                 @endforeach
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <div class="mt-4">{{ $ars->links() }}</div>
+    <div style="margin-top: 1rem;">{{ $ars->links() }}</div>
 
     <!-- View Details Modal -->
-    <div id="arModal" class="fixed inset-0 z-[1000] hidden items-center justify-center bg-black/30 p-4">
-        <div class="w-full max-w-3xl rounded-2xl bg-white shadow-xl overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-4 border-b">
-                <h3 class="text-lg font-semibold">AR Details</h3>
-                <button class="close-ar-modal text-gray-500 hover:text-gray-700"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="p-6 grid md:grid-cols-2 gap-4 text-sm" id="arModalBody">
-                <div>
-                    <div class="text-gray-500">Customer</div>
-                    <div class="font-medium" id="mdCustomer">—</div>
+    <div class="modal" id="arModal" tabindex="-1" style="display: none;">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 8px;">
+                <div class="modal-header" style="padding: 1rem 1.5rem;">
+                    <h5 class="modal-title" style="font-size: 20px; font-weight: 600;">AR Details</h5>
+                    <button type="button" class="btn-close close-ar-modal" aria-label="Close"></button>
                 </div>
-                <div>
-                    <div class="text-gray-500">Invoice #</div>
-                    <div class="font-medium" id="mdInvoice">—</div>
+                <div class="modal-body" style="padding: 1.5rem;">
+                    <div class="row g-3" id="arModalBody">
+                        <div class="col-md-6">
+                            <div style="font-size: 14px; color: var(--text-muted);">Customer</div>
+                            <div style="font-weight: 500;" id="mdCustomer">—</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div style="font-size: 14px; color: var(--text-muted);">Invoice #</div>
+                            <div style="font-weight: 500;" id="mdInvoice">—</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div style="font-size: 14px; color: var(--text-muted);">Invoice Date</div>
+                            <div style="font-weight: 500;" id="mdInvDate">—</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div style="font-size: 14px; color: var(--text-muted);">Due Date</div>
+                            <div style="font-weight: 500;" id="mdDue">—</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div style="font-size: 14px; color: var(--text-muted);">Total</div>
+                            <div style="font-weight: 600;" id="mdTotal">—</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div style="font-size: 14px; color: var(--text-muted);">Paid</div>
+                            <div style="font-weight: 600;" id="mdPaid">—</div>
+                        </div>
+                        <div class="col-12">
+                            <div style="font-size: 14px; color: var(--text-muted);">Balance</div>
+                            <div style="font-size: 20px; font-weight: 700; color: #2563EB;" id="mdBalance">—</div>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <div class="text-gray-500">Invoice Date</div>
-                    <div class="font-medium" id="mdInvDate">—</div>
+                <div class="modal-footer" style="padding: 1rem 1.5rem;">
+                    <button type="button" class="btn close-ar-modal" style="border: 1px solid var(--border-card); background: white;">Close</button>
+                    <button type="button" class="btn btn-primary open-payment-from-details">Record Payment</button>
                 </div>
-                <div>
-                    <div class="text-gray-500">Due Date</div>
-                    <div class="font-medium" id="mdDue">—</div>
-                </div>
-                <div>
-                    <div class="text-gray-500">Total</div>
-                    <div class="font-semibold" id="mdTotal">—</div>
-                </div>
-                <div>
-                    <div class="text-gray-500">Paid</div>
-                    <div class="font-semibold" id="mdPaid">—</div>
-                </div>
-                <div class="md:col-span-2">
-                    <div class="text-gray-500">Balance</div>
-                    <div class="text-xl font-bold text-cyan-700" id="mdBalance">—</div>
-                </div>
-            </div>
-            <div class="px-6 py-4 border-t flex justify-end gap-2">
-                <button class="close-ar-modal border border-gray-200 px-4 py-2 rounded-lg">Close</button>
-                <button class="open-payment-from-details bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-4 py-2 rounded-lg">Record Payment</button>
             </div>
         </div>
     </div>
 
     <!-- Record Payment Modal -->
-    <div id="paymentModal" class="fixed inset-0 z-[1000] hidden items-center justify-center bg-black/30 p-4">
-        <div class="w-full max-w-lg rounded-2xl bg-white shadow-xl overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-4 border-b">
-                <h3 class="text-lg font-semibold">Record Payment</h3>
-                <button class="close-payment-modal text-gray-500 hover:text-gray-700"><i class="fa-solid fa-xmark"></i></button>
+    <div class="modal" id="paymentModal" tabindex="-1" style="display: none;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 8px;">
+                <div class="modal-header" style="padding: 1rem 1.5rem;">
+                    <h5 class="modal-title" style="font-size: 20px; font-weight: 600;">Record Payment</h5>
+                    <button type="button" class="btn-close close-payment-modal" aria-label="Close"></button>
+                </div>
+                <form id="paymentForm" method="POST" action="#" enctype="multipart/form-data">
+                <div class="modal-body" style="padding: 1.5rem;">
+                    @csrf
+                    <input type="hidden" name="ar_id" id="pmArId" />
+                    <div class="mb-3">
+                        <label class="form-label">Payment Date</label>
+                        <input type="date" name="payment_date" id="pmDate" class="form-control" value="{{ now()->toDateString() }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Payment Method</label>
+                        <select name="payment_method" id="pmMethod" class="form-select" required>
+                            <option>Cash</option>
+                            <option>GCash</option>
+                            <option>Bank Transfer</option>
+                            <option>Check</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Payment Type</label>
+                        <select name="payment_type" id="pmType" class="form-select" required>
+                            <option value="Full">Full</option>
+                            <option value="Partial">Partial</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reference #</label>
+                        <input type="text" name="reference_number" id="pmRef" class="form-control" placeholder="Required if not cash">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Official Receipt (Image/PDF)</label>
+                        <input type="file" name="or_file" id="pmOr" class="form-control" accept="image/*,application/pdf">
+                        <small style="font-size: 14px; color: var(--text-muted);">Required if not cash.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Amount</label>
+                        <input type="number" min="0.01" step="0.01" name="amount" id="pmAmount" class="form-control" placeholder="0.00" required>
+                        <small style="font-size: 14px; color: var(--text-muted);">Outstanding: <span id="pmMax" data-value="0">—</span></small>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 1rem 1.5rem;">
+                    <button type="button" class="btn close-payment-modal" style="border: 1px solid var(--border-card); background: white;">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Payment</button>
+                </div>
+                </form>
             </div>
-            <form id="paymentForm" method="POST" action="#" class="p-6 space-y-4">
-                @csrf
-                <input type="hidden" name="ar_id" id="pmArId" />
-                <div>
-                    <label class="block text-xs text-gray-500">Payment Date</label>
-                    <input type="date" name="payment_date" id="pmDate" class="w-full border border-gray-200 rounded-lg px-3 py-2" value="{{ now()->toDateString() }}" required>
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-500">Payment Method</label>
-                    <select name="payment_method" id="pmMethod" class="w-full border border-gray-200 rounded-lg px-3 py-2" required>
-                        <option>Cash</option>
-                        <option>GCash</option>
-                        <option>Bank Transfer</option>
-                        <option>Check</option>
-                    </select>
-                </div>
-                <div id="gcashQrContainer" class="hidden mt-3 text-center border border-gray-200 rounded-lg p-3">
-                  <p class="text-sm text-gray-600 mb-2">Scan this GCash QR to pay:</p>
-                  <div id="gcashQrCode"></div>
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-500">Reference #</label>
-                    <input type="text" name="reference_number" id="pmRef" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="Optional">
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-500">Amount</label>
-                    <input type="number" min="0.01" step="0.01" name="amount" id="pmAmount" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="0.00" required>
-                    <small class="text-xs text-gray-500">Max: <span id="pmMax">—</span></small>
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" class="close-payment-modal border border-gray-200 px-4 py-2 rounded-lg">Cancel</button>
-                    <button type="submit" class="bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-4 py-2 rounded-lg">Save Payment</button>
-                </div>
-            </form>
         </div>
     </div>
 
     <!-- Totals Breakdown Modal -->
-    <div id="totalsModal" class="fixed inset-0 z-[1000] hidden items-center justify-center bg-black/30 p-4">
-        <div class="w-full max-w-4xl rounded-2xl bg-white shadow-xl overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-4 border-b">
-                <div>
-                    <h3 id="totalsTitle" class="text-lg font-semibold">Totals Breakdown</h3>
-                    <div class="text-sm text-gray-500">Sum: <span id="totalsSum">—</span></div>
+    <div class="modal" id="totalsModal" tabindex="-1" style="display: none;">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" style="border-radius: 8px;">
+                <div class="modal-header" style="padding: 1rem 1.5rem;">
+                    <div>
+                        <h5 class="modal-title" style="font-size: 20px; font-weight: 600;" id="totalsTitle">Totals Breakdown</h5>
+                        <div style="font-size: 14px; color: var(--text-muted);">Sum: <span id="totalsSum">—</span></div>
+                    </div>
+                    <button type="button" class="btn-close close-totals-modal" aria-label="Close"></button>
                 </div>
-                <button class="close-totals-modal text-gray-500 hover:text-gray-700"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="p-6 overflow-auto">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-gray-50 text-left" id="totalsHead"></thead>
-                    <tbody class="divide-y divide-gray-100" id="totalsBody"></tbody>
-                </table>
-            </div>
-            <div class="px-6 py-4 border-t flex justify-end">
-                <button class="close-totals-modal border border-gray-200 px-4 py-2 rounded-lg">Close</button>
+                <div class="modal-body" style="padding: 1.5rem;">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-dark" id="totalsHead"></thead>
+                            <tbody id="totalsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 1rem 1.5rem;">
+                    <button type="button" class="btn close-totals-modal" style="border: 1px solid var(--border-card); background: white;">Close</button>
+                </div>
             </div>
         </div>
     </div>
@@ -268,13 +298,13 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const arModal = document.getElementById('arModal');
-        const paymentModal = document.getElementById('paymentModal');
-        const totalsModal = document.getElementById('totalsModal');
+        const arModal = new bootstrap.Modal(document.getElementById('arModal'));
+        const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
+        const totalsModal = new bootstrap.Modal(document.getElementById('totalsModal'));
         let currentAR = null;
 
-        function open(el){ el.classList.remove('hidden'); el.classList.add('flex'); }
-        function close(el){ el.classList.add('hidden'); el.classList.remove('flex'); }
+        function open(modal){ modal.show(); }
+        function close(modal){ modal.hide(); }
 
         document.querySelectorAll('.view-details').forEach(btn => {
             btn.addEventListener('click', async () => {
@@ -309,8 +339,12 @@
                 currentAR = ar;
                 const balance = Math.max(0, Number(ar.total_amount) - Number(ar.amount_paid));
                 document.getElementById('pmArId').value = ar.ar_id;
-                document.getElementById('pmAmount').value = balance.toFixed(2);
-                document.getElementById('pmMax').textContent = `₱${balance.toLocaleString(undefined,{minimumFractionDigits:2})}`;
+                const pmAmount = document.getElementById('pmAmount');
+                const pmMax = document.getElementById('pmMax');
+                pmMax.textContent = `₱${balance.toLocaleString(undefined,{minimumFractionDigits:2})}`;
+                pmMax.dataset.value = String(balance.toFixed(2));
+                const pmType = document.getElementById('pmType');
+                if ((pmType.value||'Full') === 'Full') { pmAmount.value = balance.toFixed(2); pmAmount.readOnly = true; } else { pmAmount.readOnly = false; pmAmount.value = ''; }
                 const form = document.getElementById('paymentForm');
                 form.action = `/accounts-receivable/${ar.ar_id}/payment`;
                 open(paymentModal);
@@ -322,8 +356,12 @@
             if(!currentAR) return;
             const balance = Math.max(0, Number(currentAR.total_amount) - Number(currentAR.amount_paid));
             document.getElementById('pmArId').value = currentAR.ar_id;
-            document.getElementById('pmAmount').value = balance.toFixed(2);
-            document.getElementById('pmMax').textContent = `₱${balance.toLocaleString(undefined,{minimumFractionDigits:2})}`;
+            const pmAmount = document.getElementById('pmAmount');
+            const pmMax = document.getElementById('pmMax');
+            pmMax.textContent = `₱${balance.toLocaleString(undefined,{minimumFractionDigits:2})}`;
+            pmMax.dataset.value = String(balance.toFixed(2));
+            const pmType = document.getElementById('pmType');
+            if ((pmType.value||'Full') === 'Full') { pmAmount.value = balance.toFixed(2); pmAmount.readOnly = true; } else { pmAmount.readOnly = false; pmAmount.value=''; }
             const form = document.getElementById('paymentForm');
             form.action = `/accounts-receivable/${currentAR.ar_id}/payment`;
             close(arModal); open(paymentModal);
@@ -331,15 +369,34 @@
 
         // Validate amount > 0
         document.getElementById('paymentForm').addEventListener('submit', (e) => {
-            const amount = parseFloat(document.getElementById('pmAmount').value || '0');
-            if(amount <= 0){ e.preventDefault(); Swal && Swal.fire('Invalid Amount','Please enter an amount greater than 0.00','warning'); }
+            const pmMethod = document.getElementById('pmMethod');
+            const pmRef = document.getElementById('pmRef');
+            const pmFile = document.getElementById('pmOr');
+            const pmType = document.getElementById('pmType');
+            const pmAmount = document.getElementById('pmAmount');
+            const pmMax = document.getElementById('pmMax');
+            const out = parseFloat(pmMax.dataset.value || '0');
+            const amt = parseFloat(pmAmount.value || '0');
+            const isCash = (pmMethod.value||'').toLowerCase() === 'cash';
+            if (!isCash && !pmRef.value.trim()) { e.preventDefault(); return Swal && Swal.fire('Missing Reference','Reference number is required for non-cash payments.','warning'); }
+            if (!isCash && !pmFile.files.length) { e.preventDefault(); return Swal && Swal.fire('Missing OR','Please upload the Official Receipt (image/PDF) for non-cash payments.','warning'); }
+            if ((pmType.value||'Full') === 'Full') {
+                if (Math.abs(amt - out) > 0.009) { e.preventDefault(); return Swal && Swal.fire('Invalid Amount','Full payment must match the outstanding balance.','error'); }
+            } else {
+                if (!(amt > 0 && amt < out)) { e.preventDefault(); return Swal && Swal.fire('Invalid Amount','Partial payment must be > 0 and < outstanding.','error'); }
+            }
         });
 
         // Dynamic GCash QR loading
         const pmMethod = document.getElementById('pmMethod');
         const gcashQrContainer = document.getElementById('gcashQrContainer');
         const gcashQrCode = document.getElementById('gcashQrCode');
+        const pmType = document.getElementById('pmType');
+        const pmRef = document.getElementById('pmRef');
+        const pmOr = document.getElementById('pmOr');
         pmMethod.addEventListener('change', async () => {
+            const isCash = (pmMethod.value||'').toLowerCase() === 'cash';
+            pmRef.required = !isCash; pmOr.required = !isCash;
             if (pmMethod.value.toLowerCase() === 'gcash') {
                 const arId = document.getElementById('pmArId').value;
                 const amount = document.getElementById('pmAmount').value;
@@ -371,6 +428,14 @@
                 gcashQrContainer.classList.add('hidden');
                 gcashQrCode.innerHTML = "";
             }
+        });
+
+        // Payment type changes amount behavior
+        pmType.addEventListener('change', () => {
+            const pmAmount = document.getElementById('pmAmount');
+            const out = parseFloat(document.getElementById('pmMax').dataset.value || '0');
+            if ((pmType.value||'Full') === 'Full') { pmAmount.value = out.toFixed(2); pmAmount.readOnly = true; }
+            else { pmAmount.readOnly = false; if (!pmAmount.value || parseFloat(pmAmount.value) >= out) pmAmount.value = ''; }
         });
 
         // Metric cards -> totals breakdown modal

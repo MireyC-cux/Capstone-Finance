@@ -150,10 +150,10 @@ class PayrollController extends Controller
         $endDate = $payroll->pay_period_end ?? $payroll->end_date ?? null;
         $deductions = ['income_tax' => 0, 'sss' => 0, 'philhealth' => 0, 'pagibig' => 0];
         if ($startDate && $endDate) {
-            $sum = \DB::table('deductions')
+            $sum = DB::table('deductions')
                 ->selectRaw('COALESCE(SUM(income_tax),0) as income_tax, COALESCE(SUM(sss),0) as sss, COALESCE(SUM(philhealth),0) as philhealth, COALESCE(SUM(pagibig),0) as pagibig')
                 ->where('employeeprofiles_id', $emp->employeeprofiles_id)
-                ->whereBetween('created_at', [\Carbon\Carbon::parse($startDate)->startOfDay(), \Carbon\Carbon::parse($endDate)->endOfDay()])
+                ->whereBetween('created_at', [Carbon::parse($startDate)->startOfDay(), Carbon::parse($endDate)->endOfDay()])
                 ->first();
             if ($sum) {
                 $deductions = [
@@ -301,10 +301,10 @@ class PayrollController extends Controller
 
     protected function getApprovedOtHours(EmployeeProfile $emp, Carbon $start, Carbon $end): int
     {
-        return (int) (\App\Models\LeaveOvertimeRequest::where('employeeprofiles_id', $emp->employeeprofiles_id)
+        return (int) (\App\Models\OvertimeRequest::where('employeeprofiles_id', $emp->employeeprofiles_id)
             ->where('status', 'approved')
-            ->whereBetween('request_date', [$start->startOfDay(), $end->endOfDay()])
-            ->sum('overtime_hours') ?? 0);
+            ->whereBetween('approved_date', [$start->startOfDay(), $end->endOfDay()])
+            ->sum('hours') ?? 0);
     }
 
     protected function getApprovedCashAdvanceTotal(EmployeeProfile $emp, Carbon $start, Carbon $end): float

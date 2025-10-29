@@ -5,12 +5,12 @@
     left: 0;
     width: 260px;
     height: 100%;
-    background: linear-gradient(180deg, #dc2626 0%, #ea580c 50%, #f97316 100%);
+    background: linear-gradient(180deg, #E65C33 0%, #F57C42 50%, #B53D20 100%);
     color: #fff;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
     z-index: 1000;
-    box-shadow: 4px 0 24px rgba(220, 38, 38, 0.15);
+    box-shadow: 4px 0 24px rgba(230, 92, 51, 0.15);
 }
 
 .sidebar.collapsed {
@@ -119,7 +119,7 @@
     left: 260px;
     right: 0;
     height: 70px;
-    background: linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #f97316 100%);
+    background: #2C2C2C;
     color: #fff;
     display: flex;
     align-items: center;
@@ -127,7 +127,7 @@
     padding: 0 2rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 999;
-    box-shadow: 0 4px 20px rgba(220, 38, 38, 0.15);
+    box-shadow: 0 4px 20px rgba(44, 44, 44, 0.15);
     backdrop-filter: blur(10px);
 }
 
@@ -249,7 +249,7 @@
 
 .account-avatar {
     background: linear-gradient(135deg, #fff 0%, #fef3c7 100%);
-    color: #dc2626;
+    color: #E65C33;
     width: 38px;
     height: 38px;
     border-radius: 50%;
@@ -272,7 +272,7 @@
     margin-top: 70px;
     padding: 2rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: linear-gradient(135deg, #fef2f2 0%, #fff7ed 100%);
+    background: #F4F7FA;
     min-height: calc(100vh - 70px);
 }
 
@@ -283,7 +283,7 @@
 /* Content Styling */
 .content h1 {
     font-size: 2.5rem;
-    background: linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #f97316 100%);
+    background: linear-gradient(135deg, #E65C33 0%, #F57C42 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -293,7 +293,7 @@
 }
 
 .content p {
-    color: #78716c;
+    color: #5A6B7A;
     font-size: 1.1rem;
     line-height: 1.7;
 }

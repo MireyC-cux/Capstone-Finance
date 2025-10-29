@@ -81,9 +81,8 @@
                         ($it->end_date ? ' - '.\Carbon\Carbon::parse($it->end_date)->format('m/d/y') : '');
             $qty = (int)($it->quantity ?? 1);
             $unit = (float)($it->unit_price ?? 0);
-            $extrasTotal = ($it->extras ?? collect())->sum(fn($e)=> (int)$e->qty * (float)$e->price);
-            $line = ($qty * $unit) + $extrasTotal;
-            $grand += $line;
+            $lineBase = ($qty * $unit);
+            $grand += $lineBase;
           @endphp
           <tr>
             <td>{{ $dateRange }}</td>
@@ -91,8 +90,28 @@
             <td class="text-uppercase">{{ $it->service->service_type ?? 'GENERAL CLEANING' }}</td>
             <td class="text-end">{{ number_format($qty) }}</td>
             <td class="text-end">{{ number_format($unit, 2) }}</td>
-            <td class="text-end">{{ number_format($line, 2) }}</td>
+            <td class="text-end">{{ number_format($lineBase, 2) }}</td>
           </tr>
+          @foreach(($it->extras ?? collect()) as $ex)
+            @php
+              $exQty = (int)($ex->qty ?? 1);
+              $exPrice = (float)($ex->price ?? 0);
+              $exAmt = $exQty * $exPrice;
+              $grand += $exAmt;
+            @endphp
+            <tr>
+              <td class="text-muted">&nbsp;</td>
+              <td class="text-muted text-uppercase">&nbsp;</td>
+              <td>
+                <span class="text-muted">Extra:</span>
+                {{ $ex->name }}
+                <span class="text-muted">(for {{ $it->service->service_type ?? ($it->service_type ?? 'Service') }})</span>
+              </td>
+              <td class="text-end">{{ number_format($exQty) }}</td>
+              <td class="text-end">{{ number_format($exPrice, 2) }}</td>
+              <td class="text-end">{{ number_format($exAmt, 2) }}</td>
+            </tr>
+          @endforeach
         @endforeach
         <tr>
           <td colspan="4"></td>

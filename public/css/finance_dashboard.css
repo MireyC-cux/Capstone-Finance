@@ -1,8 +1,8 @@
 /* Base card */
 .card {
-  background: #fff;
+  background: #FAFAFA;
   border-radius: 14px;
-  border: 1px solid #f1f5f9;
+  border: 1px solid #D9E2EC;
   box-shadow: 0 4px 16px rgba(0,0,0,0.04);
 }
 
@@ -38,7 +38,7 @@
 
 .card-content h3 {
   font-size: 0.9rem;
-  color: #78716c;
+  color: #5A6B7A;
   margin-bottom: 0.5rem;
   font-weight: 600;
 }
@@ -46,7 +46,7 @@
 .stats-value {
   font-size: 1.8rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #dc2626, #ea580c);
+  background: linear-gradient(135deg, #E65C33, #F57C42);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -54,8 +54,8 @@
 }
 
 .stats-change { font-size: 0.85rem; font-weight: 600; }
-.stats-change.positive { color: #16a34a; }
-.stats-change.negative { color: #dc2626; }
+.stats-change.positive { color: #16A34A; }
+.stats-change.negative { color: #D32F2F; }
 
 /* Split row */
 .dashboard-row {
@@ -79,7 +79,7 @@
   align-items: center;
   justify-content: center;
   height: 300px;
-  background: linear-gradient(135deg, #fef2f2, #fff7ed);
+  background: linear-gradient(135deg, #F4F7FA, #FAFAFA);
   border-radius: 12px;
   margin-top: 1.5rem;
 }
@@ -92,7 +92,7 @@
 .activity-card > h2 {
   position: sticky;
   top: 0;
-  background: #fff;
+  background: #FAFAFA;
   z-index: 1;
   padding-bottom: 0.5rem;
 }
@@ -108,7 +108,7 @@
 }
 
 .activity-item:hover {
-  background: linear-gradient(135deg, #fef2f2, #fff7ed);
+  background: linear-gradient(135deg, #F4F7FA, #FAFAFA);
   transform: translateX(5px);
 }
 
@@ -123,8 +123,8 @@
 }
 
 .activity-content { flex: 1; }
-.activity-title { font-weight: 600; color: #333; margin-bottom: 0.25rem; }
-.activity-time { font-size: 0.85rem; color: #78716c; }
+.activity-title { font-weight: 600; color: #212121; margin-bottom: 0.25rem; }
+.activity-time { font-size: 0.85rem; color: #5A6B7A; }
 
 @media (max-width: 1024px) {
   .dashboard-row { grid-template-columns: 1fr; }

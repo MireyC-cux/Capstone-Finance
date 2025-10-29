@@ -1,0 +1,688 @@
+/**
+ * Finance Management System - Color Scheme
+ * Comprehensive color definitions following brand guidelines
+ */
+
+:root {
+    /* ============================================
+       CORE BRAND COLORS
+       ============================================ */
+    --brand-primary: #E65C33;
+    --brand-primary-hover: #F57C42;
+    --brand-premium: #D9532A;
+    --brand-premium-hover: #E36A3A;
+    --brand-sidebar-gradient-end: #B53D20;
+
+    /* ============================================
+       TOPBAR & SIDEBAR
+       ============================================ */
+    --topbar-bg: #2C2C2C;
+    --sidebar-gradient-start: var(--brand-primary);
+    --sidebar-gradient-mid: var(--brand-primary-hover);
+    --sidebar-gradient-end: var(--brand-sidebar-gradient-end);
+
+    /* ============================================
+       BACKGROUND & LAYOUT
+       ============================================ */
+    --bg-main: #F4F7FA;
+    --bg-card: #FAFAFA;
+    --border-card: #D9E2EC;
+    --bg-white: #FFFFFF;
+
+    /* ============================================
+       TEXT COLORS
+       ============================================ */
+    --text-primary: #212121;
+    --text-secondary: #5A6B7A;
+    --text-muted: #6B7280;
+    --text-pdf-primary: #111;
+    --text-pdf-label: #333;
+    --text-pdf-muted: #555;
+
+    /* ============================================
+       SEMANTIC COLORS
+       ============================================ */
+    --success: #00897B;
+    --info: #3A7CA5;
+    --warning: #FFB300;
+    --danger: #D32F2F;
+
+    /* ============================================
+       SERVICE TYPE COLORS
+       ============================================ */
+    --service-cleaning: #00897B;
+    --service-installation: #3A7CA5;
+    --service-repair: #D32F2F;
+
+    /* ============================================
+       CHART COLORS - FINANCIAL REPORTS
+       ============================================ */
+    --chart-revenue-trend: #2563EB;
+    --chart-revenue: #16A34A;
+    --chart-payroll: #059669;
+    --chart-profit: #111827;
+    --chart-expense: #EF4444;
+    --chart-expense-segment-1: #F87171;
+    --chart-expense-segment-2: #FB923C;
+    --chart-expense-segment-3: #FBBF24;
+    --chart-expense-segment-4: #34D399;
+    --chart-expense-segment-5: #60A5FA;
+    --chart-expense-segment-6: #A78BFA;
+    --chart-expense-segment-7: #F472B6;
+    --chart-expense-segment-8: #4ADE80;
+    --chart-outflow: #F87171;
+    --chart-inflow: #60A5FA;
+    --chart-tax: #A78BFA;
+
+    /* ============================================
+       PAYMENT STATUS COLORS
+       ============================================ */
+    --status-paid: #10B981;
+    --status-partially-paid: #F59E0B;
+    --status-unpaid: #DC3545;
+
+    /* ============================================
+       CHART COLORS - SERVICE REPORTS
+       ============================================ */
+    --chart-monthly-revenue: #0D6EFD;
+    --chart-service-type: #6F42C1;
+    --chart-aircon-type: #20C997;
+    --chart-service-status: #FFC107;
+    --chart-completed: #198754;
+    --chart-ongoing: #0DCAF0;
+    --chart-weekly-frequency: #0DCAF0;
+    --chart-top-suppliers: #0DCAF0;
+    --chart-expense-trend: #DC3545;
+    --chart-average-duration: #FD7E14;
+    --chart-generic: #6C757D;
+
+    /* ============================================
+       INTERACTIVE ELEMENTS
+       ============================================ */
+    --btn-disabled-bg: #E0E0E0;
+    --btn-disabled-text: #9E9E9E;
+    --event-service: #107C10;
+    --link-active: #3A7CA5;
+
+    /* ============================================
+       BORDERS & DIVIDERS
+       ============================================ */
+    --border-default: #E5E7EB;
+    --border-light: #E9ECEF;
+    --border-pdf: #444;
+    --border-pdf-underline: #999;
+    --badge-bg: #F3F4F6;
+    --badge-text: #374151;
+
+    /* ============================================
+       PDF SPECIAL COLORS
+       ============================================ */
+    --pdf-table-header-bg: #F9FAFB;
+    --pdf-table-header-alt: #EFEFEF;
+    --pdf-signature-line: #000;
+    --pdf-company-highlight: #B91C1C;
+}
+
+/* ============================================
+   UTILITY CLASSES - BACKGROUNDS
+   ============================================ */
+.bg-brand-primary { background-color: var(--brand-primary) !important; }
+.bg-brand-primary-hover { background-color: var(--brand-primary-hover) !important; }
+.bg-brand-premium { background-color: var(--brand-premium) !important; }
+.bg-topbar { background-color: var(--topbar-bg) !important; }
+.bg-main { background-color: var(--bg-main) !important; }
+.bg-card { background-color: var(--bg-card) !important; }
+.bg-white { background-color: var(--bg-white) !important; }
+
+/* Semantic Backgrounds */
+.bg-success { background-color: var(--success) !important; }
+.bg-info { background-color: var(--info) !important; }
+.bg-warning { background-color: var(--warning) !important; }
+.bg-danger { background-color: var(--danger) !important; }
+
+/* Status Backgrounds */
+.bg-paid { background-color: var(--status-paid) !important; }
+.bg-partially-paid { background-color: var(--status-partially-paid) !important; }
+.bg-unpaid { background-color: var(--status-unpaid) !important; }
+
+/* ============================================
+   UTILITY CLASSES - TEXT COLORS
+   ============================================ */
+.text-brand-primary { color: var(--brand-primary) !important; }
+.text-brand-primary-hover { color: var(--brand-primary-hover) !important; }
+.text-primary { color: var(--text-primary) !important; }
+.text-secondary { color: var(--text-secondary) !important; }
+.text-muted { color: var(--text-muted) !important; }
+
+/* Semantic Text Colors */
+.text-success { color: var(--success) !important; }
+.text-info { color: var(--info) !important; }
+.text-warning { color: var(--warning) !important; }
+.text-danger { color: var(--danger) !important; }
+
+/* Status Text Colors */
+.text-paid { color: var(--status-paid) !important; }
+.text-partially-paid { color: var(--status-partially-paid) !important; }
+.text-unpaid { color: var(--status-unpaid) !important; }
+
+/* ============================================
+   UTILITY CLASSES - BORDERS
+   ============================================ */
+.border-card { border-color: var(--border-card) !important; }
+.border-default { border-color: var(--border-default) !important; }
+.border-light { border-color: var(--border-light) !important; }
+
+/* ============================================
+   BUTTON STYLES WITH BRAND COLORS
+   ============================================ */
+.btn-primary {
+    background-color: var(--brand-primary);
+    border-color: var(--brand-primary);
+    color: var(--bg-white);
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: var(--brand-primary-hover);
+    border-color: var(--brand-primary-hover);
+    color: var(--bg-white);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(230, 92, 51, 0.3);
+}
+
+.btn-primary:active,
+.btn-primary:focus {
+    background-color: var(--brand-premium);
+    border-color: var(--brand-premium);
+}
+
+.btn-premium {
+    background-color: var(--brand-premium);
+    border-color: var(--brand-premium);
+    color: var(--bg-white);
+    transition: all 0.3s ease;
+}
+
+.btn-premium:hover {
+    background-color: var(--brand-premium-hover);
+    border-color: var(--brand-premium-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(217, 83, 42, 0.3);
+}
+
+.btn-success {
+    background-color: var(--success);
+    border-color: var(--success);
+    color: var(--bg-white);
+}
+
+.btn-success:hover {
+    background-color: #00796B;
+    border-color: #00796B;
+    transform: translateY(-2px);
+}
+
+.btn-info {
+    background-color: var(--info);
+    border-color: var(--info);
+    color: var(--bg-white);
+}
+
+.btn-info:hover {
+    background-color: #2F6690;
+    border-color: #2F6690;
+    transform: translateY(-2px);
+}
+
+.btn-warning {
+    background-color: var(--warning);
+    border-color: var(--warning);
+    color: var(--text-primary);
+}
+
+.btn-warning:hover {
+    background-color: #FFA000;
+    border-color: #FFA000;
+    transform: translateY(-2px);
+}
+
+.btn-danger {
+    background-color: var(--danger);
+    border-color: var(--danger);
+    color: var(--bg-white);
+}
+
+.btn-danger:hover {
+    background-color: #C62828;
+    border-color: #C62828;
+    transform: translateY(-2px);
+}
+
+.btn-disabled,
+.btn:disabled {
+    background-color: var(--btn-disabled-bg);
+    color: var(--btn-disabled-text);
+    border-color: var(--btn-disabled-bg);
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ============================================
+   BADGE STYLES WITH STATUS COLORS
+   ============================================ */
+.badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.375rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.badge-paid {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--status-paid);
+    border: 1px solid var(--status-paid);
+}
+
+.badge-partially-paid {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--status-partially-paid);
+    border: 1px solid var(--status-partially-paid);
+}
+
+.badge-unpaid {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: var(--status-unpaid);
+    border: 1px solid var(--status-unpaid);
+}
+
+.badge-cleaning {
+    background-color: rgba(0, 137, 123, 0.1);
+    color: var(--service-cleaning);
+    border: 1px solid var(--service-cleaning);
+}
+
+.badge-installation {
+    background-color: rgba(58, 124, 165, 0.1);
+    color: var(--service-installation);
+    border: 1px solid var(--service-installation);
+}
+
+.badge-repair {
+    background-color: rgba(211, 47, 47, 0.1);
+    color: var(--service-repair);
+    border: 1px solid var(--service-repair);
+}
+
+.badge-completed {
+    background-color: rgba(25, 135, 84, 0.1);
+    color: var(--chart-completed);
+    border: 1px solid var(--chart-completed);
+}
+
+.badge-ongoing {
+    background-color: rgba(13, 202, 240, 0.1);
+    color: var(--chart-ongoing);
+    border: 1px solid var(--chart-ongoing);
+}
+
+.badge-default {
+    background-color: var(--badge-bg);
+    color: var(--badge-text);
+    border: 1px solid var(--border-default);
+}
+
+/* ============================================
+   CARD STYLES
+   ============================================ */
+.card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: 0.875rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background-color: var(--bg-white);
+    border-bottom: 1px solid var(--border-card);
+    padding: 1.25rem 1.5rem;
+    border-radius: 0.875rem 0.875rem 0 0;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-footer {
+    background-color: var(--bg-white);
+    border-top: 1px solid var(--border-card);
+    padding: 1rem 1.5rem;
+    border-radius: 0 0 0.875rem 0.875rem;
+}
+
+/* ============================================
+   TABLE STYLES
+   ============================================ */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--bg-white);
+}
+
+.table thead {
+    background-color: var(--bg-card);
+    border-bottom: 2px solid var(--border-card);
+}
+
+.table thead th {
+    color: var(--text-primary);
+    font-weight: 600;
+    padding: 1rem;
+    text-align: left;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid var(--border-default);
+    transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: var(--bg-main);
+}
+
+.table tbody td {
+    padding: 1rem;
+    color: var(--text-secondary);
+}
+
+/* ============================================
+   FORM ELEMENTS
+   ============================================ */
+.form-control,
+.form-select,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+textarea,
+select {
+    background-color: var(--bg-white);
+    border: 1px solid var(--border-card);
+    color: var(--text-primary);
+    padding: 0.625rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus,
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px rgba(230, 92, 51, 0.1);
+}
+
+.form-label {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.form-text {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+/* ============================================
+   ALERT STYLES
+   ============================================ */
+.alert {
+    padding: 1rem 1.25rem;
+    border-radius: 0.5rem;
+    border: 1px solid;
+    margin-bottom: 1rem;
+}
+
+.alert-success {
+    background-color: rgba(0, 137, 123, 0.1);
+    color: var(--success);
+    border-color: var(--success);
+}
+
+.alert-info {
+    background-color: rgba(58, 124, 165, 0.1);
+    color: var(--info);
+    border-color: var(--info);
+}
+
+.alert-warning {
+    background-color: rgba(255, 179, 0, 0.1);
+    color: var(--warning);
+    border-color: var(--warning);
+}
+
+.alert-danger {
+    background-color: rgba(211, 47, 47, 0.1);
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+/* ============================================
+   LINK STYLES
+   ============================================ */
+a {
+    color: var(--brand-primary);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: var(--brand-primary-hover);
+    text-decoration: underline;
+}
+
+a.link-active {
+    color: var(--link-active);
+    font-weight: 600;
+}
+
+/* ============================================
+   GRADIENT UTILITIES
+   ============================================ */
+.gradient-brand {
+    background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%);
+}
+
+.gradient-sidebar {
+    background: linear-gradient(180deg, var(--brand-primary) 0%, var(--brand-primary-hover) 50%, var(--brand-sidebar-gradient-end) 100%);
+}
+
+.gradient-topbar {
+    background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 50%, var(--brand-sidebar-gradient-end) 100%);
+}
+
+.gradient-text-brand {
+    background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ============================================
+   CALENDAR EVENT COLORS
+   ============================================ */
+.calendar-event-service {
+    background-color: var(--event-service);
+    color: var(--bg-white);
+}
+
+.calendar-event-reminder {
+    background-color: var(--chart-monthly-revenue);
+    color: var(--bg-white);
+}
+
+.calendar-event-generic {
+    background-color: var(--chart-generic);
+    color: var(--bg-white);
+}
+
+/* ============================================
+   CHART SPECIFIC CLASSES
+   ============================================ */
+.chart-color-revenue { color: var(--chart-revenue); }
+.chart-color-expense { color: var(--chart-expense); }
+.chart-color-profit { color: var(--chart-profit); }
+.chart-color-payroll { color: var(--chart-payroll); }
+
+/* ============================================
+   ICON COLORS
+   ============================================ */
+.icon-brand { color: var(--brand-primary); }
+.icon-success { color: var(--success); }
+.icon-info { color: var(--info); }
+.icon-warning { color: var(--warning); }
+.icon-danger { color: var(--danger); }
+
+/* ============================================
+   PDF SPECIFIC STYLES
+   ============================================ */
+.pdf-container {
+    background-color: var(--bg-white);
+    color: var(--text-pdf-primary);
+}
+
+.pdf-header,
+.pdf-footer {
+    border-bottom: 2px solid var(--border-pdf-underline);
+}
+
+.pdf-table {
+    border: 1px solid var(--border-pdf);
+}
+
+.pdf-table thead {
+    background-color: var(--pdf-table-header-bg);
+}
+
+.pdf-table th,
+.pdf-table td {
+    border: 1px solid var(--border-pdf);
+    padding: 0.5rem;
+}
+
+.pdf-label {
+    color: var(--text-pdf-label);
+    font-weight: 600;
+}
+
+.pdf-value {
+    color: var(--text-pdf-primary);
+}
+
+.pdf-muted {
+    color: var(--text-pdf-muted);
+}
+
+.pdf-company-name {
+    color: var(--pdf-company-highlight);
+    font-weight: 700;
+}
+
+.pdf-signature-line {
+    border-bottom: 2px solid var(--pdf-signature-line);
+}
+
+/* ============================================
+   NOTIFICATION & DROPDOWN STYLES
+   ============================================ */
+.notification-badge {
+    background-color: var(--danger);
+    color: var(--bg-white);
+    border-radius: 50%;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.dropdown-menu {
+    background-color: var(--bg-white);
+    border: 1px solid var(--border-card);
+    border-radius: 0.5rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.dropdown-item {
+    color: var(--text-primary);
+    padding: 0.75rem 1.25rem;
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-main);
+    color: var(--brand-primary);
+}
+
+/* ============================================
+   LOADING & SPINNER
+   ============================================ */
+.spinner-brand {
+    border-top-color: var(--brand-primary);
+    border-right-color: var(--brand-primary);
+}
+
+.loading-overlay {
+    background-color: rgba(244, 247, 250, 0.9);
+}
+
+/* ============================================
+   MODAL STYLES
+   ============================================ */
+.modal-content {
+    background-color: var(--bg-white);
+    border: 1px solid var(--border-card);
+    border-radius: 0.875rem;
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--border-light);
+    padding: 1.5rem;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    border-top: 1px solid var(--border-light);
+    padding: 1rem 1.5rem;
+}
+
+/* ============================================
+   RESPONSIVE UTILITIES
+   ============================================ */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .table {
+        font-size: 0.875rem;
+    }
+    
+    .btn {
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+    }
+}

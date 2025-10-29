@@ -13,7 +13,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Alpine.js for sidebar collapsible groups -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Finance Color Scheme -->
+    <link href="{{ asset('css/finance_colors.css') }}" rel="stylesheet">
+    
     <!-- Finance Sidebar CSS -->
     <link href="{{ asset('css/finance_sidebar.css') }}" rel="stylesheet">
 
@@ -29,31 +39,130 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <button id="sidebarToggle" class="toggle-btn" aria-label="Toggle Sidebar">
-                <i class="fas fa-bars"></i>
-            </button>
+
             <img src="{{ asset('images/finance_logo.svg') }}" class="brand-logo animate-logo" alt="Finance Logo">
             <h4 class="logo-text">Finance</h4>
         </div>
 
-        <nav class="sidebar-menu" aria-label="Finance Navigation">
+        <nav class="sidebar-menu" aria-label="Finance navigation">
             <ul>
-                <li><a href="{{ route('finance.home') }}" class="menu-item {{ request()->routeIs('finance.home') ? 'active' : '' }}"><i class="fas fa-home"></i> <span class="label">Home</span></a></li>
-                <li><a href="{{ route('finance.billing.index') }}" class="menu-item {{ request()->routeIs('finance.billing.*') ? 'active' : '' }}"><i class="fas fa-file-invoice-dollar"></i> <span class="label">Billing & Invoicing</span></a></li>
-                <li><a href="{{ route('finance.accounts-receivable') }}" class="menu-item {{ request()->routeIs('finance.accounts-receivable') ? 'active' : '' }}"><i class="fas fa-receipt"></i> <span class="label">Accounts Receivable (AR)</span></a></li>
-                <li><a href="{{ route('finance.accounts-payable') }}" class="menu-item {{ request()->routeIs('finance.accounts-payable') ? 'active' : '' }}"><i class="fas fa-file-invoice"></i> <span class="label">Accounts Payable (AP)</span></a></li>
-                <li><a href="{{ route('finance.payroll') }}" class="menu-item {{ request()->routeIs('finance.payroll') ? 'active' : '' }}"><i class="fas fa-money-check-alt"></i> <span class="label">Payroll Management</span></a></li>
-                <li><a href="{{ route('finance.cashflow') }}" class="menu-item {{ request()->routeIs('finance.cashflow') ? 'active' : '' }}"><i class="fas fa-chart-line"></i> <span class="label">Cash Flow & Expense Tracking</span></a></li>
-                <li><a href="{{ route('finance.reports') }}" class="menu-item {{ request()->routeIs('finance.reports') ? 'active' : '' }}"><i class="fas fa-chart-bar"></i> <span class="label">Reporting</span></a></li>
-                <li><a href="{{ route('finance.inventory.dashboard') }}" class="menu-item {{ request()->routeIs('finance.inventory.*') ? 'active' : '' }}"><i class="fas fa-boxes"></i> <span class="label">Inventory Management</span></a></li>
-            </ul>
-           <ul>
+                <!-- DASHBOARD -->
+                <li class="menu-title"><i class="fa-solid fa-gauge"></i> Dashboard</li>
+                <hr class="section-divider" />
+                <li>
+                    <a class="menu-item {{ request()->routeIs('finance.home') ? 'active' : '' }}" href="{{ route('finance.home') }}">
+                        <i class="fas fa-home"></i><span class="label">Finance Dashboard</span>
+                    </a>
+                </li>
 
-            <li>
-                <a href="http://Humanresource.test/HR">Admin</a>
-            </li>
-           </ul>
-           
+                <!-- BILLING & INVOICES -->
+                <li class="menu-group" x-data="{ open: {{ (request()->routeIs('finance.billing.*') || request()->routeIs('invoices.*') || request()->routeIs('finance.accounts-receivable') || request()->routeIs('finance.ar.aging')) ? 'true' : 'false' }} }">
+                    <button class="menu-header" @click="open = !open">
+                        <i class="fa-solid fa-file-invoice-dollar"></i><span class="label">Billing & Invoices</span>
+                        <i class="fa-solid fa-chevron-down caret" :class="{ 'rotate-180': open }"></i>
+                    </button>
+                    <hr class="section-divider" />
+                    <div class="submenu" x-show="open" x-transition>
+                        <a class="menu-item {{ request()->routeIs('finance.billing.index') ? 'active' : '' }}" href="{{ route('finance.billing.index') }}"><i class="fa-solid fa-file-invoice"></i><span class="label">Billing</span></a>
+                        <a class="menu-item {{ request()->routeIs('finance.accounts-receivable') ? 'active' : '' }}" href="{{ route('finance.accounts-receivable') }}"><i class="fa-solid fa-hand-holding-dollar"></i><span class="label">Accounts Receivable</span></a>
+                        <a class="menu-item {{ request()->routeIs('invoices.index') ? 'active' : '' }}" href="{{ route('invoices.index') }}"><i class="fa-solid fa-clock-rotate-left"></i><span class="label">Invoice History</span></a>
+                    </div>
+                </li>
+
+                <!-- ACCOUNTS PAYABLE -->
+                <li class="menu-group" x-data="{ open: {{ (request()->routeIs('accounts-payable.*') || request()->routeIs('reports.ap-aging') || request()->routeIs('finance.disbursement.*')) ? 'true' : 'false' }} }">
+                    <button class="menu-header" @click="open = !open">
+                        <i class="fa-solid fa-file-invoice"></i><span class="label">Accounts Payable</span>
+                        <i class="fa-solid fa-chevron-down caret" :class="{ 'rotate-180': open }"></i>
+                    </button>
+                    <hr class="section-divider" />
+                    <div class="submenu" x-show="open" x-transition>
+                        <a class="menu-item {{ request()->routeIs('accounts-payable.index') ? 'active' : '' }}" href="{{ route('accounts-payable.index') }}"><i class="fa-solid fa-credit-card"></i><span class="label">AP Ledger</span></a>
+                        <a class="menu-item {{ request()->routeIs('reports.ap-aging') ? 'active' : '' }}" href="{{ route('reports.ap-aging') }}"><i class="fa-solid fa-hourglass-end"></i><span class="label">AP Aging</span></a>
+                        <a class="menu-item {{ request()->routeIs('finance.disbursement.index') ? 'active' : '' }}" href="{{ route('finance.disbursement.index') }}"><i class="fa-solid fa-wallet"></i><span class="label">Disbursement History</span></a>
+                    </div>
+                </li>
+
+                <!-- PURCHASE ORDERS -->
+                <li class="menu-group" x-data="{ open: {{ (request()->routeIs('purchase-orders.*')) ? 'true' : 'false' }} }">
+                    <button class="menu-header" @click="open = !open">
+                        <i class="fa-solid fa-file-signature"></i><span class="label">Purchase Orders</span>
+                        <i class="fa-solid fa-chevron-down caret" :class="{ 'rotate-180': open }"></i>
+                    </button>
+                    <hr class="section-divider" />
+                    <div class="submenu" x-show="open" x-transition>
+                        <a class="menu-item {{ request()->routeIs('purchase-orders.index') ? 'active' : '' }}" href="{{ route('purchase-orders.index') }}"><i class="fa-solid fa-list"></i><span class="label">All POs</span></a>
+                        <a class="menu-item {{ request()->routeIs('purchase-orders.create') ? 'active' : '' }}" href="{{ route('purchase-orders.create') }}"><i class="fa-solid fa-plus-circle"></i><span class="label">Create PO</span></a>
+                    </div>
+                </li>
+
+                <!-- PAYROLL -->
+                <li class="menu-group" x-data="{ open: {{ (request()->routeIs('finance.payroll*')) ? 'true' : 'false' }} }">
+                    <button class="menu-header" @click="open = !open">
+                        <i class="fa-solid fa-people-carry-box"></i><span class="label">Payroll Management</span>
+                        <i class="fa-solid fa-chevron-down caret" :class="{ 'rotate-180': open }"></i>
+                    </button>
+                    <hr class="section-divider" />
+                    <div class="submenu" x-show="open" x-transition>
+                        <a class="menu-item {{ request()->routeIs('finance.payroll') ? 'active' : '' }}" href="{{ route('finance.payroll') }}"><i class="fa-solid fa-money-bill-wave"></i><span class="label">Payroll</span></a>
+                        <a class="menu-item {{ request()->routeIs('finance.payroll.approvals') ? 'active' : '' }}" href="{{ route('finance.payroll.approvals') }}"><i class="fa-solid fa-circle-check"></i><span class="label">Payroll Approvals</span></a>
+                    </div>
+                </li>
+
+                <!-- CASH FLOW & EXPENSES -->
+                <li class="menu-group" x-data="{ open: {{ (request()->routeIs('finance.cashflow') || request()->routeIs('finance.expenses')) ? 'true' : 'false' }} }">
+                    <button class="menu-header" @click="open = !open">
+                        <i class="fa-solid fa-chart-pie"></i><span class="label">Cash Flow & Expenses</span>
+                        <i class="fa-solid fa-chevron-down caret" :class="{ 'rotate-180': open }"></i>
+                    </button>
+                    <hr class="section-divider" />
+                    <div class="submenu" x-show="open" x-transition>
+                        <a class="menu-item {{ request()->routeIs('finance.cashflow') ? 'active' : '' }}" href="{{ route('finance.cashflow') }}"><i class="fa-solid fa-sack-dollar"></i><span class="label">Cash Flow</span></a>
+                        <a class="menu-item {{ request()->routeIs('finance.expenses') ? 'active' : '' }}" href="{{ route('finance.expenses') }}"><i class="fa-solid fa-money-bill"></i><span class="label">Expenses</span></a>
+                    </div>
+                </li>
+
+                <!-- INVENTORY -->
+                <li class="menu-group" x-data="{ open: {{ (request()->routeIs('finance.inventory.*')) ? 'true' : 'false' }} }">
+                    <button class="menu-header" @click="open = !open">
+                        <i class="fa-solid fa-boxes-stacked"></i><span class="label">Inventory & Supplies</span>
+                        <i class="fa-solid fa-chevron-down caret" :class="{ 'rotate-180': open }"></i>
+                    </button>
+                    <hr class="section-divider" />
+                    <div class="submenu" x-show="open" x-transition>
+                        <a class="menu-item {{ request()->routeIs('finance.inventory.dashboard') ? 'active' : '' }}" href="{{ route('finance.inventory.dashboard') }}"><i class="fa-solid fa-chart-bar"></i><span class="label">Inventory Dashboard</span></a>
+                        <a class="menu-item {{ request()->routeIs('finance.inventory.items.index') ? 'active' : '' }}" href="{{ route('finance.inventory.items.index') }}"><i class="fa-solid fa-cubes"></i><span class="label">Items</span></a>
+                        <a class="menu-item {{ request()->routeIs('finance.inventory.stock-in.index') ? 'active' : '' }}" href="{{ route('finance.inventory.stock-in.index') }}"><i class="fa-solid fa-arrow-down"></i><span class="label">Stock-In</span></a>
+                        <a class="menu-item {{ request()->routeIs('finance.inventory.stock-out.index') ? 'active' : '' }}" href="{{ route('finance.inventory.stock-out.index') }}"><i class="fa-solid fa-arrow-up"></i><span class="label">Stock-Out</span></a>
+                        <a class="menu-item {{ request()->routeIs('finance.inventory.adjustments.index') ? 'active' : '' }}" href="{{ route('finance.inventory.adjustments.index') }}"><i class="fa-solid fa-sliders"></i><span class="label">Adjustments</span></a>
+                        <a class="menu-item {{ request()->routeIs('finance.inventory.reports.index') ? 'active' : '' }}" href="{{ route('finance.inventory.reports.index') }}"><i class="fa-solid fa-file-lines"></i><span class="label">Inventory Reports</span></a>
+                    </div>
+                </li>
+
+                <!-- REPORTS -->
+                <li class="menu-group" x-data="{ open: {{ (request()->routeIs('finance.reports')) ? 'true' : 'false' }} }">
+                    <button class="menu-header" @click="open = !open">
+                        <i class="fa-solid fa-chart-line"></i><span class="label">Reports & Analytics</span>
+                        <i class="fa-solid fa-chevron-down caret" :class="{ 'rotate-180': open }"></i>
+                    </button>
+                    <hr class="section-divider" />
+                    <div class="submenu" x-show="open" x-transition>
+                        <a class="menu-item {{ request()->routeIs('finance.reports') ? 'active' : '' }}" href="{{ route('finance.reports') }}"><i class="fa-solid fa-coins"></i><span class="label">Finance Reports Hub</span></a>
+                    </div>
+                </li>
+
+                <!-- ACCOUNT -->
+                <li class="menu-group" x-data="{ open: false }">
+                    <button class="menu-header" @click="open = !open">
+                        <i class="fa-solid fa-user-lock"></i><span class="label">Account</span>
+                        <i class="fa-solid fa-chevron-down caret" :class="{ 'rotate-180': open }"></i>
+                    </button>
+                    <hr class="section-divider" />
+                    <div class="submenu" x-show="open" x-transition>
+                        <a class="menu-item" href=""><i class="fa-solid fa-right-from-bracket"></i><span class="label">Logout</span></a>
+                    </div>
+                </li>
+            </ul>
         </nav>
     </div>
 
@@ -61,8 +170,7 @@
     <div class="topbar gradient-bar">
         <div class="topbar-left">
             <div class="logo-container">
-                <img src="{{ asset('images/finance_logo.svg') }}" alt="Finance Logo" class="logo">
-                <span class="system-name">Finance Management</span>
+                <img src="{{ asset('images/3Rs_logo.png') }}" alt="3R's Logo" class="logo-3rs">
             </div>
 
             <div class="search-container">
@@ -96,28 +204,29 @@
     <!-- Modern Interactive Scripts -->
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            // Sidebar Toggle with smooth animation
+            // Sidebar Toggle with smooth animation (guard if toggle not present)
             const toggleBtn = document.getElementById('sidebarToggle');
             const sidebar = document.querySelector('.sidebar');
             const topbar = document.querySelector('.topbar');
             const mainContent = document.querySelector('.main-content');
-            
-            toggleBtn.addEventListener('click', function () {
-                sidebar.classList.toggle('collapsed');
-                topbar.classList.toggle('collapsed');
-                mainContent.classList.toggle('expanded');
-                
-                // Save state to localStorage
-                localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
-            });
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function () {
+                    sidebar?.classList.toggle('collapsed');
+                    topbar?.classList.toggle('collapsed');
+                    mainContent?.classList.toggle('expanded');
+                    // Save state to localStorage
+                    localStorage.setItem('sidebarCollapsed', sidebar?.classList.contains('collapsed'));
+                });
+            }
             
             // Restore sidebar state
             if (localStorage.getItem('sidebarCollapsed') === 'true') {
-                sidebar.classList.add('collapsed');
-                topbar.classList.add('collapsed');
-                mainContent.classList.add('expanded');
+                sidebar?.classList.add('collapsed');
+                topbar?.classList.add('collapsed');
+                mainContent?.classList.add('expanded');
             }
-            
+
             // Active menu item animation
             const menuItems = document.querySelectorAll('.menu-item');
             menuItems.forEach(item => {
@@ -175,26 +284,66 @@
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
     @stack('scripts')
 </body>
 <style>
+:root{
+  --sb-grad-top: #e06b48;
+  --sb-grad-mid: #d05837;
+  --sb-grad-bot: #bd553b;
+  --sb-highlight: #d76242;
+  --sb-active-bg: rgba(255,255,255,0.14);
+  --sb-divider: rgba(255,255,255,0.12);
+  --sb-text: #ffffff;
+  --sb-w: 220px;
+  --sb-w-collapsed: 64px;
+  --topbar-h: 56px;
+  /* user-specified theme colors */
+  --clr-topbar-bg: #2C2C2C;
+  --clr-sidebar-grad-start: #E65C33;
+  --clr-sidebar-grad-end: #B53D20;
+}
 /* Sidebar */
 .sidebar {
     position: fixed;
-    top: 0;
+    top: var(--topbar-h);
     left: 0;
     width: 260px;
-    height: 100%;
-    background: linear-gradient(180deg, #dc2626 0%, #ea580c 50%, #f97316 100%);
-    color: #fff;
+    height: calc(100vh - var(--topbar-h));
+    background: linear-gradient(180deg, var(--clr-sidebar-grad-start) 0%, var(--clr-sidebar-grad-end) 100%);
+    color: var(--sb-text);
+    font-family: "Poppins", "Montserrat", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    font-size: 14px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: hidden;
+    overflow-y: auto; /* allow vertical scroll when content exceeds */
+    overflow-x: hidden;
     z-index: 1000;
-    box-shadow: 4px 0 24px rgba(220, 38, 38, 0.15);
+    box-shadow: inset -2px 0 6px rgba(0,0,0,0.12);
+    padding: 10px 8px;
+    /* Firefox scrollbar fallback: keep thumb default, track transparent to reveal gradient */
+    scrollbar-width: thin;
+    scrollbar-color: auto transparent;
 }
 
 .sidebar.collapsed {
-    width: 70px;
+    width: var(--sb-w-collapsed);
+}
+
+/* Sidebar scrollbar styling (WebKit/Blink) */
+.sidebar::-webkit-scrollbar {
+    width: 10px;
+}
+.sidebar::-webkit-scrollbar-track {
+    background: linear-gradient(180deg, var(--clr-sidebar-grad-start) 0%, var(--clr-sidebar-grad-end) 100%);
+}
+/* Keep thumb color as-is (no override) */
+.sidebar::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
 }
 
 .sidebar-header {
@@ -244,43 +393,42 @@
 .sidebar-menu ul li a {
     display: flex;
     align-items: center;
-    padding: 0.9rem 1rem;
-    color: rgba(255, 255, 255, 0.9);
+    gap: 12px;
+    padding: 12px 12px;
+    color: var(--sb-text);
     text-decoration: none;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    font-weight: 500;
-    border-radius: 12px;
+    transition: background .18s ease, transform .12s ease;
+    font-weight: 600;
+    border-radius: 8px;
     position: relative;
-    overflow: hidden;
+    justify-content: flex-start;
+    text-align: left;
 }
 
 .sidebar-menu ul li a::before {
     content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 4px;
-    background: #fff;
-    transform: scaleY(0);
-    transition: transform 0.3s ease;
+    display: none; /* remove left accent line for a cleaner, formal look */
 }
 
 .sidebar-menu ul li a:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: #fff;
-    transform: translateX(5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateX(3px);
 }
 
-.sidebar-menu ul li a:hover::before {
-    transform: scaleY(1);
+.sidebar-menu ul li a:hover::before {}
+
+/* Active menu item state: soft pill highlight */
+.sidebar-menu ul li a.active {
+    background: var(--sb-active-bg);
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08) inset;
 }
+.sidebar-menu ul li a.active::before { display: none; }
 
 .sidebar-menu i {
-    margin-right: 14px;
-    font-size: 1.1rem;
-    min-width: 20px;
+    font-size: 16px;
+    min-width: 18px;
+    width: 18px;
     text-align: center;
 }
 
@@ -296,10 +444,10 @@
 .topbar {
     position: fixed;
     top: 0;
-    left: 260px;
+    left: 0;
     right: 0;
-    height: 70px;
-    background: linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #f97316 100%);
+    height: var(--topbar-h);
+    background: var(--clr-topbar-bg);
     color: #fff;
     display: flex;
     align-items: center;
@@ -307,13 +455,11 @@
     padding: 0 2rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 999;
-    box-shadow: 0 4px 20px rgba(220, 38, 38, 0.15);
+    box-shadow: 0 4px 20px rgba(44, 44, 44, 0.15);
     backdrop-filter: blur(10px);
 }
 
-.topbar.collapsed {
-    left: 70px;
-}
+.topbar.collapsed { left: 0; }
 
 .topbar-left {
     display: flex;
@@ -331,6 +477,13 @@
     height: 40px;
     width: 40px;
     filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+}
+
+/* 3Rs logo in topbar */
+.logo-3rs {
+    height: 36px;
+    width: auto;
+    display: block;
 }
 
 .system-name {
@@ -429,7 +582,7 @@
 
 .account-avatar {
     background: linear-gradient(135deg, #fff 0%, #fef3c7 100%);
-    color: #dc2626;
+    color: #E65C33;
     width: 38px;
     height: 38px;
     border-radius: 50%;
@@ -448,22 +601,20 @@
 
 /* Main Content */
 .main-content {
-    margin-left: 260px;
-    margin-top: 70px;
+    margin-left: var(--sb-w);
+    margin-top: var(--topbar-h);
     padding: 2rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: linear-gradient(135deg, #fef2f2 0%, #fff7ed 100%);
+    background: #F4F7FA;
     min-height: calc(100vh - 70px);
 }
 
-.main-content.expanded {
-    margin-left: 70px;
-}
+.main-content.expanded { margin-left: var(--sb-w-collapsed); }
 
 /* Content Styling */
 .content h1 {
     font-size: 2.5rem;
-    background: linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #f97316 100%);
+    background: linear-gradient(135deg, #E65C33 0%, #F57C42 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -473,7 +624,7 @@
 }
 
 .content p {
-    color: #78716c;
+    color: #5A6B7A;
     font-size: 1.1rem;
     line-height: 1.7;
 }
@@ -497,6 +648,94 @@
 
 .toggle-btn i {
     font-size: 1.2rem;
+}
+
+/* Sidebar Grouped Menu */
+.menu-title {
+    padding: 12px 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--sb-text);
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+/* Ensure single-line labels and left alignment */
+.sidebar .label, .menu-header .label {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.menu-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.menu-group {
+    margin-bottom: 1.5rem;
+}
+
+.menu-header {
+    width: 100%;
+    background: transparent !important;
+    border: 0 !important;
+    color: rgba(255,255,255,0.95);
+    padding: 12px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    transition: background .18s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    box-shadow: none !important;
+    text-align: left;
+}
+.menu-header:hover { background: transparent !important; }
+.menu-header:focus,
+.menu-header:focus-visible,
+.menu-header:active {
+    outline: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+.submenu {
+    margin-left: 1.5rem;
+    padding-left: 8px;
+}
+
+.submenu .menu-item {
+    padding: .65rem 1rem;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.submenu .menu-item i {
+    margin-right: .6rem;
+}
+
+.menu-header .caret {
+    margin-left: auto;
+    transition: transform .18s ease;
+}
+
+.rotate-180 {
+    transform: rotate(180deg);
+}
+
+.section-divider {
+    border: none; 
+    height: 1px; 
+    margin: 8px 0; 
+    background: var(--sb-divider);
 }
 </style>
 

@@ -3,218 +3,220 @@
 @section('title', 'Payroll Management')
 
 @section('content')
-<div class="relative">
-    <div class="absolute inset-0 -z-10 bg-gradient-to-r from-rose-50 via-cyan-50 to-emerald-50"></div>
-    <div class="max-w-7xl mx-auto">
-    <div class="mb-6">
-        <div class="rounded-3xl p-6 bg-white/70 backdrop-blur shadow-sm border border-white/50">
-            <h1 class="text-3xl font-extrabold tracking-tight">Payroll Management</h1>
-            <p class="text-slate-600 mt-1">Semi-monthly payroll dashboard and actions</p>
-        </div>
-    </div>
-    <div class="flex items-center justify-between mb-4 sticky top-3 z-10">
-        <div></div>
-        <div class="flex gap-2 bg-white/80 backdrop-blur px-3 py-2 rounded-2xl shadow border border-white/50">
-            <form id="exportPayrollForm" method="GET" action="{{ route('finance.payroll.export') }}">
+<div class="container-fluid py-4">
+    <!-- Action Bar -->
+    <div class="d-flex justify-content-end mb-3">
+        <div class="d-flex flex-wrap gap-2">
+            <form id="exportPayrollForm" method="GET" action="{{ route('finance.payroll.export') }}" class="d-inline">
                 <input type="hidden" name="employee" value="{{ request('employee') }}">
                 <input type="hidden" name="position" value="{{ request('position') }}">
                 <input type="hidden" name="status" value="Approved">
                 <input type="hidden" name="period_start" value="{{ $period_start }}">
                 <input type="hidden" name="period_end" value="{{ $period_end }}">
-                <button type="submit" class="px-4 py-2 bg-slate-900/90 hover:bg-slate-900 text-white rounded-2xl shadow">Export PDF</button>
+                <button type="submit" class="btn btn-dark btn-sm">Export PDF</button>
             </form>
-            <a href="{{ route('finance.disbursement.index') }}" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl shadow">Disbursed Payroll</a>
-            <a href="{{ route('finance.payroll.approvals') }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow">Approval Form</a>
-            <button id="openGenerateModal" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-2xl shadow">Generate Payroll</button>
+            <a href="{{ route('finance.disbursement.index') }}" class="btn btn-success btn-sm">Disbursed Payroll</a>
+            <a href="{{ route('finance.payroll.approvals') }}" class="btn btn-primary btn-sm">Approval Form</a>
+            <button id="openGenerateModal" type="button" class="btn btn-warning btn-sm text-dark fw-semibold" data-bs-toggle="modal" data-bs-target="#generateModal">Generate Payroll</button>
         </div>
     </div>
 
-    <form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-3 bg-white/90 backdrop-blur p-5 rounded-2xl shadow border border-white/60 mb-6">
-        <div>
-            <label class="block text-sm text-slate-600">Employee</label>
-            <input type="text" name="employee" value="{{ $filters['employee'] ?? '' }}" class="w-full mt-1 border rounded-xl px-3 py-2 focus:ring-2 focus:ring-cyan-500" placeholder="Name">
-        </div>
-        <div>
-            <label class="block text-sm text-slate-600">Position</label>
-            <input type="text" name="position" value="{{ $filters['position'] ?? '' }}" class="w-full mt-1 border rounded-xl px-3 py-2 focus:ring-2 focus:ring-cyan-500" placeholder="e.g. Technician">
-        </div>
-        <div>
-            <label class="block text-sm text-slate-600">Status</label>
-            <select name="status" class="w-full mt-1 border rounded-xl px-3 py-2 bg-slate-50" disabled>
-                <option selected>Approved</option>
-            </select>
-        </div>
-        <div>
-            <label class="block text-sm text-slate-600">Period Start</label>
-            <input type="date" name="period_start" value="{{ $period_start }}" class="w-full mt-1 border rounded-xl px-3 py-2 focus:ring-2 focus:ring-cyan-500">
-        </div>
-        <div>
-            <label class="block text-sm text-slate-600">Period End</label>
-            <input type="date" name="period_end" value="{{ $period_end }}" class="w-full mt-1 border rounded-xl px-3 py-2 focus:ring-2 focus:ring-cyan-500">
-        </div>
-        <div class="md:col-span-5 flex justify-end mt-2">
-            <button class="px-4 py-2 bg-slate-900/90 text-white rounded-2xl hover:bg-slate-900">Apply Filters</button>
+    <!-- Filter Section -->
+    <form method="GET" class="card border-0 shadow-sm mb-3">
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-semibold mb-1">Employee</label>
+                    <input type="text" name="employee" value="{{ $filters['employee'] ?? '' }}" class="form-control form-control-sm" placeholder="Name">
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-semibold mb-1">Position</label>
+                    <input type="text" name="position" value="{{ $filters['position'] ?? '' }}" class="form-control form-control-sm" placeholder="e.g. Technician">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-semibold mb-1">Period Start</label>
+                    <input type="date" name="period_start" value="{{ $period_start }}" class="form-control form-control-sm">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-semibold mb-1">Period End</label>
+                    <input type="date" name="period_end" value="{{ $period_end }}" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-2 text-end">
+                    <button class="btn btn-primary btn-sm w-100">Apply Filters</button>
+                </div>
+            </div>
         </div>
     </form>
 
-    <div class="bg-white/95 backdrop-blur rounded-2xl shadow-lg overflow-hidden border border-white/60">
-        <table class="min-w-full">
-            <thead>
-                <tr class="bg-gradient-to-r from-slate-50 to-slate-100 text-left text-slate-700">
-                    <th class="px-4 py-3">Select</th>
-                    <th class="px-4 py-3">Employee</th>
-                    <th class="px-4 py-3">Position</th>
-                    <th class="px-4 py-3">Pay Period</th>
-                    <th class="px-4 py-3">Days Worked</th>
-                    <th class="px-4 py-3">OT (hrs)</th>
-                    <th class="px-4 py-3">OT Pay</th>
-                    <th class="px-4 py-3">Deductions</th>
-                    <th class="px-4 py-3">Cash Advance</th>
-                    <th class="px-4 py-3">Net Pay</th>
-                    <th class="px-4 py-3">Status</th>
-                    <th class="px-4 py-3">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y">
+    <!-- Data Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr class="text-nowrap">
+                        <th>Select</th>
+                        <th>Employee</th>
+                        <th>Position</th>
+                        <th>Pay Period</th>
+                        <th>Days Worked</th>
+                        <th>OT (hrs)</th>
+                        <th>OT Pay</th>
+                        <th>Deductions</th>
+                        <th>Cash Advance</th>
+                        <th>Net Pay</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
                 @php $filterStatus = 'Approved'; @endphp
                 @forelse ($rows as $r)
                     @if($r['status'] === 'Approved')
-                    <tr class="odd:bg-white even:bg-slate-50/50 hover:bg-slate-50">
-                        <td class="px-4 py-3 align-top">
-                            <input type="checkbox" class="emp-checkbox" value="{{ $r['employee']->employeeprofiles_id }}">
+                    <tr>
+                        <td><input type="checkbox" class="form-check-input emp-checkbox" value="{{ $r['employee']->employeeprofiles_id }}"></td>
+                        <td class="fw-semibold">{{ $r['employee']->last_name }}, {{ $r['employee']->first_name }}</td>
+                        <td>{{ $r['position'] }}</td>
+                        <td class="text-muted">{{ $r['period'] }}</td>
+                        <td>{{ $r['days_worked'] }}</td>
+                        <td>{{ $r['ot_hours'] }}</td>
+                        <td>₱ {{ number_format($r['ot_pay'],2) }}</td>
+                        <td class="text-danger">₱ {{ number_format($r['deductions'],2) }}</td>
+                        <td class="text-warning">₱ {{ number_format($r['cash_advance'],2) }}</td>
+                        <td class="fw-bold text-primary">₱ {{ number_format($r['net'],2) }}</td>
+                        <td>
+                            <span class="badge {{ $r['status']==='Approved' ? 'bg-success' : ($r['status']==='Paid' ? 'bg-primary' : ($r['status']==='Pending' ? 'bg-warning text-dark' : 'bg-secondary')) }}">{{ $r['status'] }}</span>
                         </td>
-                        <td class="px-4 py-3 align-top">
-                            <div class="font-semibold">{{ $r['employee']->last_name }}, {{ $r['employee']->first_name }}</div>
-                        </td>
-                        <td class="px-4 py-3 align-top">{{ $r['position'] }}</td>
-                        <td class="px-4 py-3 align-top">{{ $r['period'] }}</td>
-                        <td class="px-4 py-3 align-top">{{ $r['days_worked'] }}</td>
-                        <td class="px-4 py-3 align-top">{{ $r['ot_hours'] }}</td>
-                        <td class="px-4 py-3 align-top">₱ {{ number_format($r['ot_pay'],2) }}</td>
-                        <td class="px-4 py-3 align-top">₱ {{ number_format($r['deductions'],2) }}</td>
-                        <td class="px-4 py-3 align-top">₱ {{ number_format($r['cash_advance'],2) }}</td>
-                        <td class="px-4 py-3 align-top font-semibold">₱ {{ number_format($r['net'],2) }}</td>
-                        <td class="px-4 py-3 align-top">
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs {{
-                                $r['status']==='Approved' ? 'bg-green-100 text-green-700' : ($r['status']==='Paid' ? 'bg-blue-100 text-blue-700' : ($r['status']==='Pending' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'))
-                            }}">{{ $r['status'] }}</span>
-                        </td>
-                        <td class="px-4 py-3 align-top space-x-2">
+                        <td>
                             @if($r['payroll'])
-                                <a href="{{ route('finance.payroll.payslip', $r['payroll']->payroll_id) }}" class="text-brand-700 hover:underline">Payslip</a>
-                                <button class="text-blue-700 hover:underline disburse-btn" data-id="{{ $r['payroll']->payroll_id }}">Disburse</button>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ route('finance.payroll.payslip', $r['payroll']->payroll_id) }}" class="btn btn-outline-warning btn-sm">Payslip</a>
+                                    <button type="button" class="btn btn-outline-primary btn-sm disburse-btn" data-id="{{ $r['payroll']->payroll_id }}">Disburse</button>
+                                </div>
                             @else
-                                <span class="text-slate-400">No payroll</span>
+                                <span class="text-muted">No payroll</span>
                             @endif
                         </td>
                     </tr>
                     @endif
                 @empty
                     <tr>
-                        <td colspan="12" class="px-4 py-6 text-center text-slate-500">No employees found.</td>
+                        <td colspan="12" class="py-4 text-center text-muted">No employees found.</td>
                     </tr>
                 @endforelse
-            </tbody>
-        </table>
-    </div>
-    </div>
-</div>
-
-<!-- Generate Payroll Modal -->
-<div id="generateModal" class="fixed inset-0 bg-black/30 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl">
-        <div class="px-6 py-4 border-b flex justify-between items-center">
-            <h3 class="text-lg font-semibold">Generate Payroll</h3>
-            <button class="text-slate-500 hover:text-slate-800" id="closeGenerateModal">✕</button>
+                </tbody>
+            </table>
         </div>
-        <form method="POST" action="{{ route('finance.payroll.generate') }}" class="p-6 space-y-4">
-            @csrf
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm text-slate-600">Period Start</label>
-                    <input type="date" name="period_start" value="{{ $period_start }}" class="w-full mt-1 border rounded-lg px-3 py-2" required>
-                </div>
-                <div>
-                    <label class="block text-sm text-slate-600">Period End</label>
-                    <input type="date" name="period_end" value="{{ $period_end }}" class="w-full mt-1 border rounded-lg px-3 py-2" required>
-                </div>
-            </div>
-            <div>
-                <label class="block text-sm text-slate-600 mb-1">Selected Employees</label>
-                <div id="selectedEmployees" class="text-sm text-slate-700">None</div>
-            </div>
-            <div id="employeeIdsContainer"></div>
-            <div class="flex justify-end gap-3">
-                <button type="button" id="cancelGenerate" class="px-4 py-2 rounded-2xl bg-slate-200 hover:bg-slate-300">Cancel</button>
-                <button type="submit" class="px-4 py-2 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white">Save as Pending</button>
-            </div>
-        </form>
     </div>
-</div>
+    </div>
+<!-- End container -->
 
-<!-- Approval Modal -->
-<div id="approvalModal" class="fixed inset-0 bg-black/30 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md">
-        <div class="px-6 py-4 border-b flex justify-between items-center">
-            <h3 class="text-lg font-semibold">Update Payroll Status</h3>
-            <button class="text-slate-500 hover:text-slate-800" id="closeApprovalModal">✕</button>
+<!-- Generate Payroll Modal (Bootstrap) -->
+<div class="modal fade" id="generateModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Generate Payroll</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST" action="{{ route('finance.payroll.generate') }}">
+        @csrf
+        <div class="modal-body">
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label small mb-1">Period Start</label>
+              <input type="date" name="period_start" value="{{ $period_start }}" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label small mb-1">Period End</label>
+              <input type="date" name="period_end" value="{{ $period_end }}" class="form-control form-control-sm" required>
+            </div>
+          </div>
+          <div class="mt-2">
+            <label class="form-label small mb-1">Selected Employees</label>
+            <div id="selectedEmployees" class="small text-muted">None</div>
+          </div>
+          <div id="employeeIdsContainer"></div>
         </div>
-        <form id="approvalForm" method="POST" action="#" class="p-6 space-y-4">
-            @csrf
-            <div>
-                <label class="block text-sm text-slate-600">Action</label>
-                <select name="action" class="w-full mt-1 border rounded-lg px-3 py-2">
-                    <option value="approve">Approve</option>
-                    <option value="reject">Reject</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm text-slate-600">Remarks (optional)</label>
-                <input type="text" name="remarks" class="w-full mt-1 border rounded-lg px-3 py-2" placeholder="Reason">
-            </div>
-            <div class="flex justify-end gap-3">
-                <button type="button" id="cancelApproval" class="px-4 py-2 rounded-2xl bg-slate-200 hover:bg-slate-300">Cancel</button>
-                <button type="submit" class="px-4 py-2 rounded-2xl bg-green-600 hover:bg-green-700 text-white">Confirm</button>
-            </div>
-        </form>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm">Save as Pending</button>
+        </div>
+      </form>
     </div>
-</div>
+  </div>
+  </div>
 
-<!-- Disbursement Modal -->
-<div id="disbursementModal" class="fixed inset-0 bg-black/30 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md">
-        <div class="px-6 py-4 border-b flex justify-between items-center">
-            <h3 class="text-lg font-semibold">Record Salary Payment</h3>
-            <button class="text-slate-500 hover:text-slate-800" id="closeDisbursementModal">✕</button>
+<!-- Approval Modal (Bootstrap) -->
+<div class="modal fade" id="approvalModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Update Payroll Status</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="approvalForm" method="POST" action="#">
+        @csrf
+        <div class="modal-body">
+          <div class="mb-2">
+            <label class="form-label small mb-1">Action</label>
+            <select name="action" class="form-select form-select-sm">
+              <option value="approve">Approve</option>
+              <option value="reject">Reject</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label small mb-1">Remarks (optional)</label>
+            <input type="text" name="remarks" class="form-control form-control-sm" placeholder="Reason">
+          </div>
         </div>
-        <form method="POST" action="{{ route('finance.disbursement.record') }}" class="p-6 space-y-4">
-            @csrf
-            <input type="hidden" name="payroll_id" id="disbursePayrollId">
-            <div>
-                <label class="block text-sm text-slate-600">Payment Date</label>
-                <input type="date" name="payment_date" class="w-full mt-1 border rounded-lg px-3 py-2" required>
-            </div>
-            <div>
-                <label class="block text-sm text-slate-600">Method</label>
-                <select name="payment_method" class="w-full mt-1 border rounded-lg px-3 py-2" required>
-                    <option>Cash</option>
-                    <option>Bank Transfer</option>
-                    <option>GCash</option>
-                    <option>Check</option>
-                    <option>Other</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm text-slate-600">Reference No.</label>
-                <input type="text" name="reference_number" class="w-full mt-1 border rounded-lg px-3 py-2" placeholder="Optional">
-            </div>
-            <div class="flex justify-end gap-3">
-                <button type="button" id="cancelDisbursement" class="px-4 py-2 rounded-2xl bg-slate-200 hover:bg-slate-300">Cancel</button>
-                <button type="submit" class="px-4 py-2 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white">Record Payment</button>
-            </div>
-        </form>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success btn-sm">Confirm</button>
+        </div>
+      </form>
     </div>
-</div>
+  </div>
+  </div>
+
+<!-- Disbursement Modal (Bootstrap) -->
+<div class="modal fade" id="disbursementModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Record Salary Payment</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST" action="{{ route('finance.disbursement.record') }}">
+        @csrf
+        <input type="hidden" name="payroll_id" id="disbursePayrollId">
+        <div class="modal-body">
+          <div class="mb-2">
+            <label class="form-label small mb-1">Payment Date</label>
+            <input type="date" name="payment_date" class="form-control form-control-sm" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small mb-1">Method</label>
+            <select name="payment_method" class="form-select form-select-sm" required>
+              <option>Cash</option>
+              <option>Bank Transfer</option>
+              <option>GCash</option>
+              <option>Check</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label small mb-1">Reference No.</label>
+            <input type="text" name="reference_number" class="form-control form-control-sm" placeholder="Optional">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm">Record Payment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  </div>
 @endsection
 
 @push('scripts')
@@ -227,24 +229,18 @@
     Swal.fire({ icon: 'error', title: 'Error', text: @json(session('error')), confirmButtonColor: '#ef4444' });
     @endif
 
-    const genModal = document.getElementById('generateModal');
+    // Bootstrap modals, append to body to avoid inline display
+    const genModalEl = document.getElementById('generateModal');
+    const apprModalEl = document.getElementById('approvalModal');
+    const disbModalEl = document.getElementById('disbursementModal');
+    const mainContent = document.querySelector('.main-content');
+    [genModalEl, apprModalEl, disbModalEl].forEach(el => { if (el && el.parentElement !== document.body) document.body.appendChild(el); });
+
+    const genModal = genModalEl ? new bootstrap.Modal(genModalEl) : null;
+    const apprModal = apprModalEl ? new bootstrap.Modal(apprModalEl) : null;
+    const disbModal = disbModalEl ? new bootstrap.Modal(disbModalEl) : null;
+
     const openGenBtn = document.getElementById('openGenerateModal');
-    const closeGenBtn = document.getElementById('closeGenerateModal');
-    const cancelGenBtn = document.getElementById('cancelGenerate');
-
-    const apprModal = document.getElementById('approvalModal');
-    const closeApprBtn = document.getElementById('closeApprovalModal');
-    const cancelApprBtn = document.getElementById('cancelApproval');
-    const approvalForm = document.getElementById('approvalForm');
-
-    const disbModal = document.getElementById('disbursementModal');
-    const closeDisbBtn = document.getElementById('closeDisbursementModal');
-    const cancelDisbBtn = document.getElementById('cancelDisbursement');
-    const disbursePayrollId = document.getElementById('disbursePayrollId');
-
-    function openModal(el){ el.classList.remove('hidden'); el.classList.add('flex'); }
-    function closeModal(el){ el.classList.add('hidden'); el.classList.remove('flex'); }
-
     openGenBtn?.addEventListener('click', () => {
         const ids = Array.from(document.querySelectorAll('.emp-checkbox:checked')).map(cb => cb.value);
         const container = document.getElementById('employeeIdsContainer');
@@ -257,30 +253,26 @@
             container.appendChild(input);
         });
         document.getElementById('selectedEmployees').textContent = ids.length ? ids.join(', ') : 'None';
-        openModal(genModal);
+        genModal?.show();
     });
-    closeGenBtn?.addEventListener('click', () => closeModal(genModal));
-    cancelGenBtn?.addEventListener('click', () => closeModal(genModal));
 
+    const approvalForm = document.getElementById('approvalForm');
     document.querySelectorAll('.approve-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', () => {
             const id = btn.dataset.id;
-            const action = btn.dataset.action; // approve|reject (prefill select)
+            const action = btn.dataset.action || 'approve';
             approvalForm.action = `{{ url('finance/payroll') }}/${id}/approve`;
             approvalForm.querySelector('select[name="action"]').value = action;
-            openModal(apprModal);
+            apprModal?.show();
         });
     });
-    closeApprBtn?.addEventListener('click', () => closeModal(apprModal));
-    cancelApprBtn?.addEventListener('click', () => closeModal(apprModal));
 
+    const disbursePayrollId = document.getElementById('disbursePayrollId');
     document.querySelectorAll('.disburse-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             disbursePayrollId.value = btn.dataset.id;
-            openModal(disbModal);
+            disbModal?.show();
         });
     });
-    closeDisbBtn?.addEventListener('click', () => closeModal(disbModal));
-    cancelDisbBtn?.addEventListener('click', () => closeModal(disbModal));
 </script>
 @endpush

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
 use App\Models\AccountsReceivable;
@@ -11,6 +12,7 @@ use App\Models\PaymentReceived;
 use App\Models\Invoice;
 use App\Models\CashFlow;
 use App\Models\ActivityLog;
+use App\Models\PaymentHistory;
 
 class PaymentController extends Controller
 {
@@ -24,7 +26,9 @@ class PaymentController extends Controller
             'payment_date' => 'required|date',
             'amount' => 'required|numeric|min:0.01',
             'payment_method' => 'required|string|max:50',
-            'reference_number' => 'nullable|string|max:100',
+            'payment_type' => 'required|in:Full,Partial',
+            'reference_number' => 'nullable|string|max:100|required_unless:payment_method,Cash',
+            'or_file' => 'nullable|file|mimes:png,jpg,jpeg,gif,bmp,webp,svg,pdf|max:4096|required_unless:payment_method,Cash',
             'account_id' => 'nullable|integer|exists:cash_accounts,account_id',
         ]);
 
@@ -37,8 +41,26 @@ class PaymentController extends Controller
             default => 'Cash',
         };
 
-        return DB::transaction(function () use ($data) {
+        return DB::transaction(function () use ($data, $request) {
             $ar = AccountsReceivable::findOrFail($data['ar_id']);
+
+            // Determine outstanding and enforce payment_type rules
+            $outstanding = max(0.0, (float)$ar->total_amount - (float)$ar->amount_paid);
+            if (strcasecmp($data['payment_type'], 'Full') === 0) {
+                // Force amount to outstanding to avoid mismatch
+                $data['amount'] = $outstanding;
+            } else {
+                // Partial: must be >0 and < outstanding
+                if (!($data['amount'] > 0 && $data['amount'] < $outstanding)) {
+                    return back()->with('error', 'Partial payment must be greater than 0 and less than the outstanding balance.');
+                }
+            }
+
+            // Handle OR upload (if provided)
+            $orPath = null;
+            if ($request->hasFile('or_file')) {
+                $orPath = $request->file('or_file')->store('or_uploads', 'public');
+            }
 
             $payment = PaymentReceived::create([
                 'ar_id' => $ar->ar_id,
@@ -46,16 +68,23 @@ class PaymentController extends Controller
                 'amount' => $data['amount'],
                 'payment_method' => $data['payment_method'],
                 'reference_number' => $data['reference_number'] ?? null,
+                'or_file_path' => $orPath,
             ]);
 
             $ar->amount_paid = round($ar->amount_paid + $payment->amount, 2);
             $ar->status = $this->deriveArStatus($ar->total_amount, $ar->amount_paid, $ar->due_date);
+            if ($ar->status === 'Partially Paid') {
+                $ar->due_date = Carbon::parse($ar->due_date)->addDays(15)->toDateString();
+            }
             $ar->save();
 
             // Update linked invoice if any
             $invoice = Invoice::where('ar_id', $ar->ar_id)->first();
             if ($invoice) {
                 $invoice->status = $this->deriveInvoiceStatus($ar->total_amount, $ar->amount_paid, $ar->due_date);
+                if ($invoice->status === 'Partially Paid') {
+                    $invoice->due_date = Carbon::parse($invoice->due_date)->addDays(15)->toDateString();
+                }
                 $invoice->save();
             }
 
@@ -82,6 +111,20 @@ class PaymentController extends Controller
                     'method' => $payment->payment_method,
                     'reference' => $payment->reference_number,
                 ],
+            ]);
+
+            // Log to payment_history as well
+            $billingId = \App\Models\Billing::where('service_request_id', $ar->service_request_id)
+                ->orderByDesc('billing_id')->value('billing_id');
+            PaymentHistory::create([
+                'billing_id' => $billingId,
+                'service_request_id' => $ar->service_request_id,
+                'payment_date' => $payment->payment_date,
+                'due_date' => $ar->due_date,
+                'type_of_payment' => $data['payment_method'],
+                'amount' => $payment->amount,
+                'status' => $ar->status,
+                'or_file_path' => $orPath,
             ]);
 
             return redirect()->back()->with('success', 'Payment recorded successfully.');
@@ -223,6 +266,9 @@ class PaymentController extends Controller
 
         $ar->amount_paid += $payment->amount;
         $ar->status = $this->deriveArStatus($ar->total_amount, $ar->amount_paid, $ar->due_date);
+        if ($ar->status === 'Partially Paid') {
+            $ar->due_date = Carbon::parse($ar->due_date)->addDays(15)->toDateString();
+        }
         $ar->save();
 
         // Log to CashFlow
@@ -248,6 +294,16 @@ class PaymentController extends Controller
                 'reference' => $payment->reference_number,
             ],
         ]);
+
+        // Also update invoice due date if partially paid
+        $invoice = Invoice::where('ar_id', $ar->ar_id)->first();
+        if ($invoice) {
+            $invoice->status = $this->deriveInvoiceStatus($ar->total_amount, $ar->amount_paid, $ar->due_date);
+            if ($invoice->status === 'Partially Paid') {
+                $invoice->due_date = Carbon::parse($invoice->due_date)->addDays(15)->toDateString();
+            }
+            $invoice->save();
+        }
 
         return redirect()->route('payments.history')->with('success', 'GCash payment completed successfully (Test Mode).');
     }

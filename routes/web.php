@@ -203,10 +203,11 @@ Route::prefix('payments')->name('payments.')->group(function () {
 // 📘 ACCOUNTS RECEIVABLE
 // =======================================================
 
-Route::resource('accounts-receivable', AccountsReceivableController::class);
+// Place specific routes BEFORE resource to avoid being shadowed by /accounts-receivable/{id}
 Route::get('accounts-receivable/totals', [AccountsReceivableController::class, 'totals'])->name('accounts-receivable.totals');
-Route::post('accounts-receivable/{id}/payment', [PaymentController::class, 'store'])->name('payments.store');
 Route::get('accounts-receivable/aging-report', [ARReportController::class, 'agingReport'])->name('ar.aging');
+Route::post('accounts-receivable/{id}/payment', [PaymentController::class, 'store'])->name('payments.store');
+Route::resource('accounts-receivable', AccountsReceivableController::class);
 
 // =======================================================
 // 📗 ACCOUNTS PAYABLE & PURCHASE ORDERS

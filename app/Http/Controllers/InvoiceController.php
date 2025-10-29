@@ -8,14 +8,24 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\Billing;
 use App\Models\Invoice;
+use App\Models\PaymentHistory;
 use App\Models\AccountsReceivable;
 
 class InvoiceController extends Controller
 {
     public function index()
     {
-        $invoices = Invoice::with(['billing.serviceRequest.customer'])->orderByDesc('invoice_id')->paginate(20);
-        return view('finance.invoices.index', compact('invoices'));
+        // Show payment_history entries as invoice history
+        $histories = PaymentHistory::with(['serviceRequest.customer','billing'])
+            ->orderByDesc('payment_id')
+            ->paginate(20);
+
+        // Build a map of service_request_id => ar_id for payment modal actions
+        $srIds = $histories->getCollection()->pluck('service_request_id')->unique()->filter()->values();
+        $arMap = AccountsReceivable::whereIn('service_request_id', $srIds)
+            ->pluck('ar_id', 'service_request_id');
+
+        return view('finance.invoices.index', compact('histories', 'arMap'));
     }
 
     public function create($billing_id)

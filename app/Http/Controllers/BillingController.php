@@ -13,26 +13,22 @@ use App\Models\ServiceRequestItemExtra;
 use App\Models\Billing;
 use App\Models\Invoice;
 use App\Models\AccountsReceivable;
+use App\Models\PaymentHistory;
 
 class BillingController extends Controller
 {
     // Dashboard: list completed, unbilled SRs with filters
     public function index(Request $request)
     {
-        $query = ServiceRequestItem::with(['serviceRequest.customer', 'service'])
-            ->where('status', 'Completed');
+        $query = ServiceRequestItem::with(['serviceRequest.customer', 'service']);
 
-        if (Schema::hasColumn('service_request_items', 'billed')) {
-            $query->where(function ($q) {
-                $q->whereNull('billed')->orWhere('billed', false);
-            });
-        }
-
-        // Only include service requests with Approved quotation
+        // SR-level filters: only SRs without any billing, order status: Pending, quotation: Approved (if column exists)
         $query->whereHas('serviceRequest', function ($q) {
+            $q->where('order_status', 'Pending');
             if (Schema::hasColumn('service_requests', 'quotation_status')) {
                 $q->where('quotation_status', 'Approved');
             }
+            $q->doesntHave('billings');
         });
 
         if ($request->filled('customer')) {
@@ -47,7 +43,6 @@ class BillingController extends Controller
                 $q->where('service_request_number', 'like', "%{$srn}%");
             });
         }
-        // Removed date range filtering as requested
 
         $items = $query->get()->groupBy('service_request_id');
 
@@ -60,11 +55,7 @@ class BillingController extends Controller
     // View items for a service request (for modal)
     public function viewItems($id)
     {
-        $sr = ServiceRequest::with(['customer', 'items.service', 'items' => function ($q) {
-            $q->where('status', 'Completed')->where(function ($qq) {
-                $qq->whereNull('billed')->orWhere('billed', false);
-            });
-        }])->findOrFail($id);
+        $sr = ServiceRequest::with(['customer', 'items.service'])->findOrFail($id);
 
         foreach ($sr->items as $item) {
             $item->extras = ServiceRequestItemExtra::where('item_id', $item->item_id)->get();
@@ -79,53 +70,88 @@ class BillingController extends Controller
         $data = $request->validate([
             'service_request_id' => 'required|integer|exists:service_requests,service_request_id',
             'billing_date' => 'required|date',
-            'due_date' => 'required|date|after_or_equal:billing_date',
             'generate_invoice' => 'sometimes|boolean',
         ]);
 
         return DB::transaction(function () use ($data) {
-            $sr = ServiceRequest::with(['items' => function($q){ $q->where('status','Completed'); }])->findOrFail($data['service_request_id']);
-            $items = $sr->items()->where(function($q){ $q->whereNull('billed')->orWhere('billed', false); })->get();
+            $sr = ServiceRequest::with(['items'])->findOrFail($data['service_request_id']);
+            $items = $sr->items;
             if ($items->isEmpty()) {
-                return response()->json(['message' => 'No completed unbilled items.'], 422);
+                return response()->json(['message' => 'No completed items.'], 422);
             }
-
-            $subtotal = 0; $discount = 0; $tax = 0;
-            foreach ($items as $item) {
-                $line = ($item->quantity ?? 1) * (float)$item->unit_price;
-                $lineDiscount = (float)($item->discount ?? 0);
-                $lineTax = (float)($item->tax ?? 0);
-                $extras = ServiceRequestItemExtra::where('item_id', $item->item_id)->get();
-                $extraSum = $extras->sum(fn($e) => (float)$e->qty * (float)$e->price);
-                $subtotal += $line + $extraSum;
-                $discount += $lineDiscount;
-                $tax += $lineTax;
-            }
-
-            $total = round($subtotal - $discount + $tax, 2);
 
             $billingData = [
                 'service_request_id' => $sr->service_request_id,
                 'customer_id' => $sr->customer_id ?? ($sr->customer->customer_id ?? null),
                 'billing_date' => $data['billing_date'],
-                'due_date' => $data['due_date'],
-                'discount' => 0,
-                'tax' => 0,
-                'total_amount' => $total,
+                'status' => 'Billed',
             ];
 
-            if (Schema::hasColumn('billings', 'approval_status')) {
-                $billingData['approval_status'] = 'Pending';
-            }
             if (Schema::hasColumn('billings', 'generate_invoice_after_approval')) {
                 $billingData['generate_invoice_after_approval'] = !empty($data['generate_invoice']);
+            }
+            if (Schema::hasColumn('billings', 'meta')) {
+                $billingData['meta'] = null;
             }
 
             $billing = Billing::create($billingData);
 
-            $message = Schema::hasColumn('billings','approval_status') ? 'Billing submitted for admin approval.' : 'Billing created.';
+            // Also create Accounts Receivable entry so it appears in AR and invoice history
+            $subtotal = 0; $lineDiscount = 0; $lineTax = 0;
+            foreach ($items as $item) {
+                $qty = (int)($item->quantity ?? 1);
+                $unit = (float)($item->unit_price ?? 0);
+                $lineDiscount += (float)($item->discount ?? 0);
+                $lineTax += (float)($item->tax ?? 0);
+                $extras = ServiceRequestItemExtra::where('item_id', $item->item_id)->get();
+                $extraSum = $extras->sum(fn($e) => (float)$e->qty * (float)$e->price);
+                $subtotal += ($qty * $unit) + $extraSum;
+            }
+            $grandDiscount = Schema::hasColumn('service_requests', 'overall_discount') ? (float)($sr->overall_discount ?? 0) : 0.0;
+            $grandTax = Schema::hasColumn('service_requests', 'overall_tax_amount') ? (float)($sr->overall_tax_amount ?? 0) : 0.0;
+            $taxTotal = $lineTax + $grandTax;
+            $totalAmount = round($subtotal - ($lineDiscount + $grandDiscount) + $taxTotal, 2);
+
+            $invoiceNumber = $this->nextInvoiceNumber();
+            $invoiceDate = Carbon::parse($data['billing_date'])->toDateString();
+            $dueDate = Carbon::parse($data['billing_date'])->addDays(15)->toDateString();
+
+            $ar = AccountsReceivable::create([
+                'customer_id' => $sr->customer_id ?? ($sr->customer->customer_id ?? null),
+                'service_request_id' => $sr->service_request_id,
+                'invoice_number' => $invoiceNumber,
+                'invoice_date' => $invoiceDate,
+                'due_date' => $dueDate,
+                'total_amount' => $totalAmount,
+                'amount_paid' => 0,
+                'status' => 'Unpaid',
+            ]);
+
+            // Also create an Invoice record with 15-day due date
+            $invDue = Carbon::parse($data['billing_date'])->addDays(15)->toDateString();
+            $invoice = Invoice::create([
+                'billing_id' => $billing->billing_id,
+                'ar_id' => $ar->ar_id,
+                'invoice_number' => $invoiceNumber,
+                'invoice_date' => $invoiceDate,
+                'due_date' => $invDue,
+                'amount' => $totalAmount,
+                'status' => 'Unpaid',
+            ]);
+
+            // Record an entry in payment_history to reflect this billed SR
+            PaymentHistory::create([
+                'billing_id' => $billing->billing_id,
+                'service_request_id' => $sr->service_request_id,
+                'payment_date' => $invoiceDate,
+                'due_date' => $invDue,
+                'type_of_payment' => 'Billed',
+                'amount' => $totalAmount,
+                'status' => 'Unpaid',
+            ]);
+
             return response()->json([
-                'message' => $message,
+                'message' => 'Billing created.',
                 'billing_id' => $billing->billing_id,
             ]);
         });
@@ -222,16 +248,35 @@ class BillingController extends Controller
             return $billing->invoice;
         }
 
-        $now = Carbon::now();
+        // Compute totals from items + extras for this service request
+        $items = ServiceRequestItem::where('service_request_id', $billing->service_request_id)->get();
+        $subtotal = 0; $lineDiscount = 0; $lineTax = 0;
+        foreach ($items as $item) {
+            $qty = (int)($item->quantity ?? 1);
+            $unit = (float)($item->unit_price ?? 0);
+            $lineDiscount += (float)($item->discount ?? 0);
+            $lineTax += (float)($item->tax ?? 0);
+            $extras = ServiceRequestItemExtra::where('item_id', $item->item_id)->get();
+            $extraSum = $extras->sum(fn($e) => (float)$e->qty * (float)$e->price);
+            $subtotal += ($qty * $unit) + $extraSum;
+        }
+        $sr = ServiceRequest::find($billing->service_request_id);
+        $grandDiscount = Schema::hasColumn('service_requests', 'overall_discount') ? (float)($sr->overall_discount ?? 0) : 0.0;
+        $grandTax = Schema::hasColumn('service_requests', 'overall_tax_amount') ? (float)($sr->overall_tax_amount ?? 0) : 0.0;
+        $taxTotal = $lineTax + $grandTax;
+        $totalAmount = round($subtotal - ($lineDiscount + $grandDiscount) + $taxTotal, 2);
+
         $invoiceNumber = $this->nextInvoiceNumber();
+        $invoiceDate = Carbon::parse($billing->billing_date)->toDateString();
+        $dueDate = Carbon::parse($billing->billing_date)->addDays(15)->toDateString();
 
         $ar = AccountsReceivable::create([
             'customer_id' => $billing->customer_id,
             'service_request_id' => $billing->service_request_id,
             'invoice_number' => $invoiceNumber,
-            'invoice_date' => $now->toDateString(),
-            'due_date' => Carbon::parse($billing->due_date)->toDateString(),
-            'total_amount' => $billing->total_amount,
+            'invoice_date' => $invoiceDate,
+            'due_date' => $dueDate,
+            'total_amount' => $totalAmount,
             'amount_paid' => 0,
             'status' => 'Unpaid',
         ]);
@@ -240,9 +285,9 @@ class BillingController extends Controller
             'billing_id' => $billing->billing_id,
             'ar_id' => $ar->ar_id,
             'invoice_number' => $invoiceNumber,
-            'invoice_date' => $now->toDateString(),
-            'due_date' => Carbon::parse($billing->due_date)->toDateString(),
-            'amount' => $billing->total_amount,
+            'invoice_date' => $invoiceDate,
+            'due_date' => $dueDate,
+            'amount' => $totalAmount,
             'status' => 'Unpaid',
         ]);
 
@@ -252,10 +297,34 @@ class BillingController extends Controller
     // Very simple sequential number; consider using your invoice_sequence table if needed
     protected function nextInvoiceNumber(): string
     {
-        $prefix = 'INV-'.Carbon::now()->format('Ymd').'-';
-        $last = Invoice::whereDate('created_at', Carbon::today())
-            ->orderByDesc('invoice_id')->first();
-        $seq = $last ? ((int)substr($last->invoice_number, -4)) + 1 : 1;
-        return $prefix . str_pad((string)$seq, 4, '0', STR_PAD_LEFT);
+        $today = Carbon::today();
+        $prefix = 'INV-'.$today->format('Ymd').'-';
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('invoice_sequences')) {
+                $year = (int)$today->format('Y');
+                // Use a short transaction lock to safely increment the yearly counter
+                $row = DB::table('invoice_sequences')->where('year', $year)->lockForUpdate()->first();
+                if ($row) {
+                    DB::table('invoice_sequences')->where('id', $row->id)->update([
+                        'counter' => $row->counter + 1,
+                        'updated_at' => now(),
+                    ]);
+                    $seq = (int)$row->counter + 1;
+                } else {
+                    DB::table('invoice_sequences')->insert([
+                        'year' => $year,
+                        'counter' => 1,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                    $seq = 1;
+                }
+                return $prefix . str_pad((string)$seq, 4, '0', STR_PAD_LEFT);
+            }
+        } catch (\Throwable $e) {
+            // Fallback below
+        }
+        static $fallbackSeq = 0; $fallbackSeq++;
+        return $prefix . str_pad((string)$fallbackSeq, 4, '0', STR_PAD_LEFT);
     }
 }

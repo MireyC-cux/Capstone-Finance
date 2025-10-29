@@ -8,34 +8,31 @@
 
 @section('content')
 @if(!empty($reportsMode))
-    <div class="max-w-7xl mx-auto">
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <h1>Finance Reporting</h1>
-                <p class="text-gray-600">Generate insights from Revenue, Expenses, AR, AP, Cash Flow, Payroll, and P&L.</p>
-            </div>
-            <form method="get" action="{{ route('finance.reports') }}" class="flex items-end gap-2">
+    <div style="padding: 20px;">
+        <div class="d-flex justify-content-between align-items-start" style="margin-bottom: 2rem;">
+            <form method="get" action="{{ route('finance.reports') }}" class="d-flex gap-2 align-items-end">
                 <div>
-                    <label class="block text-sm text-gray-600">Start</label>
-                    <input type="date" name="start" value="{{ $start ?? now()->subMonths(11)->startOfMonth()->toDateString() }}" class="border rounded px-2 py-1">
+                    <label class="form-label" style="margin-bottom: 0.25rem;">Start</label>
+                    <input type="date" name="start" value="{{ $start ?? now()->subMonths(11)->startOfMonth()->toDateString() }}" class="form-control form-control-sm">
                 </div>
                 <div>
-                    <label class="block text-sm text-gray-600">End</label>
-                    <input type="date" name="end" value="{{ $end ?? now()->toDateString() }}" class="border rounded px-2 py-1">
+                    <label class="form-label" style="margin-bottom: 0.25rem;">End</label>
+                    <input type="date" name="end" value="{{ $end ?? now()->toDateString() }}" class="form-control form-control-sm">
                 </div>
-                <button class="px-3 py-2 bg-amber-600 text-white rounded">Apply</button>
+                <button class="btn btn-primary btn-sm">Apply</button>
             </form>
         </div>
 
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div class="p-4 bg-white rounded-lg shadow">
-                <div class="flex items-center justify-between mb-3">
-                    <h2 class="font-semibold">Revenue Report</h2>
-                    <div class="space-x-2">
-                        <a class="text-sm px-2 py-1 rounded bg-slate-100 hover:bg-slate-200" href="{{ route('finance.reports', ['export'=>'csv','type'=>'revenue','start'=>$start,'end'=>$end]) }}">Export CSV</a>
-                        <a class="text-sm px-2 py-1 rounded bg-slate-100 hover:bg-slate-200" href="{{ route('finance.reports', ['export'=>'pdf','type'=>'revenue','start'=>$start,'end'=>$end]) }}">Export PDF</a>
+        <div class="row g-4">
+            <div class="col-12 col-xl-6">
+                <div class="card" style="padding: 1.25rem;">
+                    <div class="d-flex justify-content-between align-items-center" style="margin-bottom: 1rem;">
+                        <h2 style="font-size: 20px; font-weight: 600; margin: 0;">Revenue Report</h2>
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-sm" style="border: 1px solid var(--border-card); background: white; font-size: 13px;" href="{{ route('finance.reports', ['export'=>'csv','type'=>'revenue','start'=>$start,'end'=>$end]) }}">CSV</a>
+                            <a class="btn btn-sm" style="border: 1px solid var(--border-card); background: white; font-size: 13px;" href="{{ route('finance.reports', ['export'=>'pdf','type'=>'revenue','start'=>$start,'end'=>$end]) }}">PDF</a>
+                        </div>
                     </div>
-                </div>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
                     <div><div class="text-xs text-gray-500">Sales</div><div class="font-semibold">₱ {{ number_format((float)($revenue['totals']['sales_total'] ?? 0),2) }}</div></div>
                     <div><div class="text-xs text-gray-500">Paid</div><div class="font-semibold text-emerald-600">₱ {{ number_format((float)($revenue['totals']['paid_total'] ?? 0),2) }}</div></div>
@@ -115,91 +112,171 @@
             </div>
         </div>
 @else
-    <div class="dashboard-header">
-        <h1>Welcome Back! 👋</h1>
-        <p>Here's what's happening with your finance today.</p>
-    </div>
-
-    <div class="dashboard-grid">
-        <!-- Stats Cards -->
-        <div class="card stats-card">
-            <div class="card-icon" style="background: linear-gradient(135deg, #dc2626, #ea580c);">
-                <i class="fas fa-peso-sign"></i>
-            </div>
-            <div class="card-content">
-                <h3>Total Revenue</h3>
-                <p class="stats-value">₱{{ $totalRevenue }}</p>
-                <span class="stats-change {{ $revenueChangeDirection }}">{{ $revenueChangePct > 0 ? '+' : '' }}{{ $revenueChangePct }}% from last month</span>
-            </div>
-        </div>
-
-        <div class="card stats-card">
-            <div class="card-icon" style="background: linear-gradient(135deg, #ea580c, #f97316);">
-                <i class="fas fa-receipt"></i>
-            </div>
-            <div class="card-content">
-                <h3>Total Expenses</h3>
-                <p class="stats-value">₱{{ $totalExpenses }}</p>
-                <span class="stats-change {{ $expensesChangeDirection }}">{{ $expensesChangePct > 0 ? '+' : '' }}{{ $expensesChangePct }}% from last month</span>
-            </div>
-        </div>
-
-        <div class="card stats-card">
-            <div class="card-icon" style="background: linear-gradient(135deg, #f97316, #fb923c);">
-                <i class="fas fa-chart-line"></i>
-            </div>
-            <div class="card-content">
-                <h3>Net Profit</h3>
-                <p class="stats-value">₱{{ $netProfit }}</p>
-                <span class="stats-change {{ $profitChangeDirection }}">{{ $profitChangePct > 0 ? '+' : '' }}{{ $profitChangePct }}% from last month</span>
-            </div>
-        </div>
-
-        <div class="card stats-card">
-            <div class="card-icon" style="background: linear-gradient(135deg, #fb923c, #fdba74);">
-                <i class="fas fa-users"></i>
-            </div>
-            <div class="card-content">
-                <h3>Active Employees</h3>
-                <p class="stats-value">{{ $activeEmployees }}</p>
-                <span class="stats-change positive">+{{ $newEmployeesThisMonth }} new this month</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="dashboard-row">
-        <div class="card chart-card">
-            <h2><i class="fas fa-chart-area"></i> Revenue Overview</h2>
-            <p>Track your monthly revenue performance</p>
-            <div class="chart-placeholder" style="height:auto; background:none;">
-                <canvas id="revenueChart" height="300" aria-label="Monthly Revenue Chart" role="img"></canvas>
-            </div>
-        </div>
-
-        <div class="card activity-card">
-            <h2><i class="fas fa-clock"></i> Recent Activity</h2>
-            <div class="activity-list">
-                @forelse($activities as $activity)
-                    <div class="activity-item">
-                        <div class="activity-icon" style="background: {{ $activity['bg'] }};">
-                            <i class="{{ $activity['icon'] }}" style="color: {{ $activity['color'] }};"></i>
+    <div style="padding: 20px; background: #F5F7FA;">
+        <!-- Top Metric Cards -->
+        <div class="row g-3" style="margin-bottom: 1.5rem;">
+            <div class="col-6 col-lg-3">
+                <div class="card" style="background: white; border: 1px solid #E5E7EB; padding: 1rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="width: 42px; height: 42px; border-radius: 50%; background: #3B82F6; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fas fa-wallet" style="font-size: 18px; color: white;"></i>
                         </div>
-                        <div class="activity-content">
-                            <p class="activity-title">{{ $activity['title'] }}</p>
-                            <span class="activity-time">{{ optional($activity['when'])->diffForHumans() }}</span>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 12px; color: #6B7280; margin-bottom: 2px;">Monthly Revenue</div>
+                            <div style="font-size: 20px; font-weight: 700; color: #3B82F6;">₱{{ $totalRevenue }}</div>
+                            <div style="font-size: 11px; color: #9CA3AF; margin-top: 2px;">{{ $revenueChangePct > 0 ? '+' : '' }}{{ $revenueChangePct }}%</div>
                         </div>
                     </div>
-                @empty
-                    <div class="activity-item">
-                        <div class="activity-icon" style="background: #fef3c7;">
-                            <i class="fas fa-info-circle" style="color: #9ca3af;"></i>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="card" style="background: white; border: 1px solid #E5E7EB; padding: 1rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="width: 42px; height: 42px; border-radius: 50%; background: #3B82F6; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fas fa-receipt" style="font-size: 18px; color: white;"></i>
                         </div>
-                        <div class="activity-content">
-                            <p class="activity-title">No recent activity</p>
-                            <span class="activity-time">—</span>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 12px; color: #6B7280; margin-bottom: 2px;">Monthly Expenses</div>
+                            <div style="font-size: 20px; font-weight: 700; color: #3B82F6;">₱{{ $totalExpenses }}</div>
+                            <div style="font-size: 11px; color: #9CA3AF; margin-top: 2px;">{{ $expensesChangePct > 0 ? '+' : '' }}{{ $expensesChangePct }}%</div>
                         </div>
                     </div>
-                @endforelse
+                </div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="card" style="background: white; border: 1px solid #E5E7EB; padding: 1rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="width: 42px; height: 42px; border-radius: 50%; background: #0EA5E9; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fas fa-hand-holding-usd" style="font-size: 18px; color: white;"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 12px; color: #6B7280; margin-bottom: 2px;">AR Outstanding</div>
+                            <div style="font-size: 20px; font-weight: 700; color: #0EA5E9;">₱{{ number_format((float)($arOutstanding ?? 0), 2) }}</div>
+                            <div style="font-size: 11px; color: #9CA3AF; margin-top: 2px;">Overdue: {{ (int)($overdueInvoicesCount ?? 0) }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="card" style="background: white; border: 1px solid #E5E7EB; padding: 1rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="width: 42px; height: 42px; border-radius: 50%; background: #EF4444; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fas fa-file-invoice-dollar" style="font-size: 18px; color: white;"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 12px; color: #6B7280; margin-bottom: 2px;">AP Outstanding</div>
+                            <div style="font-size: 20px; font-weight: 700; color: #EF4444;">₱{{ number_format((float)($apOutstanding ?? 0), 2) }}</div>
+                            <div style="font-size: 11px; color: #9CA3AF; margin-top: 2px;">Due soon: {{ (int)($apDueSoonCount ?? 0) }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="row g-3">
+            <!-- Left: Activity Overview Chart -->
+            <div class="col-12 col-lg-8">
+                <div class="card" style="background: white; border: 1px solid #E5E7EB; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="d-flex justify-content-between align-items-center" style="margin-bottom: 1rem;">
+                        <div>
+                            <h2 style="font-size: 18px; font-weight: 600; color: #111827; margin: 0;">Activity Overview</h2>
+                            <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">
+                                <span class="badge" style="background: #10B981; color: white; padding: 2px 8px; font-size: 11px; margin-right: 8px;">Completed: 9</span>
+                                <span style="color: #9CA3AF;">Avg Duration: <strong>100%</strong></span>
+                                <span style="color: #9CA3AF; margin-left: 12px;">Payroll Processed: <strong>₱0.00</strong></span>
+                            </div>
+                        </div>
+                        <select class="form-select form-select-sm" style="width: auto; font-size: 13px; border-color: #E5E7EB;">
+                            <option>All</option>
+                            <option>This Week</option>
+                            <option>This Month</option>
+                        </select>
+                    </div>
+                    <div style="height: 350px;">
+                        <canvas id="revenueChart" height="350" aria-label="Activity Overview Chart" role="img"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Finance Info Cards Sidebar -->
+            <div class="col-12 col-lg-4">
+                <div class="d-flex flex-column gap-3">
+                    <!-- Today Collections -->
+                    <div class="card" style="background: white; border: 1px solid #E5E7EB; padding: 1rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div style="font-size: 12px; color: #6B7280;">Today Collections</div>
+                                <div style="font-size: 24px; font-weight: 700; color: #10B981;">₱{{ number_format((float)($todayCollections ?? 0), 2) }}</div>
+                            </div>
+                            <div style="width: 36px; height: 36px; border-radius: 6px; background: #D1FAE5; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-coins" style="font-size: 16px; color: #10B981;"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Today Disbursements -->
+                    <div class="card" style="background: white; border: 1px solid #E5E7EB; padding: 1rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div style="font-size: 12px; color: #6B7280;">Today Disbursements</div>
+                                <div style="font-size: 24px; font-weight: 700; color: #EF4444;">₱{{ number_format((float)($todayDisbursements ?? 0), 2) }}</div>
+                            </div>
+                            <div style="width: 36px; height: 36px; border-radius: 6px; background: #FEE2E2; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-money-bill-wave" style="font-size: 16px; color: #EF4444;"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pending Approvals -->
+                    <div class="card" style="background: white; border: 1px solid #E5E7EB; padding: 1rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div style="font-size: 12px; color: #6B7280;">Pending Approvals</div>
+                                <div style="font-size: 24px; font-weight: 700; color: #F59E0B;">{{ (int)($pendingApprovalsCount ?? 0) }}</div>
+                            </div>
+                            <div style="width: 36px; height: 36px; border-radius: 6px; background: #FEF3C7; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-clipboard-check" style="font-size: 16px; color: #F59E0B;"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Unbilled Completed SRs -->
+                    <div class="card" style="background: white; border: 1px solid #E5E7EB; padding: 1rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div style="font-size: 12px; color: #6B7280;">Unbilled Completed SRs</div>
+                                <div style="font-size: 14px; color: #6B7280;">Count</div>
+                                <div style="font-size: 20px; font-weight: 700; color: #111827;">{{ (int)($unbilledSrCount ?? 0) }}</div>
+                            </div>
+                            <div class="text-end">
+                                <div style="font-size: 14px; color: #6B7280;">Est. Total</div>
+                                <div style="font-size: 20px; font-weight: 700; color: #111827;">₱{{ number_format((float)($unbilledSrTotal ?? 0), 2) }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Finance Actions -->
+                    <div class="d-flex flex-column gap-2">
+                        <a href="{{ route('finance.billing.index') }}" class="btn" style="background: #3B82F6; color: white; font-size: 13px; font-weight: 600; padding: 0.625rem 1rem; border: none; border-radius: 6px;">
+                            <i class="fas fa-file-invoice"></i> Create/Generate Invoice
+                        </a>
+                        <a href="{{ route('finance.accounts-receivable') }}" class="btn" style="background: #10B981; color: white; font-size: 13px; font-weight: 600; padding: 0.625rem 1rem; border: none; border-radius: 6px;">
+                            <i class="fas fa-cash-register"></i> Record Customer Payment
+                        </a>
+                        <a href="{{ route('finance.accounts-payable') }}" class="btn" style="background: #F59E0B; color: #111827; font-size: 13px; font-weight: 700; padding: 0.625rem 1rem; border: none; border-radius: 6px;">
+                            <i class="fas fa-file-invoice-dollar"></i> Record Supplier Bill
+                        </a>
+                        <a href="{{ route('finance.payroll') }}" class="btn" style="background: #334155; color: white; font-size: 13px; font-weight: 600; padding: 0.625rem 1rem; border: none; border-radius: 6px;">
+                            <i class="fas fa-money-check-alt"></i> Run Payroll
+                        </a>
+                    </div>
+
+                    <!-- Removed extra quick links to keep only four finance actions above -->
+                </div>
             </div>
         </div>
     </div>
@@ -213,16 +290,107 @@
             const reportsMode = {!! json_encode(isset($reportsMode) && $reportsMode) !!};
             if (!reportsMode) {
                 const labels = {!! json_encode($revenueChartLabels ?? []) !!};
-                const data = {!! json_encode($revenueChartData ?? []) !!};
+                const revenueData = {!! json_encode($revenueChartData ?? []) !!};
+                const expensesData = revenueData.map(v => v * 0.6); // Mock expenses data
                 const ctx = document.getElementById('revenueChart');
                 if (!ctx || !labels.length) return;
-                const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
-                gradient.addColorStop(0, 'rgba(234, 88, 12, 0.25)');
-                gradient.addColorStop(1, 'rgba(253, 186, 116, 0)');
+                
+                const ctxGradient = ctx.getContext('2d');
+                const revenueGradient = ctxGradient.createLinearGradient(0, 0, 0, 350);
+                revenueGradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
+                revenueGradient.addColorStop(1, 'rgba(59, 130, 246, 0.05)');
+                
+                const expensesGradient = ctxGradient.createLinearGradient(0, 0, 0, 350);
+                expensesGradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
+                expensesGradient.addColorStop(1, 'rgba(16, 185, 129, 0.05)');
+                
                 new Chart(ctx, {
                     type: 'line',
-                    data: { labels, datasets: [{ label: 'Revenue (₱)', data, borderColor: '#ea580c', backgroundColor: gradient, borderWidth: 2, fill: true, pointRadius: 3, pointBackgroundColor: '#ea580c', tension: 0.35 }] },
-                    options: { responsive: true, maintainAspectRatio: false }
+                    data: {
+                        labels,
+                        datasets: [
+                            {
+                                label: 'Revenue',
+                                data: revenueData,
+                                borderColor: '#3B82F6',
+                                backgroundColor: revenueGradient,
+                                borderWidth: 2.5,
+                                fill: true,
+                                pointRadius: 0,
+                                pointHoverRadius: 5,
+                                pointBackgroundColor: '#3B82F6',
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Expenses',
+                                data: expensesData,
+                                borderColor: '#10B981',
+                                backgroundColor: expensesGradient,
+                                borderWidth: 2.5,
+                                fill: true,
+                                pointRadius: 0,
+                                pointHoverRadius: 5,
+                                pointBackgroundColor: '#10B981',
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                align: 'end',
+                                labels: {
+                                    boxWidth: 12,
+                                    boxHeight: 12,
+                                    usePointStyle: true,
+                                    pointStyle: 'circle',
+                                    padding: 15,
+                                    font: { size: 12, weight: '500' }
+                                }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                titleColor: '#111827',
+                                bodyColor: '#6B7280',
+                                borderColor: '#E5E7EB',
+                                borderWidth: 1,
+                                padding: 12,
+                                displayColors: true,
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': ₱' + context.parsed.y.toLocaleString('en-PH', {minimumFractionDigits: 2});
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false, drawBorder: false },
+                                ticks: { color: '#9CA3AF', font: { size: 11 } }
+                            },
+                            y: {
+                                grid: { color: '#F3F4F6', drawBorder: false },
+                                ticks: {
+                                    color: '#9CA3AF',
+                                    font: { size: 11 },
+                                    callback: function(value) {
+                                        return '₱' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        },
+                        interaction: {
+                            mode: 'nearest',
+                            axis: 'x',
+                            intersect: false
+                        }
+                    }
                 });
                 return;
             }

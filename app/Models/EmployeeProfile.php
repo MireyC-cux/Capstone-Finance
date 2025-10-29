@@ -79,4 +79,9 @@ class EmployeeProfile extends Model
     {
         return $this->hasMany(Expense::class, 'employeeprofiles_id');
     }
+
+    public function overtimeRequests()
+    {
+        return $this->hasMany(OvertimeRequest::class, 'employeeprofiles_id');
+    }
 }

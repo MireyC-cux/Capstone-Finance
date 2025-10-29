@@ -1,119 +1,127 @@
 @extends('layouts.finance_app')
 
 @section('content')
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Billing Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        .btn-rounded { border-radius: 1rem; }
-        .shadow-soft { box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
-        .table-hover tbody tr:hover { background-color: #f8fafc; }
-        .modal-content { border-radius: 1rem; }
-    </style>
-</head>
-<body class="bg-light">
-<div class="container py-4">
-    <div class="d-flex align-items-center mb-3">
-      <h3 class="mb-0">Billing Dashboard</h3>
-      <div class="ms-auto d-flex gap-2">
-        <a class="btn btn-outline-secondary btn-rounded" href="{{ route('invoices.index') }}">Invoices</a>
-      </div>
+<div style="padding: 20px; font-family: Inter, Poppins, 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;">
+    <div class="d-flex justify-content-end align-items-center mb-3">
+        <a href="{{ route('invoices.index') }}" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2">
+            <i class="fas fa-file-invoice"></i>
+            <span>Invoice History</span>
+        </a>
     </div>
 
-    <form method="get" class="card card-body shadow-soft mb-4">
-        <div class="row g-2">
-            <div class="col-md-3">
-                <input type="text" class="form-control" name="customer" placeholder="Customer" value="{{ $filters['customer'] ?? '' }}">
-            </div>
-            <div class="col-md-3">
-                <input type="text" class="form-control" name="sr_number" placeholder="Service Request #" value="{{ $filters['sr_number'] ?? '' }}">
-            </div>
-            <div class="col-md-2 d-grid ms-auto">
-                <button class="btn btn-primary btn-rounded">Search</button>
+    <form method="get" class="mb-4">
+        <div class="card border-0 shadow-sm" style="padding: 1rem;">
+            <div class="row g-2 align-items-end">
+                <div class="col-12 col-md-4">
+                    <label class="form-label small fw-semibold mb-1">Customer</label>
+                    <input type="text" class="form-control form-control-sm" name="customer" placeholder="Search by customer name" value="{{ $filters['customer'] ?? '' }}">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label small fw-semibold mb-1">Service Request #</label>
+                    <input type="text" class="form-control form-control-sm" name="sr_number" placeholder="Search by SR number" value="{{ $filters['sr_number'] ?? '' }}">
+                </div>
+                <div class="col-12 col-md-4">
+                    <button type="submit" class="btn btn-primary btn-sm w-100 d-inline-flex align-items-center justify-content-center gap-2">
+                        <i class="fas fa-search"></i>
+                        <span>Search</span>
+                    </button>
+                </div>
             </div>
         </div>
     </form>
 
-    <div class="card shadow-soft">
-        <div class="card-body">
-            <div class="d-flex align-items-center mb-3">
-                <div class="fw-semibold">Completed, Unbilled Service Requests (Quotation: Approved)</div>
-            </div>
-
-            <div class="table-responsive">
-                <table class="table table-striped table-hover align-middle">
-                    <thead class="table-light">
-                    <tr>
-                        <th>Service Request #</th>
-                        <th>Customer</th>
-                        <th>Service Date</th>
-                        <th>Total (Est.)</th>
-                        <th>Actions</th>
+    <div class="card border-0 shadow-sm" style="padding: 0; overflow: hidden;">
+        <div class="px-3 py-3 border-bottom">
+            <h5 class="mb-0 fw-semibold">Completed, Unbilled Service Requests</h5>
+            <div class="text-muted small mt-1">Quotation: Approved</div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr class="text-nowrap">
+                        <th class="py-2">Service Request #</th>
+                        <th class="py-2">Customer</th>
+                        <th class="py-2">Service Date</th>
+                        <th class="py-2 text-end">Subtotal</th>
+                        <th class="py-2 text-end">Line Discount</th>
+                        <th class="py-2 text-end">Grand Discount</th>
+                        <th class="py-2 text-end">Tax</th>
+                        <th class="py-2 text-end">Total</th>
+                        <th class="py-2">Actions</th>
                     </tr>
                     </thead>
                     <tbody>
                     @forelse($groups as $service_request_id => $items)
                         @php
                             $sr = $items->first()->serviceRequest;
-                            $subtotal = 0; $discount = 0; $tax = 0;
+                            $subtotal = 0; $lineDiscount = 0; $lineTax = 0;
                             foreach ($items as $it) {
                                 $line = ($it->quantity ?? 1) * (float)$it->unit_price;
-                                $lineDiscount = (float)($it->discount ?? 0);
-                                $lineTax = (float)($it->tax ?? 0);
+                                $lineDiscount += (float)($it->discount ?? 0);
+                                $lineTax += (float)($it->tax ?? 0);
                                 $extras = \App\Models\ServiceRequestItemExtra::where('item_id', $it->item_id)->get();
                                 $extraSum = $extras->sum(fn($e)=> (float)$e->qty * (float)$e->price);
-                                $subtotal += $line + $extraSum; $discount += $lineDiscount; $tax += $lineTax;
+                                $subtotal += $line + $extraSum;
                             }
-                            $total = round($subtotal - $discount + $tax, 2);
+                            $grandDiscount = (float)($sr->overall_discount ?? 0);
+                            $grandTax = (float)($sr->overall_tax_amount ?? 0);
+                            $taxTotal = $lineTax + $grandTax;
+                            $total = round($subtotal - ($lineDiscount + $grandDiscount) + $taxTotal, 2);
                         @endphp
                         <tr>
-                            <td>{{ $sr->service_request_number ?? $service_request_id }}</td>
+                            <td class="fw-semibold">{{ $sr->service_request_number ?? $service_request_id }}</td>
                             <td>{{ $sr->customer->full_name ?? 'N/A' }}</td>
                             <td>{{ \Carbon\Carbon::parse($sr->end_date ?? $sr->service_date)->format('Y-m-d') }}</td>
-                            <td>₱ {{ number_format($total, 2) }}</td>
+                            <td class="text-end">₱ {{ number_format($subtotal, 2) }}</td>
+                            <td class="text-end">₱ {{ number_format($lineDiscount, 2) }}</td>
+                            <td class="text-end">₱ {{ number_format($grandDiscount, 2) }}</td>
+                            <td class="text-end">₱ {{ number_format($taxTotal, 2) }}</td>
+                            <td class="fw-semibold text-end">₱ {{ number_format($total, 2) }}</td>
                             <td>
-                                <button class="btn btn-sm btn-outline-primary btn-rounded" data-view-items data-srid="{{ $service_request_id }}">View Details</button>
+                                <button class="btn btn-info btn-sm d-inline-flex align-items-center gap-2" data-view-items data-srid="{{ $service_request_id }}">
+                                    <i class="fas fa-eye"></i>
+                                    <span>View</span>
+                                </button>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="text-center text-muted">No completed unbilled items found.</td></tr>
+                        <tr>
+                            <td colspan="5" class="py-4 text-center text-muted">No completed unbilled items found.</td>
+                        </tr>
                     @endforelse
                     </tbody>
                 </table>
-            </div>
         </div>
     </div>
 </div>
 
 <!-- Details Modal -->
-<div class="modal fade" id="modalGenerateBill" tabindex="-1">
+<div class="modal fade" id="modalGenerateBill" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content shadow-soft">
-      <div class="modal-header">
-        <h5 class="modal-title">Service Request Details</h5>
+    <div class="modal-content" style="border-radius: 10px;">
+      <div class="modal-header py-3 px-4">
+        <h5 class="modal-title fw-semibold">Service Request Details</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body p-4">
         <div id="billItems"></div>
         <div class="mt-3">
           <div class="d-flex justify-content-end">
             <div class="text-end">
-              <div><span class="text-muted">Subtotal:</span> <strong id="total_subtotal">₱ 0.00</strong></div>
-              <div><span class="text-muted">Discount:</span> <strong id="total_discount">₱ 0.00</strong></div>
-              <div><span class="text-muted">Tax:</span> <strong id="total_tax">₱ 0.00</strong></div>
-              <div class="fs-5"><span class="text-muted">Total:</span> <strong id="total_grand">₱ 0.00</strong></div>
+              <div class="small"><span class="text-muted">Subtotal:</span> <strong id="total_subtotal">₱ 0.00</strong></div>
+              <div class="small"><span class="text-muted">Discount:</span> <strong id="total_discount">₱ 0.00</strong></div>
+              <div class="small"><span class="text-muted">Tax:</span> <strong id="total_tax">₱ 0.00</strong></div>
+              <div class="fs-6 fw-semibold mt-1"><span class="text-muted">Total:</span> <strong id="total_grand">₱ 0.00</strong></div>
             </div>
           </div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary btn-rounded" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary btn-rounded" id="btnGenerateFromDetails">Generate Bill</button>
+      <div class="modal-footer py-3 px-4">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2" id="btnGenerateFromDetails">
+            <i class="fas fa-file-invoice-dollar"></i>
+            <span>Generate Bill</span>
+        </button>
       </div>
     </div>
   </div>
@@ -243,6 +251,7 @@ document.addEventListener('DOMContentLoaded', function(){
       setTimeout(()=> {
         try { if (document.activeElement) document.activeElement.blur(); } catch(_) {}
         modal.hide();
+        setTimeout(()=> { window.location.reload(); }, 500);
       }, 600);
     }
     else {
@@ -252,6 +261,4 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 });
 </script>
-</body>
-</html>
 @endsection
