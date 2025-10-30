@@ -4,65 +4,87 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\TechnicianAssignment;
+use Illuminate\Notifications\Notifiable;
+use App\Models\Attendance;
 use App\Models\Expenses;
-
-class EmployeeProfiles extends Model
+use App\Models\Leaveovertimerequest;
+use App\Models\Payroll;
+use App\Models\Archiveprofile;
+use App\Models\ActivityLog;
+use App\Models\SalaryRate;
+class Employeeprofiles extends Model
 {
-    use HasFactory;
+     
 
+    protected $table = 'employeeprofiles';
     protected $primaryKey = 'employeeprofiles_id';
     protected $fillable = [
+
         'first_name',
         'last_name',
         'address',
+        'email',
         'position',
-        'contact_info',
+        'date_of_birth',
+        'contact_number',
         'hire_date',
         'status',
         'emergency_contact',
-        'fingerprint_data'
+        'card_Idnumber',
+
     ];
-
-    protected $dates = ['hire_date'];
-
-    public function administrativeAccount()
+    /** @use HasFactory<\Database\Factories\EmployeeprofilesFactory> */
+    use HasFactory, Notifiable;
+   
+      public function attendances()
     {
-        return $this->hasOne(AdministrativeAccount::class, 'employeeprofiles_id');
+        return $this->hasMany(Attendance::class, 'employeeprofiles_id', 'employeeprofiles_id');
     }
 
-    public function attendances()
+      public function expenses()
     {
-        return $this->hasMany(Attendance::class, 'employeeprofiles_id');
+        return $this->hasMany(Expenses::class);
     }
 
-    public function leaveOvertimeRequests()
+     public function leaveovertimerequests()
     {
-        return $this->hasMany(LeaveOvertimeRequest::class, 'employeeprofiles_id');
-    }
-
-    public function salary()
-    {
-        return $this->hasOne(Salaries::class, 'employeeprofiles_id');
+        return $this->hasMany(Leaveovertimerequest::class);
     }
 
     public function payrolls()
     {
-        return $this->hasMany(Payroll::class, 'employeeprofiles_id');
+        return $this->hasMany(Payroll::class);
+    }
+    
+    public function archiveprofiles()
+    {
+        return $this->hasMany(Archiveprofile::class);
     }
 
-    public function assignedServiceRequestItems()
-    {
-        return $this->hasMany(ServiceRequestItem::class, 'assigned_technician_id');
-    }
 
-    public function technicianAssignments()
+    public function routeNotificationForMail($notification)
     {
-        return $this->hasMany(TechnicianAssignment::class, 'employeeprofiles_id');
+        return $this->email;
     }
+    
+    public function evaluatee()
+{
+    return $this->belongsTo(Employeeprofiles::class, 'evaluatee_id', 'employeeprofiles_id');
+}
 
-    public function expenses()
-    {
-        return $this->hasMany(Expenses::class, 'employeeprofiles_id');
-    }
+public function evaluator()
+{
+    return $this->belongsTo(Employeeprofiles::class, 'evaluator_id', 'employeeprofiles_id');
+}
+
+public function activitylogs(){
+
+    return $this->hasMany(ActivityLog::class, 'employeeprofiles_id');
+}
+
+public function salary_rates()
+{
+    return $this->hasOne(SalaryRate::class, 'position', 'position');
+}
+
 }

@@ -15,69 +15,155 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+use App\Models\OvertimeRequest;
+
+
+
 class PayrollController extends Controller
 {
-    public function dashboard(Request $request)
-    {
-        [$start, $end] = $this->resolvePeriod($request);
 
-        $query = EmployeeProfile::query();
-        if ($request->filled('employee')) {
-            $query->where(function($q) use ($request) {
-                $q->where('first_name', 'like', '%'.$request->employee.'%')
-                  ->orWhere('last_name', 'like', '%'.$request->employee.'%');
-            });
-        }
-        if ($request->filled('position')) {
-            $query->where('position', $request->position);
-        }
 
-        $employees = $query->orderBy('last_name')->get();
+public function dashboard(Request $request)
+{
+    // ✅ Determine current semi-monthly pay period automatically
+    $today = now();
+    $year = $today->year;
+    $month = $today->month;
+    $day = $today->day;
 
-        $rows = $employees->map(function (EmployeeProfile $emp) use ($start, $end) {
-            $daysWorked = $this->getDaysWorked($emp, $start, $end);
-            $totalDaysInSemiMonth = $start->diffInDays($end) + 1;
-            $rate = $this->getEffectiveDailyRate($emp, $start);
-            $otHours = $this->getApprovedOtHours($emp, $start, $end);
-            $otCap = min($otHours, 5 * $daysWorked);
-            $otPay = ($rate / 8) * $otCap;
-            $base = $rate * $daysWorked;
-            $deductions = $this->getStatutoryDeductions($emp, $start, $end);
-            $cashAdvanceTotal = $this->getApprovedCashAdvanceTotal($emp, $start, $end);
-            $cashAdvanceApplied = $cashAdvanceTotal * ($daysWorked / max($totalDaysInSemiMonth, 1));
-            $net = $base + $otPay - $deductions - $cashAdvanceApplied;
-
-            $existingPayroll = Payroll::where('employeeprofiles_id', $emp->employeeprofiles_id)
-                ->whereDate('pay_period_start', $start)
-                ->whereDate('pay_period_end', $end)
-                ->first();
-
-            return [
-                'employee' => $emp,
-                'position' => $emp->position,
-                'period' => $this->formatPayPeriod($start, $end),
-                'days_worked' => $daysWorked,
-                'ot_hours' => $otHours,
-                'ot_pay' => round($otPay, 2),
-                'deductions' => round($deductions, 2),
-                'cash_advance' => round($cashAdvanceApplied, 2),
-                'net' => round($net, 2),
-                'status' => $existingPayroll?->status ?? 'Not Generated',
-                'payroll' => $existingPayroll,
-            ];
-        });
-
-        return view('finance.payroll.index', [
-            'rows' => $rows,
-            'period_start' => $start->toDateString(),
-            'period_end' => $end->toDateString(),
-            'filters' => [
-                'employee' => $request->employee,
-                'position' => $request->position,
-                'status' => $request->status,
-            ],
-        ]);
+    if ($day <= 15) {
+        $period_start = now()->setDate($year, $month, 1)->format('Y-m-d');
+        $period_end   = now()->setDate($year, $month, 15)->format('Y-m-d');
+    } else {
+        $period_start = now()->setDate($year, $month, 16)->format('Y-m-d');
+        $period_end   = now()->endOfMonth()->format('Y-m-d');
     }
+
+    // ✅ Fetch filter values from the request
+    $employeeFilter = $request->input('employee');
+    $positionFilter = $request->input('position');
+
+    // ✅ Query payrolls with related employee profiles
+    $query = Payroll::with('employeeprofiles');
+
+    // ✅ Apply filters dynamically
+    if (!empty($employeeFilter)) {
+        $query->whereHas('employeeprofiles', function ($q) use ($employeeFilter) {
+            $q->where('first_name', 'like', '%' . $employeeFilter . '%')
+              ->orWhere('last_name', 'like', '%' . $employeeFilter . '%');
+        });
+    }
+
+    if (!empty($positionFilter)) {
+        $query->whereHas('employeeprofiles', function ($q) use ($positionFilter) {
+            $q->where('position', 'like', '%' . $positionFilter . '%');
+        });
+    }
+
+    // ✅ Get filtered payroll records
+    $payrolls = $query->get();
+
+    // ✅ Convert payrolls into $rows array for your Blade view
+    $rows = $payrolls->map(function ($payroll) use ($period_start, $period_end) {
+        $employee = $payroll->employeeprofiles;
+
+        // ✅ Fetch total approved OT hours from overtime_requests table for this employee & pay period
+        $totalOtHours = OvertimeRequest::where('employeeprofiles_id', $employee->employeeprofiles_id)
+            ->where('status', 'Approved')
+            ->whereBetween('approved_date', [$period_start, $period_end])
+            ->sum('hours'); // replace with your column name (e.g., 'ot_hours' or 'hours')
+
+        // ✅ Compute OT pay (optional)
+        $hourlyRate = $employee->daily_rate ? $employee->daily_rate / 8 : 0;
+        $otPay = $totalOtHours * ($hourlyRate * 1.25); // assuming 25% OT premium
+
+        return [
+            'employee' => $employee,
+            'position' => $employee->position ?? 'N/A',
+            'period' => $payroll->pay_period ?? "{$period_start} - {$period_end}",
+            'days_worked' => $payroll->total_days_of_work ?? 0,
+            'ot_hours' => $totalOtHours,
+            'ot_pay' => number_format($otPay, 2),
+            'deductions' => $payroll->deductions ?? 0,
+            'cash_advance' => $payroll->cash_advance ?? 0,
+            'net' => $payroll->net_pay ?? 0,
+            'status' => $payroll->status ?? 'N/A',
+            'payroll' => $payroll,
+        ];
+    });
+
+    // ✅ Return everything to the Blade view
+    return view('finance.payroll.index', [
+        'rows' => $rows,
+        'filters' => [
+            'employee' => $employeeFilter,
+            'position' => $positionFilter,
+        ],
+        'period_start' => $period_start,
+        'period_end' => $period_end,
+    ]);
+}
+
+
+
+//         [$start, $end] = $this->resolvePeriod($request);
+
+//         $query = EmployeeProfile::query();
+//         if ($request->filled('employee')) {
+//             $query->where(function($q) use ($request) {
+//                 $q->where('first_name', 'like', '%'.$request->employee.'%')
+//                   ->orWhere('last_name', 'like', '%'.$request->employee.'%');
+//             });
+//         }
+//         if ($request->filled('position')) {
+//             $query->where('position', $request->position);
+//         }
+
+//         $employees = $query->orderBy('last_name')->get();
+
+//         $rows = $employees->map(function (EmployeeProfile $emp) use ($start, $end) {
+//             $daysWorked = $this->getDaysWorked($emp, $start, $end);
+//             $totalDaysInSemiMonth = $start->diffInDays($end) + 1;
+//             $rate = $this->getEffectiveDailyRate($emp, $start);
+//             $otHours = $this->getApprovedOtHours($emp, $start, $end);
+//             $otCap = min($otHours, 5 * $daysWorked);
+//             $otPay = ($rate / 8) * $otCap;
+//             $base = $rate * $daysWorked;
+//             $deductions = $this->getStatutoryDeductions($emp, $start, $end);
+//             $cashAdvanceTotal = $this->getApprovedCashAdvanceTotal($emp, $start, $end);
+//             $cashAdvanceApplied = $cashAdvanceTotal * ($daysWorked / max($totalDaysInSemiMonth, 1));
+//             $net = $base + $otPay - $deductions - $cashAdvanceApplied;
+
+//             $existingPayroll = Payroll::where('employeeprofiles_id', $emp->employeeprofiles_id)
+//                 ->whereDate('pay_period_start', $start)
+//                 ->whereDate('pay_period_end', $end)
+//                 ->first();
+
+//             return [
+//                 'employee' => $emp,
+//                 'position' => $emp->position,
+//                 'period' => $this->formatPayPeriod($start, $end),
+//                 'days_worked' => $daysWorked,
+//                 'ot_hours' => $otHours,
+//                 'ot_pay' => round($otPay, 2),
+//                 'deductions' => round($deductions, 2),
+//                 'cash_advance' => round($cashAdvanceApplied, 2),
+//                 'net' => round($net, 2),
+//                 'status' => $existingPayroll?->status ?? 'Not Generated',
+//                 'payroll' => $existingPayroll,
+//             ];
+//         });
+
+//         return view('finance.payroll.index', [
+//             'rows' => $rows,
+//             'period_start' => $start->toDateString(),
+//             'period_end' => $end->toDateString(),
+//             'filters' => [
+//                 'employee' => $request->employee,
+//                 'position' => $request->position,
+//                 'status' => $request->status,
+//             ],
+//         ]);
 
     public function generatePayroll(Request $request)
     {
@@ -110,7 +196,7 @@ class PayrollController extends Controller
                     [
                         'total_days_of_work' => $computed['days_worked'],
                         'pay_period' => $this->formatPayPeriod($start, $end),
-                        'basic_salary' => $computed['base'],
+                        'salary_rate' => $computed['base'],
                         'overtime_pay' => $computed['ot_pay'],
                         'deductions' => $computed['deductions'],
                         'cash_advance' => $computed['cash_advance'],
@@ -368,7 +454,7 @@ class PayrollController extends Controller
             'ot_pay' => round($otPay, 2),
             'deductions' => round($deductions, 2),
             'cash_advance' => round($cashAdvanceApplied, 2),
-            'net' => round($net, 2),
+            'net' => round($net, 2),    
         ];
     }
 }
