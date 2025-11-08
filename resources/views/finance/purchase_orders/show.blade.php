@@ -27,6 +27,10 @@
         <form method="POST" action="{{ route('purchase-orders.reject',$po->purchase_order_id) }}">@csrf
           <button class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-white shadow hover:bg-rose-700 transition"><i class="fa fa-xmark"></i><span>Reject</span></button>
         </form>
+      @elseif($po->status==='Approved')
+        <form method="POST" action="{{ route('purchase-orders.deliver', $po->purchase_order_id) }}">@csrf
+          <button class="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2 text-white shadow hover:bg-sky-700 transition"><i class="fa fa-truck"></i><span>Mark Delivered</span></button>
+        </form>
       @endif
     </div>
   </div>

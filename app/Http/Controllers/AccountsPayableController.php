@@ -34,8 +34,8 @@ class AccountsPayableController extends Controller
 
         $query = AccountsPayable::with(['supplier', 'purchaseOrder'])
             ->whereHas('purchaseOrder', function($q){
-                // Updated to new Purchase Order status enum values
-                $q->where('status', 'delivered');
+                // Support both legacy 'delivered' and new 'Completed' statuses
+                $q->whereIn('status', ['delivered', 'Completed']);
             });
 
         if ($request->filled('status')) $query->where('status', $request->get('status'));

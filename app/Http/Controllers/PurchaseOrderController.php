@@ -8,6 +8,8 @@ use App\Models\ServiceRequest;
 use App\Models\Supplier;
 use App\Models\AccountsPayable;
 use App\Models\CashFlow;
+use App\Models\InventoryStockIn;
+use App\Services\Inventory\BalanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -258,9 +260,70 @@ class PurchaseOrderController extends Controller
             return back()->with('error', 'Only pending POs can be rejected.');
         }
         $purchase_order->status = 'Rejected';
-        $purchase_order->approved_by = auth()->id() ?? null;
+        $purchase_order->approved_by = Auth::id() ?? null;
         $purchase_order->save();
         return back()->with('success', 'PO rejected.');
+    }
+
+    public function deliver(Request $request, PurchaseOrder $purchase_order, BalanceService $balance)
+    {
+        if (!in_array($purchase_order->status, ['Approved', 'approved'], true)) {
+            return back()->with('error', 'Only approved POs can be marked as delivered.');
+        }
+
+        $data = $request->validate([
+            'delivered_date' => 'nullable|date',
+        ]);
+
+        return DB::transaction(function () use ($purchase_order, $balance, $data) {
+            $po = $purchase_order->load('items');
+
+            $delivDate = !empty($data['delivered_date'])
+                ? \Carbon\Carbon::parse($data['delivered_date'])->toDateString()
+                : now()->toDateString();
+
+            foreach ($po->items as $it) {
+                $invId = null;
+                if (!empty($it->item_id)) {
+                    $maybeInv = \App\Models\InventoryItem::find($it->item_id);
+                    if ($maybeInv) { $invId = $maybeInv->item_id; }
+                }
+                if (!$invId && !empty($it->description)) {
+                    $name = trim(mb_strtolower($it->description));
+                    $match = \App\Models\InventoryItem::whereRaw('LOWER(item_name) = ?', [$name])->first();
+                    if ($match) { $invId = $match->item_id; }
+                }
+                if (!$invId) { continue; }
+
+                InventoryStockIn::create([
+                    'purchase_order_id' => $po->purchase_order_id,
+                    'item_id' => $invId,
+                    'quantity' => (int)$it->quantity,
+                    'unit_cost' => (float)($it->unit_price ?? 0),
+                    'received_date' => $delivDate,
+                    'received_by' => Auth::id() ?? null,
+                    'remarks' => 'Auto stock-in from PO '.$po->po_number,
+                ]);
+
+                $balance->adjust((int)$invId, (int)$it->quantity);
+            }
+
+            // Mark PO as delivered and set delivery timestamps/audit fields if present
+            $po->status = 'Completed';
+            if (Schema::hasColumn('purchase_orders', 'delivered_at')) {
+                $po->delivered_at = now();
+            }
+            if (Schema::hasColumn('purchase_orders', 'delivery_date')) {
+                $po->delivery_date = $delivDate;
+            }
+            if (Schema::hasColumn('purchase_orders', 'delivered_by')) {
+                $po->delivered_by = Auth::id() ?? null;
+            }
+            $po->save();
+
+            return redirect()->route('finance.inventory.stock-in.index')
+                ->with('success', 'PO marked delivered and stock-in entries recorded.');
+        });
     }
 
     protected function generatePoNumber(): string

@@ -15,7 +15,6 @@
       <a class="btn btn-outline-secondary btn-sm" href="{{ route('finance.inventory.items.index') }}">Items</a>
       <a class="btn btn-outline-secondary btn-sm" href="{{ route('finance.inventory.stock-in.index') }}">Stock-In</a>
       <a class="btn btn-outline-secondary btn-sm" href="{{ route('finance.inventory.stock-out.index') }}">Stock-Out</a>
-      <a class="btn btn-outline-secondary btn-sm" href="{{ route('finance.inventory.adjustments.index') }}">Adjustments</a>
       <a class="btn btn-primary btn-sm" href="{{ route('finance.inventory.reports.index') }}">Reports</a>
     </div>
   </div>

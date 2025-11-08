@@ -225,6 +225,8 @@ Route::get('purchase-orders/{id}/summary', [PurchaseOrderController::class, 'sum
     ->where('id','[0-9]+')->name('purchase-orders.summary');
 Route::post('purchase-orders/{id}/payment', [PurchaseOrderController::class, 'recordPayment'])
     ->where('id','[0-9]+')->name('purchase-orders.payment');
+Route::post('purchase-orders/{purchase_order}/deliver', [PurchaseOrderController::class, 'deliver'])
+    ->name('purchase-orders.deliver');
 Route::resource('purchase-orders', PurchaseOrderController::class);
 Route::resource('accounts-payable', AccountsPayableController::class);
 Route::resource('payments-made', PaymentsMadeController::class)->only(['index','store']);
