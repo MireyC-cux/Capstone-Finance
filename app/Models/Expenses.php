@@ -21,6 +21,7 @@ class Expenses extends Model
         'reference_number',
         'remarks',
         'status',
+        'admin_approval',
     ];
 
     protected $casts = [
@@ -36,5 +37,10 @@ class Expenses extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class, 'supplier_id');
+    }
+
+    public function payroll(): BelongsTo
+    {
+        return $this->belongsTo(Payroll::class, 'payroll_id');
     }
 }

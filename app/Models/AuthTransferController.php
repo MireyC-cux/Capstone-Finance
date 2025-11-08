@@ -52,8 +52,8 @@ class AuthTransferController extends Controller
             Session::put('permissions', $allowedPermissions);
             Session::save();
 
-            // ✅ Redirect to Finance dashboard
-            return redirect()->away('http://Capstone-Finance.test/finance');
+            // ✅ Redirect to HR dashboard
+            return redirect()->away('http://humanresource.test/HR');
 
         } catch (DecryptException | Exception $e) {
             return redirect()->away('https://3RS-ERP.test/login')->withErrors([
@@ -84,7 +84,7 @@ class AuthTransferController extends Controller
             'updated_at' => now(),
         ]);
 
-        return redirect()->away('http://3RS-ERP.test/login');
+        return redirect()->away('https://3RS-ERP.test/login');
     }
 
     // 🔹 Determine redirect target
@@ -102,7 +102,7 @@ class AuthTransferController extends Controller
             $target = 'http://Humanresource.test/Booking';
             break;
         case 'finance-dashboard':
-            $target = 'http://Capstone-Finance.test/finance';
+            $target = 'http://Finance.test';
             break;
         default:
             $target = 'http://Capstone-Admin.test/AdminDashboard';

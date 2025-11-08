@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Payroll;;
+use App\Models\Employeeprofiles;
 
 class PayrollDisbursement extends Model
 {
@@ -28,6 +30,6 @@ class PayrollDisbursement extends Model
 
     public function employeeProfile(): BelongsTo
     {
-        return $this->belongsTo(EmployeeProfile::class, 'employeeprofiles_id');
+        return $this->belongsTo(Employeeprofiles::class,'employeeprofiles_id', 'employeeprofiles_id');
     }
 }

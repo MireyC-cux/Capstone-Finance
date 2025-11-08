@@ -29,18 +29,16 @@ use App\Http\Controllers\CapitalController;
 // 🔐 AUTH / DEFAULT REDIRECTS
 // =======================================================
 
+
+
+Route::get('/auth/verify', [AuthTransferController::class, 'verify'])->name('auth.verify');
+
+
+Route::middleware(['web', CheckAuth::class])->group(function () {
 // When someone opens the root URL, go directly to the Finance Home
 Route::get('/', function () {
     return redirect()->route('finance.home');
 });
-
-// TEMP DEBUG: verify approve route is reachable and session is available
-// (Removed) Approve debug route
-
-// Redirect /login to Finance Home (no auth page yet)
-//Route::get('/login', function () {
-//    return redirect()->route('finance.home');
-//})->name('login');
 
 
 // =======================================================
@@ -211,6 +209,13 @@ Route::get('accounts-receivable/aging-report', [ARReportController::class, 'agin
 Route::post('accounts-receivable/{id}/payment', [PaymentController::class, 'store'])->name('payments.store');
 Route::resource('accounts-receivable', AccountsReceivableController::class);
 
+Route::get('logout', function() {
+    return redirect()->away('http://3RS-ERP.test/login');
+})->name('logout');
+
+Route::post('/finance/payroll/send-approval', [PayrollController::class, 'sendApproval'])
+    ->name('finance.payroll.sendApproval');
+
 // =======================================================
 // 📗 ACCOUNTS PAYABLE & PURCHASE ORDERS
 // =======================================================
@@ -227,3 +232,4 @@ Route::get('reports/ap-aging', [APReportController::class, 'aging'])->name('repo
 Route::post('purchase-orders/{purchase_order}/approve', [PurchaseOrderController::class, 'approve'])->name('purchase-orders.approve');
 Route::post('purchase-orders/{purchase_order}/reject', [PurchaseOrderController::class, 'reject'])->name('purchase-orders.reject');
 Route::post('accounts-payable/mark-overdues', [AccountsPayableController::class, 'markOverdues'])->name('accounts-payable.mark-overdues');
+});

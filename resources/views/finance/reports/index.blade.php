@@ -3,201 +3,246 @@
 @section('title', 'Finance Reporting')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-6 py-8">
-    <!-- Page Header -->
-    <div class="mb-8">
-        <h1 class="text-4xl font-bold bg-gradient-to-r from-red-600 via-orange-600 to-orange-500 bg-clip-text text-transparent tracking-tight mb-2">Finance Reporting</h1>
-        <p class="text-slate-600 text-base">Generate comprehensive financial reports and analytics for business insights.</p>
+<!-- Page Header -->
+<div class="container-xxl py-3">
+    <div class="mb-4">
+        <h1 class="mb-1">Finance Reporting</h1>
+        <p class="text-muted mb-0">Generate comprehensive financial reports and analytics for business insights.</p>
     </div>
 
     <!-- Report Categories Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        
+    <div class="row g-4 mb-4 row-cols-1 row-cols-md-2 row-cols-lg-3">
         <!-- Financial Statements -->
-        <div class="rounded-2xl bg-white border-2 border-slate-200 p-6 shadow-xl hover:shadow-2xl transition-all duration-300">
-            <div class="flex items-center gap-4 mb-4">
-                <div class="h-16 w-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center shadow-lg">
-                    <i class="fa fa-file-invoice-dollar text-2xl"></i>
+        <div class="col">
+            <div class="report-card card h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="icon-badge bg-blue">
+                            <i class="fa-solid fa-file-invoice-dollar"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-0">Financial Statements</h5>
+                            <small class="text-muted">Core financial reports</small>
+                        </div>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="action-link list-group-item px-0 d-flex align-items-center justify-content-between text-decoration-none">
+                            <span class="fw-semibold text-body">Income Statement</span>
+                            <i class="fa-solid fa-arrow-right text-muted"></i>
+                        </a>
+                        <a href="#" class="action-link list-group-item px-0 d-flex align-items-center justify-content-between text-decoration-none">
+                            <span class="fw-semibold text-body">Balance Sheet</span>
+                            <i class="fa-solid fa-arrow-right text-muted"></i>
+                        </a>
+                        <a href="#" class="action-link list-group-item px-0 d-flex align-items-center justify-content-between text-decoration-none">
+                            <span class="fw-semibold text-body">Cash Flow Statement</span>
+                            <i class="fa-solid fa-arrow-right text-muted"></i>
+                        </a>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="text-xl font-bold text-slate-800">Financial Statements</h3>
-                    <p class="text-sm text-slate-600">Core financial reports</p>
-                </div>
-            </div>
-            <div class="space-y-3">
-                <a href="#" class="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 transition-all duration-200 group">
-                    <span class="font-medium text-slate-700 group-hover:text-blue-700">Income Statement</span>
-                    <i class="fa fa-arrow-right text-slate-400 group-hover:text-blue-600"></i>
-                </a>
-                <a href="#" class="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 transition-all duration-200 group">
-                    <span class="font-medium text-slate-700 group-hover:text-blue-700">Balance Sheet</span>
-                    <i class="fa fa-arrow-right text-slate-400 group-hover:text-blue-600"></i>
-                </a>
-                <a href="#" class="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 transition-all duration-200 group">
-                    <span class="font-medium text-slate-700 group-hover:text-blue-700">Cash Flow Statement</span>
-                    <i class="fa fa-arrow-right text-slate-400 group-hover:text-blue-600"></i>
-                </a>
             </div>
         </div>
 
         <!-- Accounts Reports -->
-        <div class="rounded-2xl bg-white border-2 border-slate-200 p-6 shadow-xl hover:shadow-2xl transition-all duration-300">
-            <div class="flex items-center gap-4 mb-4">
-                <div class="h-16 w-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg">
-                    <i class="fa fa-receipt text-2xl"></i>
+        <div class="col">
+            <div class="report-card card h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="icon-badge bg-emerald">
+                            <i class="fa-solid fa-receipt"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-0">Accounts Reports</h5>
+                            <small class="text-muted">AR & AP analytics</small>
+                        </div>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <a href="{{ route('finance.ar.aging') }}" class="action-link list-group-item px-0 d-flex align-items-center justify-content-between text-decoration-none">
+                            <span class="fw-semibold text-body">AR Aging Report</span>
+                            <i class="fa-solid fa-arrow-right text-muted"></i>
+                        </a>
+                        <a href="#" class="action-link list-group-item px-0 d-flex align-items-center justify-content-between text-decoration-none">
+                            <span class="fw-semibold text-body">AP Aging Report</span>
+                            <i class="fa-solid fa-arrow-right text-muted"></i>
+                        </a>
+                        <a href="#" class="action-link list-group-item px-0 d-flex align-items-center justify-content-between text-decoration-none">
+                            <span class="fw-semibold text-body">Collection Summary</span>
+                            <i class="fa-solid fa-arrow-right text-muted"></i>
+                        </a>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="text-xl font-bold text-slate-800">Accounts Reports</h3>
-                    <p class="text-sm text-slate-600">AR & AP analytics</p>
-                </div>
-            </div>
-            <div class="space-y-3">
-                <a href="{{ route('finance.ar.aging') ?? '#' }}" class="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 transition-all duration-200 group">
-                    <span class="font-medium text-slate-700 group-hover:text-emerald-700">AR Aging Report</span>
-                    <i class="fa fa-arrow-right text-slate-400 group-hover:text-emerald-600"></i>
-                </a>
-                <a href="#" class="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 transition-all duration-200 group">
-                    <span class="font-medium text-slate-700 group-hover:text-emerald-700">AP Aging Report</span>
-                    <i class="fa fa-arrow-right text-slate-400 group-hover:text-emerald-600"></i>
-                </a>
-                <a href="#" class="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 transition-all duration-200 group">
-                    <span class="font-medium text-slate-700 group-hover:text-emerald-700">Collection Summary</span>
-                    <i class="fa fa-arrow-right text-slate-400 group-hover:text-emerald-600"></i>
-                </a>
             </div>
         </div>
 
         <!-- Payroll Reports -->
-        <div class="rounded-2xl bg-white border-2 border-slate-200 p-6 shadow-xl hover:shadow-2xl transition-all duration-300">
-            <div class="flex items-center gap-4 mb-4">
-                <div class="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-white flex items-center justify-center shadow-lg">
-                    <i class="fa fa-money-check-alt text-2xl"></i>
+        <div class="col">
+            <div class="report-card card h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="icon-badge bg-indigo">
+                            <i class="fa-solid fa-money-check-dollar"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-0">Payroll Reports</h5>
+                            <small class="text-muted">Employee compensation</small>
+                        </div>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <a href="{{ route('finance.payroll.export') }}" class="action-link list-group-item px-0 d-flex align-items-center justify-content-between text-decoration-none">
+                            <span class="fw-semibold text-body">Payroll Register</span>
+                            <i class="fa-solid fa-arrow-right text-muted"></i>
+                        </a>
+                        <a href="#" class="action-link list-group-item px-0 d-flex align-items-center justify-content-between text-decoration-none">
+                            <span class="fw-semibold text-body">Payroll Summary</span>
+                            <i class="fa-solid fa-arrow-right text-muted"></i>
+                        </a>
+                        <a href="{{ route('finance.disbursement.index') }}" class="action-link list-group-item px-0 d-flex align-items-center justify-content-between text-decoration-none">
+                            <span class="fw-semibold text-body">Disbursement Report</span>
+                            <i class="fa-solid fa-arrow-right text-muted"></i>
+                        </a>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="text-xl font-bold text-slate-800">Payroll Reports</h3>
-                    <p class="text-sm text-slate-600">Employee compensation</p>
-                </div>
-            </div>
-            <div class="space-y-3">
-                <a href="{{ route('finance.payroll.export') ?? '#' }}" class="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 transition-all duration-200 group">
-                    <span class="font-medium text-slate-700 group-hover:text-indigo-700">Payroll Register</span>
-                    <i class="fa fa-arrow-right text-slate-400 group-hover:text-indigo-600"></i>
-                </a>
-                <a href="#" class="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 transition-all duration-200 group">
-                    <span class="font-medium text-slate-700 group-hover:text-indigo-700">Payroll Summary</span>
-                    <i class="fa fa-arrow-right text-slate-400 group-hover:text-indigo-600"></i>
-                </a>
-                <a href="{{ route('finance.disbursement.index') ?? '#' }}" class="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 transition-all duration-200 group">
-                    <span class="font-medium text-slate-700 group-hover:text-indigo-700">Disbursement Report</span>
-                    <i class="fa fa-arrow-right text-slate-400 group-hover:text-indigo-600"></i>
-                </a>
             </div>
         </div>
 
         <!-- Inventory Reports -->
-        <div class="rounded-2xl bg-white border-2 border-slate-200 p-6 shadow-xl hover:shadow-2xl transition-all duration-300">
-            <div class="flex items-center gap-4 mb-4">
-                <div class="h-16 w-16 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 text-white flex items-center justify-center shadow-lg">
-                    <i class="fa fa-boxes text-2xl"></i>
+        <div class="col">
+            <div class="report-card card h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="icon-badge bg-amber">
+                            <i class="fa-solid fa-boxes-stacked"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-0">Inventory Reports</h5>
+                            <small class="text-muted">Stock & valuation</small>
+                        </div>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <a href="{{ route('finance.inventory.reports.index') }}" class="action-link list-group-item px-0 d-flex align-items-center justify-content-between text-decoration-none">
+                            <span class="fw-semibold text-body">Stock Valuation</span>
+                            <i class="fa-solid fa-arrow-right text-muted"></i>
+                        </a>
+                        <a href="#" class="action-link list-group-item px-0 d-flex align-items-center justify-content-between text-decoration-none">
+                            <span class="fw-semibold text-body">Stock Movement</span>
+                            <i class="fa-solid fa-arrow-right text-muted"></i>
+                        </a>
+                        <a href="#" class="action-link list-group-item px-0 d-flex align-items-center justify-content-between text-decoration-none">
+                            <span class="fw-semibold text-body">Low Stock Alert</span>
+                            <i class="fa-solid fa-arrow-right text-muted"></i>
+                        </a>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="text-xl font-bold text-slate-800">Inventory Reports</h3>
-                    <p class="text-sm text-slate-600">Stock & valuation</p>
-                </div>
-            </div>
-            <div class="space-y-3">
-                <a href="{{ route('finance.inventory.reports.index') ?? '#' }}" class="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 transition-all duration-200 group">
-                    <span class="font-medium text-slate-700 group-hover:text-amber-700">Stock Valuation</span>
-                    <i class="fa fa-arrow-right text-slate-400 group-hover:text-amber-600"></i>
-                </a>
-                <a href="#" class="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 transition-all duration-200 group">
-                    <span class="font-medium text-slate-700 group-hover:text-amber-700">Stock Movement</span>
-                    <i class="fa fa-arrow-right text-slate-400 group-hover:text-amber-600"></i>
-                </a>
-                <a href="#" class="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 transition-all duration-200 group">
-                    <span class="font-medium text-slate-700 group-hover:text-amber-700">Low Stock Alert</span>
-                    <i class="fa fa-arrow-right text-slate-400 group-hover:text-amber-600"></i>
-                </a>
             </div>
         </div>
 
         <!-- Expense Reports -->
-        <div class="rounded-2xl bg-white border-2 border-slate-200 p-6 shadow-xl hover:shadow-2xl transition-all duration-300">
-            <div class="flex items-center gap-4 mb-4">
-                <div class="h-16 w-16 rounded-2xl bg-gradient-to-br from-rose-500 to-rose-600 text-white flex items-center justify-center shadow-lg">
-                    <i class="fa fa-chart-pie text-2xl"></i>
+        <div class="col">
+            <div class="report-card card h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="icon-badge bg-rose">
+                            <i class="fa-solid fa-chart-pie"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-0">Expense Reports</h5>
+                            <small class="text-muted">Cost analysis</small>
+                        </div>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <a href="{{ route('finance.expenses') }}" class="action-link list-group-item px-0 d-flex align-items-center justify-content-between text-decoration-none">
+                            <span class="fw-semibold text-body">Expense Summary</span>
+                            <i class="fa-solid fa-arrow-right text-muted"></i>
+                        </a>
+                        <a href="#" class="action-link list-group-item px-0 d-flex align-items-center justify-content-between text-decoration-none">
+                            <span class="fw-semibold text-body">Category Breakdown</span>
+                            <i class="fa-solid fa-arrow-right text-muted"></i>
+                        </a>
+                        <a href="#" class="action-link list-group-item px-0 d-flex align-items-center justify-content-between text-decoration-none">
+                            <span class="fw-semibold text-body">Budget vs Actual</span>
+                            <i class="fa-solid fa-arrow-right text-muted"></i>
+                        </a>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="text-xl font-bold text-slate-800">Expense Reports</h3>
-                    <p class="text-sm text-slate-600">Cost analysis</p>
-                </div>
-            </div>
-            <div class="space-y-3">
-                <a href="{{ route('finance.expenses') ?? '#' }}" class="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-rose-50 border border-slate-200 hover:border-rose-300 transition-all duration-200 group">
-                    <span class="font-medium text-slate-700 group-hover:text-rose-700">Expense Summary</span>
-                    <i class="fa fa-arrow-right text-slate-400 group-hover:text-rose-600"></i>
-                </a>
-                <a href="#" class="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-rose-50 border border-slate-200 hover:border-rose-300 transition-all duration-200 group">
-                    <span class="font-medium text-slate-700 group-hover:text-rose-700">Category Breakdown</span>
-                    <i class="fa fa-arrow-right text-slate-400 group-hover:text-rose-600"></i>
-                </a>
-                <a href="#" class="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-rose-50 border border-slate-200 hover:border-rose-300 transition-all duration-200 group">
-                    <span class="font-medium text-slate-700 group-hover:text-rose-700">Budget vs Actual</span>
-                    <i class="fa fa-arrow-right text-slate-400 group-hover:text-rose-600"></i>
-                </a>
             </div>
         </div>
 
         <!-- Custom Reports -->
-        <div class="rounded-2xl bg-white border-2 border-slate-200 p-6 shadow-xl hover:shadow-2xl transition-all duration-300">
-            <div class="flex items-center gap-4 mb-4">
-                <div class="h-16 w-16 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 text-white flex items-center justify-center shadow-lg">
-                    <i class="fa fa-chart-bar text-2xl"></i>
+        <div class="col">
+            <div class="report-card card h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="icon-badge bg-purple">
+                            <i class="fa-solid fa-chart-bar"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-0">Custom Reports</h5>
+                            <small class="text-muted">Build your own</small>
+                        </div>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="action-link list-group-item px-0 d-flex align-items-center justify-content-between text-decoration-none">
+                            <span class="fw-semibold text-body">Report Builder</span>
+                            <i class="fa-solid fa-arrow-right text-muted"></i>
+                        </a>
+                        <a href="#" class="action-link list-group-item px-0 d-flex align-items-center justify-content-between text-decoration-none">
+                            <span class="fw-semibold text-body">Saved Reports</span>
+                            <i class="fa-solid fa-arrow-right text-muted"></i>
+                        </a>
+                        <a href="#" class="action-link list-group-item px-0 d-flex align-items-center justify-content-between text-decoration-none">
+                            <span class="fw-semibold text-body">Scheduled Reports</span>
+                            <i class="fa-solid fa-arrow-right text-muted"></i>
+                        </a>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="text-xl font-bold text-slate-800">Custom Reports</h3>
-                    <p class="text-sm text-slate-600">Build your own</p>
-                </div>
-            </div>
-            <div class="space-y-3">
-                <a href="#" class="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 transition-all duration-200 group">
-                    <span class="font-medium text-slate-700 group-hover:text-purple-700">Report Builder</span>
-                    <i class="fa fa-arrow-right text-slate-400 group-hover:text-purple-600"></i>
-                </a>
-                <a href="#" class="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 transition-all duration-200 group">
-                    <span class="font-medium text-slate-700 group-hover:text-purple-700">Saved Reports</span>
-                    <i class="fa fa-arrow-right text-slate-400 group-hover:text-purple-600"></i>
-                </a>
-                <a href="#" class="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 transition-all duration-200 group">
-                    <span class="font-medium text-slate-700 group-hover:text-purple-700">Scheduled Reports</span>
-                    <i class="fa fa-arrow-right text-slate-400 group-hover:text-purple-600"></i>
-                </a>
             </div>
         </div>
-
     </div>
 
     <!-- Quick Actions -->
-    <div class="bg-gradient-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200 p-6 shadow-xl">
-        <h2 class="text-xl font-bold text-slate-800 mb-4">Quick Export</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <button class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white border-2 border-slate-300 hover:border-red-400 hover:bg-red-50 font-medium transition-all duration-200 group">
-                <i class="fa fa-file-pdf text-red-600 text-lg"></i>
-                <span class="text-slate-700 group-hover:text-red-700">Export as PDF</span>
-            </button>
-            <button class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white border-2 border-slate-300 hover:border-emerald-400 hover:bg-emerald-50 font-medium transition-all duration-200 group">
-                <i class="fa fa-file-excel text-emerald-600 text-lg"></i>
-                <span class="text-slate-700 group-hover:text-emerald-700">Export as Excel</span>
-            </button>
-            <button class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white border-2 border-slate-300 hover:border-blue-400 hover:bg-blue-50 font-medium transition-all duration-200 group">
-                <i class="fa fa-file-csv text-blue-600 text-lg"></i>
-                <span class="text-slate-700 group-hover:text-blue-700">Export as CSV</span>
-            </button>
-            <button class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white shadow-md font-medium transition-all duration-200">
-                <i class="fa fa-print text-lg"></i>
-                <span>Print Report</span>
-            </button>
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <h5 class="mb-0">Quick Export</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-light border btn-export">
+                        <i class="fa-solid fa-file-pdf text-danger"></i>
+                        <span class="ms-2">Export as PDF</span>
+                    </button>
+                    <button type="button" class="btn btn-light border btn-export">
+                        <i class="fa-solid fa-file-excel text-success"></i>
+                        <span class="ms-2">Export as Excel</span>
+                    </button>
+                    <button type="button" class="btn btn-light border btn-export">
+                        <i class="fa-solid fa-file-csv text-primary"></i>
+                        <span class="ms-2">Export as CSV</span>
+                    </button>
+                    <button type="button" class="btn btn-gradient">
+                        <i class="fa-solid fa-print me-2"></i>
+                        <span>Print Report</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 @endsection
+
+@push('styles')
+<style>
+.report-card{border-radius:16px;background:#fff;border:1px solid #e8ecf1;transition:transform .2s ease,box-shadow .2s ease}
+.report-card:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(2,6,23,.08)}
+.icon-badge{height:56px;width:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 8px 20px rgba(0,0,0,0.12);font-size:1.25rem}
+.icon-badge.bg-blue{background:linear-gradient(135deg,#3b82f6,#2563eb)}
+.icon-badge.bg-emerald{background:linear-gradient(135deg,#10b981,#059669)}
+.icon-badge.bg-indigo{background:linear-gradient(135deg,#6366f1,#4f46e5)}
+.icon-badge.bg-amber{background:linear-gradient(135deg,#f59e0b,#d97706)}
+.icon-badge.bg-rose{background:linear-gradient(135deg,#f43f5e,#e11d48)}
+.icon-badge.bg-purple{background:linear-gradient(135deg,#a855f7,#7c3aed)}
+.action-link{border-radius:12px;border:1px solid #e8ecf1;background:#f8fafc;padding:.75rem 1rem;margin:.35rem 0;transition:all .15s ease}
+.action-link:hover{background:#eef6ff;border-color:#bfd6ff}
+.btn-export{border-radius:12px}
+.btn-gradient{border-radius:12px;background:linear-gradient(90deg,#e65c33,#f57c42);color:#fff;border:0;padding:.6rem 1rem;box-shadow:0 4px 14px rgba(230,92,51,.3)}
+.btn-gradient:hover{filter:brightness(.95);color:#fff}
+</style>
+@endpush

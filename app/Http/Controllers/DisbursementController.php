@@ -30,58 +30,61 @@ class DisbursementController extends Controller
         ]);
     }
     public function disburseSalary(Request $request)
-    {
-        $data = $request->validate([
-            'payroll_id' => 'required|integer|exists:payrolls,payroll_id',
-            'payment_date' => 'required|date',
-            'payment_method' => 'required|in:Cash,Bank Transfer,GCash,Check,Other',
-            'reference_number' => 'nullable|string|max:255',
-            'account_id' => 'nullable|integer|exists:cash_accounts,account_id',
+{
+    $data = $request->validate([
+        'payroll_id' => 'required|integer|exists:payrolls,payroll_id',
+        'payment_date' => 'required|date',
+        'payment_method' => 'required|in:Cash,Bank Transfer,GCash,Check,Other',
+        'reference_number' => 'nullable|string|max:255',
+        'account_id' => 'nullable|integer|exists:cash_accounts,account_id',
+    ]);
+
+    $payroll = Payroll::with('employeeprofiles')->findOrFail($data['payroll_id']);
+
+    // Must be Approved Release
+    if ($payroll->admin_approval !== 'Approved Release') {
+        return back()->with('error', 'Payroll must be Approved Release before disbursement.');
+    }
+
+    DB::transaction(function () use ($payroll, $data) {
+
+        PayrollDisbursement::create([
+            'payroll_id' => $payroll->payroll_id,
+            'employeeprofiles_id' => $payroll->employeeprofiles_id,
+            'payment_date' => $data['payment_date'],
+            'payment_method' => $data['payment_method'],
+            'reference_number' => $data['reference_number'] ?? null,
+            'status' => 'Released',
         ]);
 
-        $payroll = Payroll::with('employeeProfile')->findOrFail($data['payroll_id']);
-        if ($payroll->status !== 'Approved') {
-            return back()->with('error', 'Payroll must be Approved before disbursement.');
-        }
+        $payroll->update(['status' => 'Released']);
 
-        DB::transaction(function () use ($payroll, $data) {
-            PayrollDisbursement::create([
-                'payroll_id' => $payroll->payroll_id,
+        CashFlow::create([
+            'transaction_type' => 'Outflow',
+            'source_type' => 'Expense',
+            'source_id' => $payroll->payroll_id,
+            'account_id' => $data['account_id'] ?? null,
+            'amount' => $payroll->net_pay,
+            'transaction_date' => $data['payment_date'],
+            'description' => 'Salary disbursement for payroll #' . $payroll->payroll_id,
+        ]);
+
+        ActivityLog::create([
+            'event_type' => 'payroll_released',
+            'title' => 'Payroll #' . $payroll->payroll_id . ' released (₱' . number_format((float)$payroll->net_pay, 2) . ')',
+            'context_type' => 'Payroll',
+            'context_id' => $payroll->payroll_id,
+            'amount' => $payroll->net_pay,
+            'meta' => [
                 'employeeprofiles_id' => $payroll->employeeprofiles_id,
-                'payment_date' => $data['payment_date'],
                 'payment_method' => $data['payment_method'],
                 'reference_number' => $data['reference_number'] ?? null,
-                'status' => 'Paid',
-            ]);
+            ],
+        ]);
+    });
 
-            $payroll->update(['status' => 'Paid']);
-
-            CashFlow::create([
-                'transaction_type' => 'Outflow',
-                'source_type' => 'Expense',
-                'source_id' => $payroll->payroll_id,
-                'account_id' => $data['account_id'] ?? null,
-                'amount' => $payroll->net_pay,
-                'transaction_date' => $data['payment_date'],
-                'description' => 'Salary disbursement for payroll #'.$payroll->payroll_id,
-            ]);
-
-            ActivityLog::create([
-                'event_type' => 'payroll_disbursed',
-                'title' => 'Payroll #'.$payroll->payroll_id.' disbursed (₱'.number_format((float)$payroll->net_pay, 2).')',
-                'context_type' => 'Payroll',
-                'context_id' => $payroll->payroll_id,
-                'amount' => $payroll->net_pay,
-                'meta' => [
-                    'employeeprofiles_id' => $payroll->employeeprofiles_id,
-                    'payment_method' => $data['payment_method'],
-                    'reference_number' => $data['reference_number'] ?? null,
-                ],
-            ]);
-        });
-
-        return back()->with('success', 'Salary disbursement recorded.');
-    }
+    return back()->with('success', 'Payroll successfully released.');
+}
 
     public function exportTable(Request $request)
     {

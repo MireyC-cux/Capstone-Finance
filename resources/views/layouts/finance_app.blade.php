@@ -119,7 +119,7 @@
                     </button>
                     <hr class="section-divider" />
                     <div class="submenu" x-show="open" x-transition>
-                        <a class="menu-item" href=""><i class="fa-solid fa-right-from-bracket"></i><span class="label">Logout</span></a>
+                        <a class="menu-item" href="{{ route('logout') }}"><i class="fa-solid fa-right-from-bracket"></i><span class="label">Logout</span></a>
                     </div>
                 </li>
             </ul>
@@ -133,24 +133,24 @@
                 <img src="{{ asset('images/3Rs_logo.png') }}" alt="3R's Logo" class="logo-3rs">
             </div>
 
-            <div class="search-container">
+            {{-- <div class="search-container">
                 <i class="fas fa-search"></i>
                 <input type="text" placeholder="Search...">
-            </div>
+            </div> --}}
         </div>
 
         <div class="topbar-right">
             <div class="topbar-icons">
-                <div class="topbar-item notification-item" data-count="3">
+                {{-- <div class="topbar-item notification-item" data-count="3">
                     <i class="fas fa-bell"></i>
                     <span class="notification-badge">3</span>
-                </div>
-                <div class="topbar-item"><i class="fas fa-cog"></i></div>
+                </div> --}}
+                {{-- <div class="topbar-item"><i class="fas fa-cog"></i></div> --}}
             </div>
 
             <div class="account-menu" id="accountMenu">
                 <div class="account-avatar">F</div>
-                <span class="account-name">Finance</span>
+                    {{ session('user_email') ?? 'user@example.com' }} 
                 <i class="fas fa-chevron-down dropdown-icon"></i>
             </div>
         </div>

@@ -14,7 +14,7 @@ return new class extends Migration
                 $table->foreignId('payroll_id')->constrained('payrolls', 'payroll_id')->onDelete('cascade');
                 $table->foreignId('employeeprofiles_id')->constrained('employeeprofiles', 'employeeprofiles_id')->onDelete('cascade');
                 $table->date('payment_date');
-                $table->enum('payment_method', ['Cash','Bank Transfer','GCash','Check','Other']);
+                $table->enum('payment_method', ['Cash','GCash']);
                 $table->string('reference_number')->nullable();
                 $table->enum('status', ['Pending','Paid','Cancelled'])->default('Pending');
                 $table->timestamps();

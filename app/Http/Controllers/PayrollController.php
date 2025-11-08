@@ -14,7 +14,6 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
-
 use App\Models\OvertimeRequest;
 
 
@@ -60,8 +59,14 @@ public function dashboard(Request $request)
         });
     }
 
-    // ✅ Get filtered payroll records
-    $payrolls = $query->get();
+  // ✅ Get only the latest payroll per employee (latest pay period)
+$payrolls = $query->select('payrolls.*')
+    ->join(DB::raw('(SELECT employeeprofiles_id, MAX(payroll_id) as latest_id FROM payrolls GROUP BY employeeprofiles_id) as latest'),
+        function ($join) {
+            $join->on('payrolls.payroll_id', '=', 'latest.latest_id');
+        })
+    ->get();
+
 
     // ✅ Convert payrolls into $rows array for your Blade view
     $rows = $payrolls->map(function ($payroll) use ($period_start, $period_end) {
@@ -91,6 +96,8 @@ public function dashboard(Request $request)
             'payroll' => $payroll,
         ];
     });
+    $approvalStatus = \App\Models\Expenses::latest()->value('admin_approval');
+
 
     // ✅ Return everything to the Blade view
     return view('finance.payroll.index', [
@@ -101,6 +108,7 @@ public function dashboard(Request $request)
         ],
         'period_start' => $period_start,
         'period_end' => $period_end,
+         'approvalStatus' => $approvalStatus,
     ]);
 }
 
@@ -457,4 +465,27 @@ public function dashboard(Request $request)
             'net' => round($net, 2),    
         ];
     }
+
+ public function sendApproval(Request $request)
+{
+    try {
+        \App\Models\Expenses::create([
+            'expense_name' => 'Payroll Total Approval',
+            'category' => 'Payroll Total',
+            'amount' => $request->grand_total,
+            'description' => "Total Gross: ₱" . number_format($request->total_gross, 2) .
+                             ", Total Net: ₱" . number_format($request->total_net, 2) .
+                             ", Grand Total: ₱" . number_format($request->grand_total, 2),
+            'admin_approval' => 'Pending',
+            'expense_date' => now(),
+        ]);
+
+        return back()->with('success', 'Payroll total successfully sent for approval.');
+    } catch (\Exception $e) {
+        return back()->with('error', 'Failed to send approval: ' . $e->getMessage());
+    }
 }
+
+
+}
+

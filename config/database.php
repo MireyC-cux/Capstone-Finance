@@ -112,6 +112,19 @@ return [
             // 'encrypt' => env('DB_ENCRYPT', 'yes'),
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
+        'capstone_central' => [
+            'driver' => env('CAPSTONE_DB_CONNECTION', 'mariadb'),
+            'host' => env('CAPSTONE_DB_HOST', '127.0.0.1'),
+            'port' => env('CAPSTONE_DB_PORT', '3306'),
+            'database' => env('CAPSTONE_DB_DATABASE', 'sacstms'),
+            'username' => env('CAPSTONE_DB_USERNAME', 'root'),
+            'password' => env('CAPSTONE_DB_PASSWORD', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+
+        ],
 
     ],
 

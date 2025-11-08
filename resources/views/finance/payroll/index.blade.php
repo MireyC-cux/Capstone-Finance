@@ -6,7 +6,7 @@
 
 <div class="container-fluid py-4">
 
-```
+
 <!-- Page Header -->
 <div>
     <h1 class="h3 fw-bold mb-1">Payroll Management</h1>
@@ -77,8 +77,11 @@
             </thead>
             <tbody>
                 @forelse ($rows as $r)
-                    @php
+                      @php
                         $p = $r['payroll'];
+                        $canDisburse = $p && $p->admin_approval === 'Approved Release' && $p->status !== 'Released';
+                        $canViewPayslip = $p && $p->status === 'Released';
+                        $isPending = $p && $p->status === 'Pending';
                     @endphp
                     <tr>
                         <td><input type="checkbox" class="form-check-input emp-checkbox" value="{{ $r['employee']->employeeprofiles_id }}"></td>
@@ -106,9 +109,14 @@
                        
                         <td>
                             @if($r['payroll'])
+                                @php 
+    $isPending = ($r['status'] === 'Pending');
+    $canDisburse = ($approvalStatus === 'Approved Release'); // <— change here
+@endphp
+
                                 <div class="d-flex gap-2">
-                                    <a href="{{ route('finance.payroll.payslip', $p->payroll_id) }}" class="btn btn-outline-warning btn-sm">Payslip</a>
-                                    <button type="button" class="btn btn-outline-primary btn-sm disburse-btn" data-id="{{ $p->payroll_id }}">Disburse</button>
+                                    <a href="{{ route('finance.payroll.payslip', $p->payroll_id) }}" class="btn btn-outline-warning btn-sm {{ $isPending ? 'disabled' : '' }}" @if($isPending) aria-disabled="true" tabindex="-1" style="pointer-events:none;opacity:.65;" @endif>Payslip</a>
+                                    <button type="button" class="btn btn-outline-primary btn-sm disburse-btn" data-id="{{ $p->payroll_id }}" @if(!$canDisburse) disabled @endif>Disburse</button>
                                 </div>
                             @else
                                 <span class="text-muted">No payroll</span>
@@ -123,8 +131,124 @@
             </tbody>
         </table>
     </div>
+    <div class="card-footer bg-white">
+      @php
+          $totalGross = 0;
+          $totalNet = 0;
+          $sumBasic = 0;
+          $sumBonus = 0;
+          $sumOt = 0;
+          $sumTax = 0;
+          $sumSss = 0;
+          $sumPhil = 0;
+          $sumPagibig = 0;
+          $sumCash = 0;
+          $sumDeductions = 0;
+          foreach ($rows as $row) {
+              $gross = data_get($row, 'payroll.gross_pay', 0) ?: 0;
+              $net = data_get($row, 'payroll.net_pay');
+              if ($net === null) {
+                  $net = data_get($row, 'net', 0);
+              }
+              $totalGross += $gross;
+              $totalNet += ($net ?: 0);
+
+              $sumBasic += data_get($row, 'payroll.basic_salary', 0) ?: 0;
+              $sumBonus += data_get($row, 'payroll.bonus_amount', 0) ?: 0;
+              $sumOt += data_get($row, 'payroll.overtime_pay', 0) ?: 0;
+              $sumTax += data_get($row, 'payroll.tax_deduction', 0) ?: 0;
+              $sumSss += data_get($row, 'payroll.sss_contribution', 0) ?: 0;
+              $sumPhil += data_get($row, 'payroll.philhealth_contribution', 0) ?: 0;
+              $sumPagibig += data_get($row, 'payroll.pagibig_contribution', 0) ?: 0;
+              $sumCash += data_get($row, 'payroll.cash_advance', data_get($row, 'cash_advance', 0)) ?: 0;
+              $sumDeductions += data_get($row, 'payroll.deductions', 0) ?: 0;
+          }
+          $grandTotal = $totalNet;
+      @endphp
+      <div class="row g-2">
+  <div class="col-12 col-md-4">
+    <div class="small text-muted">
+      Total Gross Pay: 
+      <span class="fw-bold text-dark">₱ {{ number_format($totalGross,2) }}</span>
+     
+    </div>
+  </div>
+
+  <div class="col-12 col-md-4">
+    <div class="small text-muted">
+      Total Net Pay: 
+      <span class="fw-bold text-dark">₱ {{ number_format($totalNet,2) }}</span>
+     
+    </div>
+  </div>
+
+ <div class="col-12 col-md-4">
+  <div class="small text-muted">
+    Grand Total: 
+    <span class="fw-bold text-primary">₱ {{ number_format($grandTotal,2) }}</span>
+    <button type="button" 
+            class="btn btn-outline-primary btn-sm ms-2 px-2 py-1 rounded-pill shadow-sm"
+            data-bs-toggle="modal" 
+            data-bs-target="#totalsBreakdownModal">
+      View
+    </button>
+  </div>
 </div>
 
+</div>
+
+<div class="d-flex justify-content-end mt-4">
+    <form action="{{ route('finance.payroll.sendApproval') }}" method="POST" class="d-inline">
+        @csrf
+
+        <input type="hidden" name="total_gross" value="{{ $totalGross }}">
+        <input type="hidden" name="total_net" value="{{ $totalNet }}">
+        <input type="hidden" name="grand_total" value="{{ $grandTotal }}">
+
+        @if($approvalStatus === 'Approved Release')
+            <span class="badge bg-success px-4 py-2 rounded-pill shadow-sm">
+                {{ $approvalStatus }}
+            </span>
+        @else
+            <button type="submit"
+                    class="btn btn-dark btn-sm px-4 py-2 rounded-pill shadow-sm d-flex align-items-center gap-1">
+                <i class="bi bi-send-fill me-1"></i> Send for Approval
+            </button>
+        @endif
+    </form>
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="modal fade" id="totalsBreakdownModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Totals Breakdown</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex justify-content-between"><div class="small text-muted">Basic Salary</div><div class="fw-semibold">₱ {{ number_format($sumBasic,2) }}</div></div>
+        <div class="d-flex justify-content-between"><div class="small text-muted">Bonus Amount</div><div class="fw-semibold">₱ {{ number_format($sumBonus,2) }}</div></div>
+        <div class="d-flex justify-content-between"><div class="small text-muted">Overtime Pay</div><div class="fw-semibold">₱ {{ number_format($sumOt,2) }}</div></div>
+        <hr class="my-2">
+        <div class="d-flex justify-content-between"><div class="small text-muted">Income Tax</div><div class="fw-semibold">₱ {{ number_format($sumTax,2) }}</div></div>
+        <div class="d-flex justify-content-between"><div class="small text-muted">SSS</div><div class="fw-semibold">₱ {{ number_format($sumSss,2) }}</div></div>
+        <div class="d-flex justify-content-between"><div class="small text-muted">PhilHealth</div><div class="fw-semibold">₱ {{ number_format($sumPhil,2) }}</div></div>
+        <div class="d-flex justify-content-between"><div class="small text-muted">Pag-IBIG</div><div class="fw-semibold">₱ {{ number_format($sumPagibig,2) }}</div></div>
+        <div class="d-flex justify-content-between"><div class="small text-muted">Cash Advance</div><div class="fw-semibold">₱ {{ number_format($sumCash,2) }}</div></div>
+        <div class="d-flex justify-content-between"><div class="small text-muted">Total of Deductions</div><div class="fw-semibold">₱ {{ number_format($sumDeductions,2) }}</div></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Generate Payroll Modal (Bootstrap) -->
@@ -161,39 +285,7 @@
       </form>
     </div>
   </div>
-  </div>
-
-<!-- Approval Modal (Bootstrap) -->
-<div class="modal fade" id="approvalModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-sm modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Update Payroll Status</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <form id="approvalForm" method="POST" action="#">
-        @csrf
-        <div class="modal-body">
-          <div class="mb-2">
-            <label class="form-label small mb-1">Action</label>
-            <select name="action" class="form-select form-select-sm">
-              <option value="approve">Approve</option>
-              <option value="reject">Reject</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-label small mb-1">Remarks (optional)</label>
-            <input type="text" name="remarks" class="form-control form-control-sm" placeholder="Reason">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-success btn-sm">Confirm</button>
-        </div>
-      </form>
-    </div>
-  </div>
-  </div>
+</div>
 
 <!-- Disbursement Modal (Bootstrap) -->
 <div class="modal fade" id="disbursementModal" tabindex="-1" aria-hidden="true">
@@ -250,12 +342,14 @@
     const genModalEl = document.getElementById('generateModal');
     const apprModalEl = document.getElementById('approvalModal');
     const disbModalEl = document.getElementById('disbursementModal');
+    const totalsModalEl = document.getElementById('totalsBreakdownModal');
     const mainContent = document.querySelector('.main-content');
-    [genModalEl, apprModalEl, disbModalEl].forEach(el => { if (el && el.parentElement !== document.body) document.body.appendChild(el); });
+    [genModalEl, apprModalEl, disbModalEl, totalsModalEl].forEach(el => { if (el && el.parentElement !== document.body) document.body.appendChild(el); });
 
     const genModal = genModalEl ? new bootstrap.Modal(genModalEl) : null;
     const apprModal = apprModalEl ? new bootstrap.Modal(apprModalEl) : null;
     const disbModal = disbModalEl ? new bootstrap.Modal(disbModalEl) : null;
+    const totalsModal = totalsModalEl ? new bootstrap.Modal(totalsModalEl) : null;
 
     const openGenBtn = document.getElementById('openGenerateModal');
     openGenBtn?.addEventListener('click', () => {

@@ -56,5 +56,10 @@ class Payroll extends Model
     {
         return $this->belongsTo(Employeeprofiles::class, 'employeeprofiles_id', 'employeeprofiles_id');
     }
+
+    public function expenses()
+    {
+        return $this->hasMany(Expenses::class, 'payroll_id', 'payroll_id');
+    }
 }
      
