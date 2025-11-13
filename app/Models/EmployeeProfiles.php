@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Attendance;
 use App\Models\Expenses;
 use App\Models\Leaveovertimerequest;
@@ -12,6 +13,8 @@ use App\Models\Payroll;
 use App\Models\Archiveprofile;
 use App\Models\ActivityLog;
 use App\Models\SalaryRate;
+use App\Models\PayrollDisbursement;
+
 class Employeeprofiles extends Model
 {
      
@@ -86,5 +89,10 @@ public function salary_rates()
 {
     return $this->hasOne(SalaryRate::class, 'position', 'position');
 }
+
+  public function payrollDisbursements(): HasMany
+    {
+        return $this->hasMany(PayrollDisbursement::class, 'employeeprofiles_id', 'employeeprofiles_id');
+    }
 
 }

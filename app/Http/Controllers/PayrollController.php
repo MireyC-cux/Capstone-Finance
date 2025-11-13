@@ -80,7 +80,10 @@ $payrolls = $query->select('payrolls.*')
 
         // ✅ Compute OT pay (optional)
         $hourlyRate = $employee->daily_rate ? $employee->daily_rate / 8 : 0;
-        $otPay = $totalOtHours * ($hourlyRate * 1.25); // assuming 25% OT premium
+        $otPay = OvertimeRequest::where('employeeprofiles_id', $employee->employeeprofiles_id)
+            ->where('status', 'Approved')
+            ->whereBetween('approved_date', [$period_start, $period_end])
+            ->sum('amount');
 
         return [
             'employee' => $employee,
@@ -88,7 +91,7 @@ $payrolls = $query->select('payrolls.*')
             'period' => $payroll->pay_period ?? "{$period_start} - {$period_end}",
             'days_worked' => $payroll->total_days_of_work ?? 0,
             'ot_hours' => $totalOtHours,
-            'ot_pay' => number_format($otPay, 2),
+            'ot_pay' => $otPay,
             'deductions' => $payroll->deductions ?? 0,
             'cash_advance' => $payroll->cash_advance ?? 0,
             'net' => $payroll->net_pay ?? 0,
@@ -112,66 +115,6 @@ $payrolls = $query->select('payrolls.*')
     ]);
 }
 
-
-
-//         [$start, $end] = $this->resolvePeriod($request);
-
-//         $query = EmployeeProfile::query();
-//         if ($request->filled('employee')) {
-//             $query->where(function($q) use ($request) {
-//                 $q->where('first_name', 'like', '%'.$request->employee.'%')
-//                   ->orWhere('last_name', 'like', '%'.$request->employee.'%');
-//             });
-//         }
-//         if ($request->filled('position')) {
-//             $query->where('position', $request->position);
-//         }
-
-//         $employees = $query->orderBy('last_name')->get();
-
-//         $rows = $employees->map(function (EmployeeProfile $emp) use ($start, $end) {
-//             $daysWorked = $this->getDaysWorked($emp, $start, $end);
-//             $totalDaysInSemiMonth = $start->diffInDays($end) + 1;
-//             $rate = $this->getEffectiveDailyRate($emp, $start);
-//             $otHours = $this->getApprovedOtHours($emp, $start, $end);
-//             $otCap = min($otHours, 5 * $daysWorked);
-//             $otPay = ($rate / 8) * $otCap;
-//             $base = $rate * $daysWorked;
-//             $deductions = $this->getStatutoryDeductions($emp, $start, $end);
-//             $cashAdvanceTotal = $this->getApprovedCashAdvanceTotal($emp, $start, $end);
-//             $cashAdvanceApplied = $cashAdvanceTotal * ($daysWorked / max($totalDaysInSemiMonth, 1));
-//             $net = $base + $otPay - $deductions - $cashAdvanceApplied;
-
-//             $existingPayroll = Payroll::where('employeeprofiles_id', $emp->employeeprofiles_id)
-//                 ->whereDate('pay_period_start', $start)
-//                 ->whereDate('pay_period_end', $end)
-//                 ->first();
-
-//             return [
-//                 'employee' => $emp,
-//                 'position' => $emp->position,
-//                 'period' => $this->formatPayPeriod($start, $end),
-//                 'days_worked' => $daysWorked,
-//                 'ot_hours' => $otHours,
-//                 'ot_pay' => round($otPay, 2),
-//                 'deductions' => round($deductions, 2),
-//                 'cash_advance' => round($cashAdvanceApplied, 2),
-//                 'net' => round($net, 2),
-//                 'status' => $existingPayroll?->status ?? 'Not Generated',
-//                 'payroll' => $existingPayroll,
-//             ];
-//         });
-
-//         return view('finance.payroll.index', [
-//             'rows' => $rows,
-//             'period_start' => $start->toDateString(),
-//             'period_end' => $end->toDateString(),
-//             'filters' => [
-//                 'employee' => $request->employee,
-//                 'position' => $request->position,
-//                 'status' => $request->status,
-//             ],
-//         ]);
 
     public function generatePayroll(Request $request)
     {
@@ -345,22 +288,22 @@ $payrolls = $query->select('payrolls.*')
         return $pdf->download('payroll_table_'.$start->format('Ymd').'-'.$end->format('Ymd').'.pdf');
     }
 
-    public function approvals(Request $request)
-    {
-        [$start, $end] = $this->resolvePeriod($request);
-        $payrolls = Payroll::with('employeeProfile')
-            ->whereBetween('pay_period_start', [$start->toDateString(), $end->toDateString()])
-            ->whereIn('status', ['Pending','Rejected'])
-            ->orderBy('status')
-            ->orderByDesc('payroll_id')
-            ->paginate(20);
+    // public function approvals(Request $request)
+    // {
+    //     [$start, $end] = $this->resolvePeriod($request);
+    //     $payrolls = Payroll::with('employeeProfile')
+    //         ->whereBetween('pay_period_start', [$start->toDateString(), $end->toDateString()])
+    //         ->whereIn('status', ['Pending','Rejected'])
+    //         ->orderBy('status')
+    //         ->orderByDesc('payroll_id')
+    //         ->paginate(20);
 
-        return view('finance.payroll.approvals', [
-            'payrolls' => $payrolls,
-            'period_start' => $start->toDateString(),
-            'period_end' => $end->toDateString(),
-        ]);
-    }
+    //     return view('finance.payroll.approvals', [
+    //         'payrolls' => $payrolls,
+    //         'period_start' => $start->toDateString(),
+    //         'period_end' => $end->toDateString(),
+    //     ]);
+    // }
 
     // ===== Helpers =====
     protected function resolvePeriod(Request $request): array
@@ -393,34 +336,7 @@ $payrolls = $query->select('payrolls.*')
             ->count('date');
     }
 
-    protected function getApprovedOtHours(EmployeeProfile $emp, Carbon $start, Carbon $end): int
-    {
-        return (int) (\App\Models\OvertimeRequest::where('employeeprofiles_id', $emp->employeeprofiles_id)
-            ->where('status', 'approved')
-            ->whereBetween('approved_date', [$start->startOfDay(), $end->endOfDay()])
-            ->sum('hours') ?? 0);
-    }
-
-    protected function getApprovedCashAdvanceTotal(EmployeeProfile $emp, Carbon $start, Carbon $end): float
-    {
-        return (float) (CashAdvance::where('employeeprofiles_id', $emp->employeeprofiles_id)
-            ->where('status', 'approved')
-            ->whereDate('approved_date', '<=', $end->toDateString())
-            ->sum('amount') ?? 0);
-    }
-
-    protected function getStatutoryDeductions(EmployeeProfile $emp, Carbon $start, Carbon $end): float
-    {
-        $rows = Deduction::where('employeeprofiles_id', $emp->employeeprofiles_id)
-            ->whereBetween('created_at', [$start->startOfDay(), $end->endOfDay()])
-            ->get();
-        $total = 0.0;
-        foreach ($rows as $d) {
-            $total += (float)($d->income_tax ?? 0) + (float)($d->sss ?? 0) + (float)($d->philhealth ?? 0) + (float)($d->pagibig ?? 0) + (float)($d->amount ?? 0);
-        }
-        return $total;
-    }
-
+   
     protected function getEffectiveDailyRate(EmployeeProfile $emp, Carbon $asOf): float
     {
         $custom = EmployeeSalaryRate::where('employeeprofiles_id', $emp->employeeprofiles_id)

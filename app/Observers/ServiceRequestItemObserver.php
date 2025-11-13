@@ -14,8 +14,29 @@ use Illuminate\Support\Facades\DB;
 
 class ServiceRequestItemObserver {
     public function updated(ServiceRequestItem $item){
-        if ($item->isDirty('status') && $item->status === 'Completed') {
+        // Sync parent ServiceRequest.order_status with aggregate item statuses
+        if ($item->isDirty('status')) {
             $sr = $item->serviceRequest()->with('items')->first();
+            if ($sr) {
+                $statuses = collect($sr->items)->pluck('status')->map(fn($s) => strtolower((string)$s));
+                $new = 'Pending';
+                if ($statuses->every(fn($s) => $s === 'completed')) {
+                    $new = 'Completed';
+                } elseif ($statuses->contains(fn($s) => in_array($s, ['in progress','in_progress','ongoing','processing'], true))) {
+                    $new = 'In Progress';
+                } elseif ($statuses->contains(fn($s) => in_array($s, ['cancelled','canceled'], true))) {
+                    $new = 'Cancelled';
+                } else {
+                    $new = 'Pending';
+                }
+                if (strcasecmp((string)$sr->order_status, $new) !== 0) {
+                    $sr->order_status = $new;
+                    $sr->save();
+                }
+            }
+        }
+        if ($item->isDirty('status') && $item->status === 'Completed') {
+            $sr = isset($sr) && $sr ? $sr : $item->serviceRequest()->with('items')->first();
             // check all items completed
             if ($sr && $sr->items->every(fn($i)=> $i->status === 'Completed')) {
                 DB::transaction(function () use ($sr) {

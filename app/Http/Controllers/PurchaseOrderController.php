@@ -9,6 +9,8 @@ use App\Models\Supplier;
 use App\Models\AccountsPayable;
 use App\Models\CashFlow;
 use App\Models\InventoryStockIn;
+use App\Models\PaymentMade;
+use App\Models\Expenses;
 use App\Services\Inventory\BalanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,32 +22,35 @@ use App\Models\ActivityLog;
 
 class PurchaseOrderController extends Controller
 {
-    public function index(Request $request)
-    {
-        $query = PurchaseOrder::with(['supplier', 'serviceRequest','accountsPayable'])->orderByDesc('purchase_order_id');
+public function index(Request $request)
+{
+    $query = PurchaseOrder::with(['supplier', 'serviceRequest','accountsPayable'])
+                ->whereIn('payment_status', ['Paid', 'Unpaid']) // only Paid or Unpaid
+                ->orderByDesc('purchase_order_id');
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->get('status'));
-        }
-        if ($request->filled('po_number')) {
-            $query->where('po_number', 'like', '%'.$request->get('po_number').'%');
-        }
-        if ($request->filled('from')) {
-            $query->whereDate('po_date', '>=', $request->get('from'));
-        }
-        if ($request->filled('to')) {
-            $query->whereDate('po_date', '<=', $request->get('to'));
-        }
-        if ($request->filled('supplier')) {
-            $supplier = $request->get('supplier');
-            $query->whereHas('supplier', function($q) use ($supplier) {
-                $q->where('supplier_name', 'like', '%'.$supplier.'%');
-            });
-        }
-
-        $pos = $query->paginate(25)->appends($request->query());
-        return view('finance.purchase_orders.index', compact('pos'));
+    if ($request->filled('status')) {
+        $query->where('status', $request->get('status'));
     }
+    if ($request->filled('po_number')) {
+        $query->where('po_number', 'like', '%'.$request->get('po_number').'%');
+    }
+    if ($request->filled('from')) {
+        $query->whereDate('po_date', '>=', $request->get('from'));
+    }
+    if ($request->filled('to')) {
+        $query->whereDate('po_date', '<=', $request->get('to'));
+    }
+    if ($request->filled('supplier')) {
+        $supplier = $request->get('supplier');
+        $query->whereHas('supplier', function($q) use ($supplier) {
+            $q->where('supplier_name', 'like', '%'.$supplier.'%');
+        });
+    }
+
+    $pos = $query->paginate(25)->appends($request->query());
+    return view('finance.purchase_orders.index', compact('pos'));
+}
+
 
     public function create(Request $request)
     {
@@ -118,100 +123,181 @@ class PurchaseOrderController extends Controller
     }
 
     public function summary($id)
-    {
-        $po = PurchaseOrder::with(['supplier','accountsPayable'])->findOrFail($id);
-        $ap = $po->accountsPayable;
-        $total = (float)$po->total_amount;
-        $paid = $ap ? (float)$ap->amount_paid : 0.0;
-        $out = max(0.0, $total - $paid);
-        return response()->json([
-            'id' => $po->purchase_order_id,
-            'po_number' => $po->po_number,
-            'supplier' => $po->supplier->supplier_name ?? '—',
-            'po_date' => Carbon::parse($po->po_date)->format('Y-m-d'),
-            'payment_status' => $ap ? $ap->status : 'Unpaid',
-            'total' => $total,
-            'paid' => $paid,
-            'outstanding' => $out,
-        ]);
+{
+    $po = PurchaseOrder::with(['supplier', 'accountsPayable'])->findOrFail($id);
+
+    // Get paid amount
+    $ap = $po->accountsPayable;
+    $total = (float) $po->total_amount;
+    $paid = 0.0;
+
+    if ($ap) {
+        $paid = (float) $ap->amount_paid;
+        $status = $ap->status;
+    } else {
+        // Check Expenses for full payment of this PO
+        $exp = Expenses::where('supplier_id', $po->supplier_id)
+                       ->where('description', 'like', '%PO #'.$po->po_number.'%')
+                       ->sum('amount');
+
+        $paid = (float) $exp;
+
+        $status = match(true) {
+            $paid <= 0 => 'Unpaid',
+            $paid >= $total => 'Paid',
+            default => 'Partially Paid',
+        };
     }
 
-    public function recordPayment(Request $request, $id)
-    {
-        $data = $request->validate([
-            'payment_date' => 'required|date',
-            'payment_method' => 'required|string|in:Cash,GCash,Bank Transfer,Check',
-            'payment_type' => 'required|string|in:Full,Partial',
-            'reference_number' => 'nullable|string|max:255',
-            'amount' => 'required|numeric|min:0.01',
-            'or_file' => 'nullable|file|mimes:jpg,jpeg,png,gif,webp,pdf',
-        ]);
+    $outstanding = max(0.0, $total - $paid);
 
-        return DB::transaction(function () use ($data, $id, $request) {
-            $po = PurchaseOrder::with('accountsPayable')->lockForUpdate()->findOrFail($id);
-            $ap = $po->accountsPayable; // may be null if not approved
+    return response()->json([
+        'id' => $po->purchase_order_id,
+        'po_number' => $po->po_number,
+        'supplier' => $po->supplier->supplier_name ?? '—',
+        'po_date' => Carbon::parse($po->po_date)->format('Y-m-d'),
+        'payment_status' => $status,
+        'total' => $total,
+        'paid' => $paid,
+        'outstanding' => $outstanding,
+    ]);
+}
 
-            $total = (float)$po->total_amount;
-            $paid = $ap ? (float)$ap->amount_paid : 0.0;
-            $outstanding = max(0.0, $total - $paid);
 
-            // Enforce full/partial constraints
-            if (($data['payment_type'] ?? 'Full') === 'Full') {
-                if (abs(((float)$data['amount']) - $outstanding) > 0.009) {
-                    return back()->with('error', 'Full payment must match the outstanding balance.');
-                }
-            } else {
-                if (!(((float)$data['amount']) > 0 && ((float)$data['amount']) < $outstanding)) {
-                    return back()->with('error', 'Partial payment must be greater than 0 and less than the outstanding balance.');
-                }
-            }
+   public function recordPayment(Request $request, $id)
+{
+    $data = $request->validate([
+        'payment_date' => 'required|date',
+        'payment_method' => 'required|string|in:Cash,GCash,Bank Transfer,Check',
+        'payment_type' => 'required|string|in:Full,Partial',
+        'reference_number' => 'nullable|string|max:255',
+        'amount' => 'required|numeric|min:0.01',
+        'or_file' => 'nullable|file|mimes:jpg,jpeg,png,gif,webp,pdf',
+    ]);
 
-            // Require reference + OR for non-cash
-            $isCash = strtolower($data['payment_method']) === 'cash';
-            if (!$isCash && empty($data['reference_number'])) {
+    return DB::transaction(function () use ($data, $id, $request) {
+        $po = PurchaseOrder::with(['accountsPayable', 'supplier'])->lockForUpdate()->findOrFail($id);
+
+        $total = (float) $po->total_amount;
+        $ap = $po->accountsPayable;
+
+        // --- Validate amount correctness ---
+        if ($data['payment_type'] === 'Full' && $data['amount'] != $total) {
+            return back()->with('error', 'Full payment must equal the total PO amount.');
+        }
+        if ($data['payment_type'] === 'Partial' && $data['amount'] >= $total) {
+            return back()->with('error', 'Partial payment must be less than the total amount.');
+        }
+
+        $isCash = strtolower($data['payment_method']) === 'cash';
+        $orPath = null;
+        if (!$isCash) {
+            if (empty($data['reference_number'])) {
                 return back()->with('error', 'Reference number is required for non-cash payments.');
             }
-
-            $orPath = null;
-            if (!$isCash) {
-                if (!$request->hasFile('or_file')) {
-                    return back()->with('error', 'Official Receipt (image/PDF) is required for non-cash payments.');
-                }
-                $orPath = $request->file('or_file')->store('or_uploads', 'public');
+            if (!$request->hasFile('or_file')) {
+                return back()->with('error', 'Official Receipt (image/PDF) is required for non-cash payments.');
             }
+            $orPath = $request->file('or_file')->store('or_uploads', 'public');
+        }
 
-            // Update Accounts Payable if exists
-            if ($ap) {
-                $ap->amount_paid = number_format(((float)$ap->amount_paid + (float)$data['amount']), 2, '.', '');
-                // derive AP status similar to existing PaymentsMadeController
-                $ap->status = $this->deriveApStatus($ap->total_amount, $ap->amount_paid, $ap->due_date);
-                $ap->save();
-            }
+        // --- Handle FULL PAYMENT ---
+       if ($data['payment_type'] === 'Full') {
+    // Directly store in Expenses, skip Accounts Payable
+    $expense = Expenses::create([
+        'supplier_id' => $po->supplier_id,
+        'expense_name' => 'Purchase Order Payment',
+        'category' => 'Office Supplies',
+        'description' => 'Full payment for PO #' . $po->po_number,
+        'amount' => number_format($data['amount'], 2, '.', ''),
+        'expense_date' => Carbon::parse($data['payment_date'])->toDateString(),
+        'paid_to' => optional($po->supplier)->supplier_name ?? 'Unknown Supplier',
+        'created_by' => Auth::id(),
+        'status' => 'Paid',
+    ]);
 
-            // Write to Cash Flow as Outflow (source_id = PO id)
-            $cf = [
-                'transaction_type' => 'Outflow',
-                'source_type' => 'Supplier Payment',
-                'source_id' => (int)$po->purchase_order_id,
-                'amount' => number_format((float)$data['amount'], 2, '.', ''),
-                'transaction_date' => Carbon::parse($data['payment_date'])->toDateString(),
-                'description' => 'Payment to supplier for PO #'.$po->po_number.(!empty($data['reference_number']) ? (' (Ref: '.$data['reference_number'].')') : ''),
-            ];
-            if ($orPath && Schema::hasColumn('cash_flow', 'or_file_path')) {
-                $cf['or_file_path'] = $orPath;
-            }
-            CashFlow::create($cf);
+    // ✅ Record in Cash Flow as Outflow
+    CashFlow::create([
+        'transaction_type' => 'Outflow',
+        'source_type' => 'Purchase Order Payment',
+        'source_id' => $po->purchase_order_id,
+        'amount' => number_format($data['amount'], 2, '.', ''),
+        'transaction_date' => Carbon::parse($data['payment_date'])->toDateString(),
+        'description' => 'Full payment for PO #' . $po->po_number . 
+                         ' (Supplier: ' . (optional($po->supplier)->supplier_name ?? 'Unknown') . ')',
+    ]);
 
-            return redirect()->route('purchase-orders.index')->with('success', 'Supplier payment recorded successfully.');
-        });
-    }
+    // Update PO directly
+    $po->payment_status = 'Paid';
+    $po->save();
+
+    return redirect()
+        ->route('purchase-orders.index')
+        ->with('success', 'Full payment recorded directly in Expenses and added to Cash Flow. PO marked as Paid.');
+}
+
+        // --- Handle PARTIAL PAYMENT ---
+        if (!$ap) {
+            $invNo = $this->generateInvoiceNumber();
+            $ap = AccountsPayable::create([
+                'supplier_id' => $po->supplier_id,
+                'purchase_order_id' => $po->purchase_order_id,
+                'invoice_number' => $invNo,
+                'invoice_date' => Carbon::parse($po->po_date)->toDateString(),
+                'due_date' => Carbon::parse($data['payment_date'])->addDays(30)->toDateString(),
+                'total_amount' => $po->total_amount,
+                'amount_paid' => 0,
+                'status' => 'Unpaid',
+            ]);
+            $po->ap_id = $ap->ap_id;
+            $po->save();
+        }
+
+        // Update Accounts Payable as partial
+        $ap->amount_paid = number_format($ap->amount_paid + $data['amount'], 2, '.', '');
+        $ap->status = 'Partially Paid';
+        $ap->save();
+
+        // Record Payment
+        PaymentMade::create([
+            'ap_id' => $ap->ap_id,
+            'payment_date' => Carbon::parse($data['payment_date'])->toDateString(),
+            'amount' => number_format($data['amount'], 2, '.', ''),
+            'payment_method' => $data['payment_method'],
+            'reference_number' => $data['reference_number'] ?? null,
+            'receipt_path' => $orPath,
+        ]);
+
+        // Log partial expense (optional)
+        Expenses::create([
+            'supplier_id' => $po->supplier_id,
+            'expense_name' => 'Partial Payment - Purchase Order',
+            'category' => 'Office Supplies',
+            'description' => 'Partial payment for PO #' . $po->po_number,
+            'amount' => number_format($data['amount'], 2, '.', ''),
+            'expense_date' => Carbon::parse($data['payment_date'])->toDateString(),
+            'paid_to' => optional($po->supplier)->supplier_name ?? 'Unknown Supplier',
+            'created_by' => Auth::id(),
+            'status' => 'Paid'
+        ]);
+
+        // Update PO status
+        $po->payment_status = 'Partial';
+        $po->save();
+
+        return redirect()
+            ->route('purchase-orders.index')
+            ->with('success', 'Partial payment recorded and stored in Accounts Payable.');
+    });
+}
+
 
     protected function deriveApStatus($total, $paid, $dueDate): string
     {
         $total = (float)$total; $paid = (float)$paid; $dueDate = Carbon::parse($dueDate);
         if ($paid <= 0) return 'Unpaid';
         if ($paid + 0.0001 >= $total) return 'Paid';
-        return $dueDate->isPast() ? 'Overdue' : 'Partially Paid';
+        return $dueDate->isPast() ? 'Overdue' : 'Partial';
     }
 
     public function approve(PurchaseOrder $purchase_order)

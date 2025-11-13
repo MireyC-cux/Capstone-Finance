@@ -1,52 +1,118 @@
 @extends('layouts.finance_app')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6">
-  <div class="flex items-end justify-between mb-6">
-    <div>
-      <h1 class="text-3xl font-extrabold bg-gradient-to-r from-brand-600 to-cyan-500 bg-clip-text text-transparent">Stock-In</h1>
-      <p class="text-slate-600 mt-1">Record received items from purchase orders or direct receiving.</p>
-    </div>
-    <div class="flex items-center gap-2">
-      <a href="{{ route('finance.inventory.dashboard') }}" class="inline-flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-4 py-2 text-slate-700 hover:bg-slate-50 transition"><i class="fa fa-arrow-left"></i><span>Back to Dashboard</span></a>
+<div class="container-xxl py-3">
+  <div class="inv-hero p-4 p-md-5 mb-4 position-relative overflow-hidden">
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+      <div>
+        <h1 class="mb-1">Stock-In</h1>
+        <p class="text-muted mb-0">Auto-recorded from delivered purchase orders.</p>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ route('finance.inventory.dashboard') }}" class="btn btn-light border btn-ghost">
+          <i class="fa fa-arrow-left me-2"></i><span>Back to Dashboard</span>
+        </a>
+      </div>
     </div>
   </div>
 
   @if(session('success'))
-    <script>window.addEventListener('DOMContentLoaded',()=>Swal.fire({icon:'success',title:'Success',text:'{{ session('success') }}',confirmButtonColor:'#06b6d4'}));</script>
+    <script>
+      window.addEventListener('DOMContentLoaded', () => 
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: '{{ session('success') }}',
+          confirmButtonColor: '#06b6d4'
+        })
+      );
+    </script>
   @endif
 
-  <div class="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-sm">
-        <thead class="bg-slate-50/80 backdrop-blur sticky top-0">
-          <tr class="text-left text-slate-600">
-            <th class="px-4 py-3 font-semibold">Date</th>
-            <th class="px-4 py-3 font-semibold">Item</th>
-            <th class="px-4 py-3 font-semibold text-right">Qty</th>
-            <th class="px-4 py-3 font-semibold text-right">Unit Cost</th>
-            <th class="px-4 py-3 font-semibold text-right">Total</th>
-            <th class="px-4 py-3 font-semibold">PO</th>
-            <th class="px-4 py-3 font-semibold">Remarks</th>
+  <div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr class="text-nowrap">
+            <th>Date Delivered</th>
+            <th>PO Number</th>
+            <th>Supplier</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th>Items</th>
+            <th>Remarks</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100">
-          @foreach($rows as $r)
-          <tr class="hover:bg-slate-50 transition">
-            <td class="px-4 py-3">{{ \Illuminate\Support\Carbon::parse($r->received_date)->format('Y-m-d') }}</td>
-            <td class="px-4 py-3">{{ $r->item->item_name ?? '—' }}</td>
-            <td class="px-4 py-3 text-right">{{ $r->quantity }}</td>
-            <td class="px-4 py-3 text-right">₱{{ number_format($r->unit_cost,2) }}</td>
-            <td class="px-4 py-3 text-right">₱{{ number_format($r->quantity * $r->unit_cost,2) }}</td>
-            <td class="px-4 py-3">{{ $r->purchase_order_id ? ('PO#'.$r->purchase_order_id) : '—' }}</td>
-            <td class="px-4 py-3">{{ $r->remarks }}</td>
+        <tbody>
+          @forelse($rows as $r)
+          <tr>
+            <td>{{ $r->delivered_date ? $r->delivered_date->format('Y-m-d') : '—' }}</td>
+            <td>{{ $r->po_number ?? '—' }}</td>
+            <td>{{ $r->supplier->supplier_name ?? '—' }}</td>
+            <td>
+              <span class="badge bg-{{ $r->status === 'delivered' ? 'success' : ($r->status === 'pending' ? 'warning' : 'danger') }}">
+                {{ ucfirst($r->status) }}
+              </span>
+            </td>
+            <td>
+              <span class="badge bg-{{ $r->payment_status === 'paid' ? 'success' : ($r->payment_status === 'partial' ? 'info' : 'secondary') }}">
+                {{ ucfirst($r->payment_status) }}
+              </span>
+            </td>
+            <td>
+              @php $items = json_decode($r->items, true); @endphp
+              @if($items && is_array($items))
+                <ul class="mb-0 small">
+                  @foreach($items as $item)
+                    <li>
+                      {{ $item['name'] ?? 'Unnamed Item' }} 
+                      (x{{ $item['qty'] ?? $item['quantity'] ?? '?' }})
+                      @if(isset($item['unit_price'])) 
+                        - ₱{{ number_format($item['unit_price'], 2) }}
+                      @endif
+                    </li>
+                  @endforeach
+                </ul>
+              @else
+                —
+              @endif
+            </td>
+            <td>{{ $r->remarks ?? '—' }}</td>
           </tr>
-          @endforeach
+          @empty
+          <tr><td colspan="7" class="text-center text-muted">No stock-in records yet.</td></tr>
+          @endforelse
         </tbody>
       </table>
     </div>
   </div>
 
-  <div class="mt-6">{{ $rows->links() }}</div>
+  <div class="mt-4">{{ $rows->links() }}</div>
 </div>
 @endsection
+
+@push('styles')
+<style>
+.btn-ghost {
+  border-radius: 12px;
+  background: #fff;
+  color: #0d6efd;
+  border-color: #cfe2ff;
+}
+.btn-ghost:hover {
+  background: #f1f6ff;
+  color: #0a58ca;
+  box-shadow: 0 6px 18px rgba(13,110,253,.15);
+}
+.inv-hero {
+  border-radius: 24px;
+  background: radial-gradient(700px 200px at 100% 0,rgba(59,130,246,.08),transparent),
+              linear-gradient(180deg,#ffffff,#f8fafc);
+  border: 1px solid #e8ecf1;
+  box-shadow: 0 10px 26px rgba(2,6,23,.06);
+}
+.inv-hero h1 {
+  font-weight: 700;
+}
+</style>
+@endpush

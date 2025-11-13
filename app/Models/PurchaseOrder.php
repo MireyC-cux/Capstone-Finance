@@ -38,11 +38,10 @@ class PurchaseOrder extends Model
         return $this->belongsTo(ServiceRequest::class, 'service_request_id');
     }
 
-    public function items(): HasMany
+ public function poItems()
     {
-        return $this->hasMany(PurchaseOrderItem::class, 'purchase_order_id');
+        return $this->hasMany(PurchaseOrderItem::class, 'purchase_order_id', 'purchase_order_id');
     }
-
     public function accountsPayable(): BelongsTo
     {
         return $this->belongsTo(AccountsPayable::class, 'ap_id', 'ap_id');

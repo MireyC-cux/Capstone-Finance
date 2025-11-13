@@ -4,8 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\Payroll;;
-use App\Models\Employeeprofiles;
 
 class PayrollDisbursement extends Model
 {
@@ -17,19 +15,22 @@ class PayrollDisbursement extends Model
         'payment_method',
         'reference_number',
         'status',
+        'proof_of_payment',
     ];
 
     protected $casts = [
         'payment_date' => 'date',
     ];
 
+    // Relationship to Payroll
     public function payroll(): BelongsTo
     {
         return $this->belongsTo(Payroll::class, 'payroll_id');
     }
 
+    // Relationship to EmployeeProfile (note the method name)
     public function employeeProfile(): BelongsTo
     {
-        return $this->belongsTo(Employeeprofiles::class,'employeeprofiles_id', 'employeeprofiles_id');
+        return $this->belongsTo(Employeeprofiles::class, 'employeeprofiles_id', 'employeeprofiles_id');
     }
 }

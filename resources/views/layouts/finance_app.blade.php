@@ -97,7 +97,7 @@
                 </li>
 
                 <!-- CASH FLOW & EXPENSES -->
-                <li class="menu-group" x-data="{ open: {{ (request()->routeIs('finance.cashflow') || request()->routeIs('finance.expenses')) ? 'true' : 'false' }} }">
+                <li class="menu-group" x-data="{ open: {{ (request()->routeIs('finance.cashflow') || request()->routeIs('finance.expenses') || request()->routeIs('finance.reports*')) ? 'true' : 'false' }} }">
                     <button class="menu-header" @click="open = !open">
                         <i class="fa-solid fa-chart-pie"></i><span class="label">Finance Overview</span>
                         <i class="fa-solid fa-chevron-down caret" :class="{ 'rotate-180': open }"></i>
@@ -106,7 +106,7 @@
                     <div class="submenu" x-show="open" x-transition>
                         <a class="menu-item {{ request()->routeIs('finance.cashflow') ? 'active' : '' }}" href="{{ route('finance.cashflow') }}"><i class="fa-solid fa-sack-dollar"></i><span class="label">Cash Flow</span></a>
                         <a class="menu-item {{ request()->routeIs('finance.inventory.dashboard') ? 'active' : '' }}" href="{{ route('finance.inventory.dashboard') }}"><i class="fa-solid fa-chart-bar"></i><span class="label">Inventory Dashboard</span></a>
-                        <a class="menu-item {{ request()->routeIs('finance.reports') ? 'active' : '' }}" href="{{ route('finance.reports') }}"><i class="fa-solid fa-coins"></i><span class="label">Finance Reports Hub</span></a>
+                        <a class="menu-item {{ request()->routeIs('finance.reports.hub') ? 'active' : '' }}" href="{{ route('finance.reports.hub') }}"><i class="fa-solid fa-coins"></i><span class="label">Finance Reports</span></a>
                     </div>
                 </li>
 

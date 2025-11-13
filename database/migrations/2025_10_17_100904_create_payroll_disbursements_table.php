@@ -19,6 +19,8 @@ return new class extends Migration
                 $table->enum('status', ['Pending','Paid','Cancelled'])->default('Pending');
                 $table->timestamps();
                 $table->index(['employeeprofiles_id','status']);
+                $table->string('proof_of_payment')->nullable();
+
             });
         }
     }

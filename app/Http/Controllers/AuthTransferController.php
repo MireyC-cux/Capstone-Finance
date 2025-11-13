@@ -56,7 +56,7 @@ class AuthTransferController extends Controller
             return redirect()->away('http://Capstone-Finance.test/finance');
 
         } catch (DecryptException | Exception $e) {
-            return redirect()->away('https://3RS-ERP.test/login')->withErrors([
+            return redirect()->away('http://3RS-ERP.test/login')->withErrors([
                 'token' => 'Invalid or expired token.',
             ]);
         }

@@ -254,8 +254,6 @@
                         <select name="payment_method" id="pmMethod" class="form-select" required>
                             <option>Cash</option>
                             <option>GCash</option>
-                            <option>Bank Transfer</option>
-                            <option>Check</option>
                         </select>
                     </div>
                     <div class="mb-3">

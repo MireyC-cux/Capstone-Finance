@@ -24,6 +24,7 @@ use App\Http\Controllers\AuthTransferController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\CashFlowController;
 use App\Http\Controllers\CapitalController;
+use App\Http\Controllers\ForecastController;
 
 // =======================================================
 // 🔐 AUTH / DEFAULT REDIRECTS
@@ -108,11 +109,15 @@ Route::prefix('finance')->name('finance.')->group(function () {
     Route::get('/disbursement', [DisbursementController::class, 'index'])->name('disbursement.index');
     Route::post('/disbursement/record', [DisbursementController::class, 'disburseSalary'])->name('disbursement.record');
     Route::get('/disbursement/export', [DisbursementController::class, 'exportTable'])->name('disbursement.export');
+    Route::get('/disbursement/proof/{filename}', [DisbursementController::class, 'showProof'])->name('disbursement.proof');
         
     // Cash Flow Dashboard & Exports
     Route::get('/cashflow', [CashFlowController::class, 'index'])->name('cashflow');
     Route::get('/cashflow/export/pdf', [CashFlowController::class, 'exportPdf'])->name('cashflow.export.pdf');
     Route::get('/cashflow/export/csv', [CashFlowController::class, 'exportCsv'])->name('cashflow.export.csv');
+
+    // Forecast JSON endpoint
+    Route::get('/forecast/json', [ForecastController::class, 'json'])->name('forecast.json');
 
     // Expenses
     Route::get('/expenses', [ExpenseController::class, 'index'])->name('expenses');
@@ -134,14 +139,20 @@ Route::prefix('finance')->name('finance.')->group(function () {
         Route::get('stock-in', [StockInController::class, 'index'])->name('stock-in.index');
         Route::post('stock-in', [StockInController::class, 'store'])->name('stock-in.store');
 
-        Route::get('stock-out', [StockOutController::class, 'index'])->name('stock-out.index');
-        Route::post('stock-out', [StockOutController::class, 'store'])->name('stock-out.store');
+      Route::get('stock-out', [StockOutController::class, 'index'])->name('stock-out.index');
+Route::post('stock-out', [StockOutController::class, 'store'])->name('stock-out.store');
+Route::put('stock-out/{id}', [StockOutController::class, 'update'])->name('stock-out.update');
+Route::post('stock-out/request-by-item', [StockOutController::class, 'requestByItem'])->name('stock-out.request-by-item');
+ Route::get('stock-out/aircon-types', [StockOutController::class, 'getAirconTypes'])
+        ->name('stock-out.aircon-types');
+
 
         Route::get('adjustments', [InventoryAdjustmentController::class, 'index'])->name('adjustments.index');
         Route::post('adjustments', [InventoryAdjustmentController::class, 'store'])->name('adjustments.store');
 
         Route::get('reports', [InventoryReportController::class, 'index'])->name('reports.index');
     });
+    Route::get('/reports/hub', [FinanceController::class, 'reportsHub'])->name('reports.hub');
     Route::get('/reports', [FinanceController::class, 'reports'])->name('reports');
 
     // AR Aging (finance-prefixed alias)
@@ -216,6 +227,7 @@ Route::get('logout', function() {
 Route::post('/finance/payroll/send-approval', [PayrollController::class, 'sendApproval'])
     ->name('finance.payroll.sendApproval');
 
+    Route::get('payroll/check-approval-status', [PayrollController::class, 'checkApprovalStatus'])->name('finance.payroll.checkApprovalStatus');
 // =======================================================
 // 📗 ACCOUNTS PAYABLE & PURCHASE ORDERS
 // =======================================================
@@ -234,4 +246,6 @@ Route::get('reports/ap-aging', [APReportController::class, 'aging'])->name('repo
 Route::post('purchase-orders/{purchase_order}/approve', [PurchaseOrderController::class, 'approve'])->name('purchase-orders.approve');
 Route::post('purchase-orders/{purchase_order}/reject', [PurchaseOrderController::class, 'reject'])->name('purchase-orders.reject');
 Route::post('accounts-payable/mark-overdues', [AccountsPayableController::class, 'markOverdues'])->name('accounts-payable.mark-overdues');
+Route::post('/finance/accounts-payable/{id}/record-payment', [AccountsPayableController::class, 'recordPayment'])
+    ->name('accounts-payable.record-payment');
 });

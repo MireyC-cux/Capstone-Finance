@@ -6,21 +6,97 @@
     <link href="{{ asset('css/finance_dashboard.css') }}" rel="stylesheet">
 @endpush
 
+@push('styles')
+    <style>
+        .report-card{border-radius:16px;background:#fff;border:1px solid #e8ecf1;transition:transform .2s ease,box-shadow .2s ease}
+        .report-card:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(2,6,23,.08)}
+        .btn-gradient{border-radius:12px;background:linear-gradient(90deg,#e65c33,#f57c42);color:#fff;border:0;padding:.6rem 1rem;box-shadow:0 4px 14px rgba(230,92,51,.3)}
+        .btn-gradient:hover{filter:brightness(.95);color:#fff}
+        .btn-ghost{border-radius:12px;background:#fff;color:#0d6efd;border:1px solid #cfe2ff}
+        .btn-ghost:hover{background:#f1f6ff;color:#0a58ca;box-shadow:0 6px 18px rgba(13,110,253,.15)}
+        .reports-hero{border-radius:24px;background:radial-gradient(700px 200px at 100% 0,rgba(59,130,246,.08),transparent),linear-gradient(180deg,#ffffff,#f8fafc);border:1px solid #e8ecf1;box-shadow:0 10px 26px rgba(2,6,23,.06)}
+        .reports-hero .badge{border-radius:999px;padding:.35rem .65rem}
+        .hero-shape{position:absolute;right:-48px;top:-48px;width:220px;height:220px;background:radial-gradient(closest-side,rgba(59,130,246,.25),transparent 70%),radial-gradient(closest-side,rgba(99,102,241,.25),transparent 70%);border-radius:50%;filter:blur(4px);pointer-events:none}
+        .stat-card{border-radius:16px;background:linear-gradient(180deg,#ffffff,#fbfdff);border:1px solid #e8ecf1;box-shadow:0 2px 8px rgba(2,6,23,.04);transition:transform .2s ease,box-shadow .2s ease}
+        .stat-card:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(2,6,23,.08)}
+        .input-group.input-group-lg .form-control{border-top-right-radius:.6rem;border-bottom-right-radius:.6rem}
+        .input-group.input-group-lg .input-group-text{border-top-left-radius:.6rem;border-bottom-left-radius:.6rem}
+        .form-select.form-select-lg{border-radius:.6rem}
+    </style>
+@endpush
+
 @section('content')
 @if(!empty($reportsMode))
-    <div style="padding: 20px;">
-        <div class="d-flex justify-content-between align-items-start" style="margin-bottom: 2rem;">
-            <form method="get" action="{{ route('finance.reports') }}" class="d-flex gap-2 align-items-end">
+    <div class="container-xxl py-3">
+        <div class="reports-hero p-4 p-md-5 mb-4 position-relative overflow-hidden">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
                 <div>
-                    <label class="form-label" style="margin-bottom: 0.25rem;">Start</label>
-                    <input type="date" name="start" value="{{ $start ?? now()->subMonths(11)->startOfMonth()->toDateString() }}" class="form-control form-control-sm">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge bg-light text-primary border border-primary">Reports</span>
+                        <span class="badge bg-light text-secondary border">Overview</span>
+                    </div
+                    <   1 class="mb-1">Finance xReporting</h1>
+                    <p class="text-muted mb-0">Generate comprehensive financial reports and analytics for business insights.</p>
                 </div>
                 <div>
                     <label class="form-label" style="margin-bottom: 0.25rem;">End</label>
                     <input type="date" name="end" value="{{ $end ?? now()->toDateString() }}" class="form-control form-control-sm">
                 </div>
-                <button class="btn btn-primary btn-sm">Apply</button>
-            </form>
+            </div>
+            <div class="hero-shape"></div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-3 p-md-4">
+                <form method="get" action="{{ route('finance.reports') }}" class="row g-2 g-md-3 align-items-end">
+                    <div class="col-12 col-md-auto">
+                        <label class="form-label small">Start</label>
+                        <input type="date" name="start" value="{{ $start ?? now()->subMonths(11)->startOfMonth()->toDateString() }}" class="form-control form-control-lg">
+                    </div>
+                    <div class="col-12 col-md-auto">
+                        <label class="form-label small">End</label>
+                        <input type="date" name="end" value="{{ $end ?? now()->toDateString() }}" class="form-control form-control-lg">
+                    </div>
+                    <div class="col-12 col-md-auto">
+                        <button class="btn btn-primary btn-lg rounded-3"><i class="fa-solid fa-sliders me-2"></i>Apply</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="row g-3 g-md-4 mb-4 row-cols-2 row-cols-md-4">
+            <div class="col">
+                <div class="stat-card card h-100 border-0">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between mb-1"><span class="text-muted small">Sales</span><span class="badge bg-light text-info border border-info">Period</span></div>
+                        <div class="h4 mb-0">₱ {{ number_format((float)($revenue['totals']['sales_total'] ?? 0),2) }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="stat-card card h-100 border-0">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between mb-1"><span class="text-muted small">Paid</span><span class="badge bg-light text-success border border-success">Collected</span></div>
+                        <div class="h4 mb-0">₱ {{ number_format((float)($revenue['totals']['paid_total'] ?? 0),2) }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="stat-card card h-100 border-0">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between mb-1"><span class="text-muted small">Outstanding AR</span><span class="badge bg-light text-warning border border-warning">Open</span></div>
+                        <div class="h4 mb-0">₱ {{ number_format((float)($revenue['totals']['outstanding_total'] ?? 0),2) }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="stat-card card h-100 border-0">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between mb-1"><span class="text-muted small">Expenses</span><span class="badge bg-light text-secondary border">Period</span></div>
+                        <div class="h4 mb-0">₱ {{ number_format((float)($expenses['totals']['expense_total'] ?? 0),2) }}</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="row g-4">
@@ -279,6 +355,17 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Forecast: Inflows, Outflows & Profit (Next 3 Months) -->
+        <div class="card" style="background: white; border: 1px solid #E5E7EB; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-top: 1rem;">
+            <div class="d-flex justify-content-between align-items-center" style="margin-bottom: 1rem;">
+                <h2 style="font-size: 18px; font-weight: 600; color: #111827; margin: 0;">3-Month Forecast: Inflows, Outflows & Profit</h2>
+            </div>
+            <div style="height: 350px;">
+                <canvas id="forecastChart" height="350" aria-label="Forecast Chart" role="img"></canvas>
+            </div>
+            <div id="forecastInsight" class="mt-2" style="font-size: 13px; color: #6B7280;"></div>
+        </div>
     </div>
 @endif
 @endsection
@@ -293,105 +380,181 @@
                 const revenueData = {!! json_encode($revenueChartData ?? []) !!};
                 const expensesData = revenueData.map(v => v * 0.6); // Mock expenses data
                 const ctx = document.getElementById('revenueChart');
-                if (!ctx || !labels.length) return;
-                
-                const ctxGradient = ctx.getContext('2d');
-                const revenueGradient = ctxGradient.createLinearGradient(0, 0, 0, 350);
-                revenueGradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
-                revenueGradient.addColorStop(1, 'rgba(59, 130, 246, 0.05)');
-                
-                const expensesGradient = ctxGradient.createLinearGradient(0, 0, 0, 350);
-                expensesGradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
-                expensesGradient.addColorStop(1, 'rgba(16, 185, 129, 0.05)');
-                
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels,
-                        datasets: [
-                            {
-                                label: 'Revenue',
-                                data: revenueData,
-                                borderColor: '#3B82F6',
-                                backgroundColor: revenueGradient,
-                                borderWidth: 2.5,
-                                fill: true,
-                                pointRadius: 0,
-                                pointHoverRadius: 5,
-                                pointBackgroundColor: '#3B82F6',
-                                tension: 0.4
-                            },
-                            {
-                                label: 'Expenses',
-                                data: expensesData,
-                                borderColor: '#10B981',
-                                backgroundColor: expensesGradient,
-                                borderWidth: 2.5,
-                                fill: true,
-                                pointRadius: 0,
-                                pointHoverRadius: 5,
-                                pointBackgroundColor: '#10B981',
-                                tension: 0.4
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: 'top',
-                                align: 'end',
-                                labels: {
-                                    boxWidth: 12,
-                                    boxHeight: 12,
-                                    usePointStyle: true,
-                                    pointStyle: 'circle',
-                                    padding: 15,
-                                    font: { size: 12, weight: '500' }
+                if (ctx && labels.length) {
+                    const ctxGradient = ctx.getContext('2d');
+                    const revenueGradient = ctxGradient.createLinearGradient(0, 0, 0, 350);
+                    revenueGradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
+                    revenueGradient.addColorStop(1, 'rgba(59, 130, 246, 0.05)');
+                    
+                    const expensesGradient = ctxGradient.createLinearGradient(0, 0, 0, 350);
+                    expensesGradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
+                    expensesGradient.addColorStop(1, 'rgba(16, 185, 129, 0.05)');
+                    
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels,
+                            datasets: [
+                                {
+                                    label: 'Revenue',
+                                    data: revenueData,
+                                    borderColor: '#3B82F6',
+                                    backgroundColor: revenueGradient,
+                                    borderWidth: 2.5,
+                                    fill: true,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 5,
+                                    pointBackgroundColor: '#3B82F6',
+                                    tension: 0.4
+                                },
+                                {
+                                    label: 'Expenses',
+                                    data: expensesData,
+                                    borderColor: '#10B981',
+                                    backgroundColor: expensesGradient,
+                                    borderWidth: 2.5,
+                                    fill: true,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 5,
+                                    pointBackgroundColor: '#10B981',
+                                    tension: 0.4
                                 }
-                            },
-                            tooltip: {
-                                mode: 'index',
-                                intersect: false,
-                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                                titleColor: '#111827',
-                                bodyColor: '#6B7280',
-                                borderColor: '#E5E7EB',
-                                borderWidth: 1,
-                                padding: 12,
-                                displayColors: true,
-                                callbacks: {
-                                    label: function(context) {
-                                        return context.dataset.label + ': ₱' + context.parsed.y.toLocaleString('en-PH', {minimumFractionDigits: 2});
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top',
+                                    align: 'end',
+                                    labels: {
+                                        boxWidth: 12,
+                                        boxHeight: 12,
+                                        usePointStyle: true,
+                                        pointStyle: 'circle',
+                                        padding: 15,
+                                        font: { size: 12, weight: '500' }
+                                    }
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                    titleColor: '#111827',
+                                    bodyColor: '#6B7280',
+                                    borderColor: '#E5E7EB',
+                                    borderWidth: 1,
+                                    padding: 12,
+                                    displayColors: true,
+                                    callbacks: {
+                                        label: function(context) {
+                                            return context.dataset.label + ': ₱' + context.parsed.y.toLocaleString('en-PH', {minimumFractionDigits: 2});
+                                        }
                                     }
                                 }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                grid: { display: false, drawBorder: false },
-                                ticks: { color: '#9CA3AF', font: { size: 11 } }
                             },
-                            y: {
-                                grid: { color: '#F3F4F6', drawBorder: false },
-                                ticks: {
-                                    color: '#9CA3AF',
-                                    font: { size: 11 },
-                                    callback: function(value) {
-                                        return '₱' + value.toLocaleString();
+                            scales: {
+                                x: {
+                                    grid: { display: false, drawBorder: false },
+                                    ticks: { color: '#9CA3AF', font: { size: 11 } }
+                                },
+                                y: {
+                                    grid: { color: '#F3F4F6', drawBorder: false },
+                                    ticks: {
+                                        color: '#9CA3AF',
+                                        font: { size: 11 },
+                                        callback: function(value) {
+                                            return '₱' + value.toLocaleString();
+                                        }
                                     }
                                 }
+                            },
+                            interaction: {
+                                mode: 'nearest',
+                                axis: 'x',
+                                intersect: false
                             }
-                        },
-                        interaction: {
-                            mode: 'nearest',
-                            axis: 'x',
-                            intersect: false
                         }
-                    }
-                });
+                    });
+                }
+                
+                // Forecast chart (Inflows, Outflows & Profit)
+                const forecastEl = document.getElementById('forecastChart');
+                const forecastInsightEl = document.getElementById('forecastInsight');
+                if (forecastEl) {
+                    fetch("{{ route('finance.forecast.json') }}?months=3", { headers: { 'Accept': 'application/json' } })
+                        .then(async (r) => {
+                            const ct = r.headers.get('content-type') || '';
+                            if (!ct.includes('application/json')) {
+                                const txt = await r.text();
+                                throw new Error('Unexpected response: ' + txt.slice(0, 120));
+                            }
+                            return r.json();
+                        })
+                        .then(data => {
+                            if (!data || data.error) {
+                                if (forecastInsightEl) forecastInsightEl.textContent = 'Forecast unavailable.';
+                                return;
+                            }
+                            const labelsAll = [...(data.months_history || []), ...(data.months_forecast || [])];
+                            const histN = (data.months_history || []).length;
+                            const inflowVals = [...(data.inflow?.history || []), ...(data.inflow?.forecast || [])];
+                            const outflowVals = [...(data.outflow?.history || []), ...(data.outflow?.forecast || [])];
+                            const profitVals = [...(data.profit?.history || []), ...(data.profit?.forecast || [])];
+                            const n = labelsAll.length;
+                            if (!n || !inflowVals.length || !outflowVals.length || !profitVals.length) {
+                                if (forecastInsightEl) forecastInsightEl.textContent = 'No forecast data available.';
+                                return;
+                            }
+
+                            const inflowBg = labelsAll.map((_, i) => i < histN ? 'rgba(16,185,129,0.7)' : 'rgba(16,185,129,0.3)');
+                            const outflowBg = labelsAll.map((_, i) => i < histN ? 'rgba(239,68,68,0.7)' : 'rgba(239,68,68,0.3)');
+                            const profitBg = labelsAll.map((_, i) => i < histN ? 'rgba(14,165,233,0.7)' : 'rgba(14,165,233,0.3)');
+
+                            const fctx = forecastEl.getContext('2d');
+                            new Chart(fctx, {
+                                type: 'bar',
+                                data: {
+                                    labels: labelsAll,
+                                    datasets: [
+                                        { label: 'Inflows', data: inflowVals, backgroundColor: inflowBg, borderColor: '#10B981', borderWidth: 1, borderRadius: 6 },
+                                        { label: 'Outflows', data: outflowVals, backgroundColor: outflowBg, borderColor: '#EF4444', borderWidth: 1, borderRadius: 6 },
+                                        { label: 'Profit', data: profitVals, backgroundColor: profitBg, borderColor: '#0EA5E9', borderWidth: 1, borderRadius: 6 }
+                                    ]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { position: 'bottom', labels: { boxWidth: 12, boxHeight: 12, padding: 12 } },
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function(ctx){
+                                                    const v = ctx.parsed.y || 0;
+                                                    return ctx.dataset.label + ': ₱' + v.toLocaleString('en-PH', {minimumFractionDigits: 2});
+                                                }
+                                            }
+                                        }
+                                    },
+                                    scales: {
+                                        x: { grid: { display: false } },
+                                        y: { grid: { color: '#F3F4F6' }, ticks: { callback: (v) => '₱' + Number(v).toLocaleString() } }
+                                    }
+                                }
+                            });
+
+                            if (forecastInsightEl && data.insight) {
+                                forecastInsightEl.textContent = data.insight;
+                            }
+                        })
+                        .catch((err) => {
+                            if (forecastInsightEl) forecastInsightEl.textContent = 'Forecast unavailable.';
+                            console.warn('Forecast error:', err);
+                        });
+                }
+                
                 return;
             }
 

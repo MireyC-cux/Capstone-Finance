@@ -22,9 +22,16 @@ class PurchaseOrderItem extends Model
         'unit_price' => 'decimal:2',
     ];
 
-    public function purchaseOrder(): BelongsTo
+
+
+ public function purchaseOrder()
     {
         return $this->belongsTo(PurchaseOrder::class, 'purchase_order_id', 'purchase_order_id');
+    }
+
+    public function item()
+    {
+        return $this->belongsTo(InventoryItem::class, 'item_id', 'item_id');
     }
 
     public function serviceRequestItem(): BelongsTo

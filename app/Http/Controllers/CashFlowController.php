@@ -23,12 +23,17 @@ class CashFlowController extends Controller
                 'as_of_date' => now()->toDateString(),
             ]);
         }
-        // Ensure up-to-date totals
+
+        // Recalculate totals
         BusinessFinancial::recalcTotals();
         $bf->refresh();
 
         $totalInflows = (float) $bf->total_inflows;
         $totalOutflows = (float) $bf->total_outflows;
+
+        // Net Balance = inflows - outflows
+        $netBalance = $totalInflows - $totalOutflows;
+
         $currentBalance = (float) $bf->current_balance;
         $profit = (float) $bf->profit;
 
@@ -50,7 +55,6 @@ class CashFlowController extends Controller
             ->orderBy('ym')
             ->get();
 
-        // Compute profit per month for chart convenience
         $profitSeries = $series->map(function ($row) {
             $row->profit = (float)($row->inflow ?? 0) - (float)($row->outflow ?? 0);
             return $row;
@@ -65,7 +69,7 @@ class CashFlowController extends Controller
             ->pluck('total', 'category');
 
         return view('finance.cashflow.index', compact(
-            'bf', 'totalInflows', 'totalOutflows', 'currentBalance', 'profit', 'series', 'profitSeries', 'recent', 'expenseCategories', 'categoryBreakdown'
+            'bf', 'totalInflows', 'totalOutflows', 'netBalance', 'currentBalance', 'profit', 'series', 'profitSeries', 'recent', 'expenseCategories', 'categoryBreakdown'
         ));
     }
 

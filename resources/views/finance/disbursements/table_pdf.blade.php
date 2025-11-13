@@ -27,16 +27,23 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($rows as $d)
+            @forelse($rows as $d)
             <tr>
-                <td>{{ $d->payment_date }}</td>
-                <td>{{ $d->employeeProfile->last_name }}, {{ $d->employeeProfile->first_name }}</td>
-                <td>{{ $d->payment_method }}</td>
-                <td>{{ $d->reference_number }}</td>
+                <td>{{ optional($d->payment_date)->format('Y-m-d') ?? '-' }}</td>
+                <td>
+                    {{ optional($d->employeeProfile)->last_name ?? 'N/A' }},
+                    {{ optional($d->employeeProfile)->first_name ?? '' }}
+                </td>
+                <td>{{ $d->payment_method ?? '-' }}</td>
+                <td>{{ $d->reference_number ?? '-' }}</td>
                 <td class="right">PHP {{ number_format($d->payroll->net_pay ?? 0, 2) }}</td>
-                <td>{{ $d->status }}</td>
+                <td>{{ $d->status ?? 'N/A' }}</td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+                <td colspan="6" class="text-center">No disbursements found for this period.</td>
+            </tr>
+            @endforelse
         </tbody>
     </table>
 </body>
