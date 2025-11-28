@@ -17,7 +17,10 @@
             <form id="exportPayrollForm" method="GET" action="{{ route('finance.payroll.export') }}" class="d-inline">
                 <input type="hidden" name="employee" value="{{ $filters['employee'] ?? '' }}">
                 <input type="hidden" name="position" value="{{ $filters['position'] ?? '' }}">
-                <input type="hidden" name="status" value="Approved">
+                <input type="hidden" name="filter_type" value="{{ $filters['filter_type'] ?? '' }}">
+                <input type="hidden" name="period_start" value="{{ $filters['period_start'] ?? '' }}">
+                <input type="hidden" name="period_end" value="{{ $filters['period_end'] ?? '' }}">
+                <input type="hidden" name="month" value="{{ $filters['month'] ?? '' }}">
                 <button type="submit" class="btn btn-dark btn-sm">Export PDF</button>
             </form>
             <a href="{{ route('finance.disbursement.index') }}" class="btn btn-success btn-sm">Disbursed Payroll</a>
@@ -36,6 +39,31 @@
                 <div class="col-12 col-md-3">
                     <label class="form-label small fw-semibold mb-1">Position</label>
                     <input type="text" name="position" value="{{ $filters['position'] ?? '' }}" class="form-control form-control-sm" placeholder="e.g. Technician">
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-semibold mb-1">Filter Type</label>
+                    <div class="d-flex gap-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="filter_type" id="ft_period" value="period" {{ ($filters['filter_type'] ?? 'period') === 'period' ? 'checked' : '' }}>
+                            <label class="form-check-label small" for="ft_period">Pay Period</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="filter_type" id="ft_month" value="month" {{ ($filters['filter_type'] ?? '') === 'month' ? 'checked' : '' }}>
+                            <label class="form-check-label small" for="ft_month">Whole Month</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-semibold mb-1">Period Start</label>
+                    <input type="date" name="period_start" value="{{ $filters['period_start'] ?? '' }}" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-semibold mb-1">Period End</label>
+                    <input type="date" name="period_end" value="{{ $filters['period_end'] ?? '' }}" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-semibold mb-1">Month</label>
+                    <input type="month" name="month" value="{{ $filters['month'] ?? '' }}" class="form-control form-control-sm">
                 </div>
                 <div class="col-12 col-md-2 text-end">
                     <button class="btn btn-primary btn-sm w-100">Apply Filters</button>
@@ -65,10 +93,6 @@
                         <th>Salary Rate</th>
                         <th>Basic Salary</th>
                         <th>Gross Pay</th>
-                        <th>Tax</th>
-                        <th>SSS</th>
-                        <th>PhilHealth</th>
-                        <th>Pag-IBIG</th>
                         <th>Deductions</th>
                         <th>Bonuses</th>
                         <th>Bonus Amount</th>
@@ -103,10 +127,6 @@
                             <td>₱ {{ number_format($p->salary_rate ?? 0,2) }}</td>
                             <td>₱ {{ number_format($p->basic_salary ?? 0,2) }}</td>
                             <td>₱ {{ number_format($p->gross_pay ?? 0,2) }}</td>
-                            <td class="text-danger">₱ {{ number_format($p->tax_deduction ?? 0,2) }}</td>
-                            <td class="text-danger">₱ {{ number_format($p->sss_contribution ?? 0,2) }}</td>
-                            <td class="text-danger">₱ {{ number_format($p->philhealth_contribution ?? 0,2) }}</td>
-                            <td class="text-danger">₱ {{ number_format($p->pagibig_contribution ?? 0,2) }}</td>
                             <td class="text-danger">₱ {{ number_format($p->deductions ?? 0,2) }}</td>
                             <td>{{ $p->bonuses ?? '—' }}</td>
                             <td>₱ {{ number_format($p->bonus_amount ?? 0,2) }}</td>
@@ -149,7 +169,7 @@
         </div>
 
         @php
-            $totalGross = $totalNet = $sumBasic = $sumBonus = $sumOt = $sumTax = $sumSss = $sumPhil = $sumPagibig = $sumCash = $sumDeductions = 0;
+            $totalGross = $totalNet = $sumBasic = $sumBonus = $sumOt = $sumCash = $sumDeductions = 0;
             foreach ($rows as $row) {
                 $gross = data_get($row, 'payroll.gross_pay', 0) ?: 0;
                 $net = data_get($row, 'payroll.net_pay', data_get($row, 'net', 0)) ?: 0;
@@ -158,10 +178,6 @@
                 $sumBasic += data_get($row, 'payroll.basic_salary', 0) ?: 0;
                 $sumBonus += data_get($row, 'payroll.bonus_amount', 0) ?: 0;
                 $sumOt += data_get($row, 'payroll.overtime_pay', 0) ?: 0;
-                $sumTax += data_get($row, 'payroll.tax_deduction', 0) ?: 0;
-                $sumSss += data_get($row, 'payroll.sss_contribution', 0) ?: 0;
-                $sumPhil += data_get($row, 'payroll.philhealth_contribution', 0) ?: 0;
-                $sumPagibig += data_get($row, 'payroll.pagibig_contribution', 0) ?: 0;
                 $sumCash += data_get($row, 'payroll.cash_advance', data_get($row, 'cash_advance', 0)) ?: 0;
                 $sumDeductions += data_get($row, 'payroll.deductions', 0) ?: 0;
             }
@@ -257,10 +273,6 @@
                 <div class="d-flex justify-content-between"><div class="small text-muted">Bonus Amount</div><div class="fw-semibold">₱ {{ number_format($sumBonus,2) }}</div></div>
                 <div class="d-flex justify-content-between"><div class="small text-muted">Overtime Pay</div><div class="fw-semibold">₱ {{ number_format($sumOt,2) }}</div></div>
                 <hr class="my-2">
-                <div class="d-flex justify-content-between"><div class="small text-muted">Income Tax</div><div class="fw-semibold">₱ {{ number_format($sumTax,2) }}</div></div>
-                <div class="d-flex justify-content-between"><div class="small text-muted">SSS</div><div class="fw-semibold">₱ {{ number_format($sumSss,2) }}</div></div>
-                <div class="d-flex justify-content-between"><div class="small text-muted">PhilHealth</div><div class="fw-semibold">₱ {{ number_format($sumPhil,2) }}</div></div>
-                <div class="d-flex justify-content-between"><div class="small text-muted">Pag-IBIG</div><div class="fw-semibold">₱ {{ number_format($sumPagibig,2) }}</div></div>
                 <div class="d-flex justify-content-between"><div class="small text-muted">Cash Advance</div><div class="fw-semibold">₱ {{ number_format($sumCash,2) }}</div></div>
                 <div class="d-flex justify-content-between"><div class="small text-muted">Total of Deductions</div><div class="fw-semibold">₱ {{ number_format($sumDeductions,2) }}</div></div>
             </div>

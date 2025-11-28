@@ -237,9 +237,35 @@ class FinanceController extends Controller
             ->groupBy('ym')
             ->orderBy('ym')
             ->pluck('total','ym');
+        $payrollMonthMap = DB::table('payrolls')
+            ->whereBetween('pay_period_start', [$s, $e])
+            ->selectRaw('DATE_FORMAT(pay_period_start, "%Y-%m") as ym, SUM(COALESCE((salary_rate * total_days_of_work) + COALESCE(overtime_pay,0) - COALESCE(deductions,0), 0)) as total')
+            ->groupBy('ym')
+            ->orderBy('ym')
+            ->pluck('total','ym');
+        // tax_deduction column removed; default tax totals to zero to avoid query error
+        $taxMonthMap = [];
         $apPaidMap = DB::table('payments_made')->whereBetween('payment_date', [$s, $e])->selectRaw('DATE_FORMAT(payment_date, "%Y-%m") as ym, SUM(amount) as total')->groupBy('ym')->orderBy('ym')->pluck('total','ym');
-        $pnlTable=[]; $iTot=0.0;$xTot=0.0;$pyTot=0.0;$apTot=0.0;$netTot=0.0; foreach ($months as $m) { $i=(float)($incomeMap[$m]??0); $x=(float)($expenseMap[$m]??0); $py=(float)($payrollPaidMap[$m]??0); $apv=(float)($apPaidMap[$m]??0); $n=$i-($x+$py+$apv); $pnlTable[]=['month'=>$m,'income'=>$i,'expense'=>$x,'payroll'=>$py,'ap_payments'=>$apv,'net'=>$n]; $iTot+=$i; $xTot+=$x; $pyTot+=$py; $apTot+=$apv; $netTot+=$n; }
+        $pnlTable=[]; $iTot=0.0;$xTot=0.0;$pyTot=0.0;$apTot=0.0;$netTot=0.0; $payrollSeries=[]; $taxSeries=[]; $taxTot=0.0;
+        foreach ($months as $m) {
+            $i=(float)($incomeMap[$m]??0);
+            $x=(float)($expenseMap[$m]??0);
+            $py=(float)($payrollPaidMap[$m]??0);
+            $apv=(float)($apPaidMap[$m]??0);
+            $n=$i-($x+$py+$apv);
+            $pnlTable[]=['month'=>$m,'income'=>$i,'expense'=>$x,'payroll'=>$py,'ap_payments'=>$apv,'net'=>$n];
+            $payrollSeries[]=['ym'=>$m,'total'=>(float)($payrollMonthMap[$m]??0)];
+            $t=(float)($taxMonthMap[$m]??0); $taxSeries[]=['ym'=>$m,'tax'=>$t]; $taxTot+=$t;
+            $iTot+=$i; $xTot+=$x; $pyTot+=$py; $apTot+=$apv; $netTot+=$n;
+        }
         $pnl = ['table'=>$pnlTable,'totals'=>['income'=>$iTot,'expense'=>$xTot,'payroll'=>$pyTot,'ap_payments'=>$apTot,'net'=>$netTot]];
+        $metrics = [
+            'revenue' => $iTot,
+            'expenses' => $xTot,
+            'payroll' => $pyTot,
+            'net' => $netTot,
+            'profit_margin' => $iTot > 0 ? ($netTot / $iTot) * 100 : 0
+        ];
 
         return view('finance.reports.index', [
             'start' => $s,
@@ -251,6 +277,9 @@ class FinanceController extends Controller
             'cash' => $cash,
             'payroll' => $payroll,
             'pnl' => $pnl,
+            'payroll_series' => $payrollSeries,
+            'tax' => ['series'=>$taxSeries,'totals'=>['tax_total'=>$taxTot]],
+            'metrics' => $metrics,
         ]);
     }
 
@@ -373,8 +402,28 @@ class FinanceController extends Controller
             ->orderBy('ym')
             ->pluck('total','ym');
         $apPaidMap = DB::table('payments_made')->whereBetween('payment_date', [$s, $e])->selectRaw('DATE_FORMAT(payment_date, "%Y-%m") as ym, SUM(amount) as total')->groupBy('ym')->orderBy('ym')->pluck('total','ym');
-        $pnlTable=[]; $iTot=0.0;$xTot=0.0;$pyTot=0.0;$apTot=0.0;$netTot=0.0; foreach ($months as $m) { $i=(float)($incomeMap[$m]??0); $x=(float)($expenseMap[$m]??0); $py=(float)($payrollPaidMap[$m]??0); $apv=(float)($apPaidMap[$m]??0); $n=$i-($x+$py+$apv); $pnlTable[]=['month'=>$m,'income'=>$i,'expense'=>$x,'payroll'=>$py,'ap_payments'=>$apv,'net'=>$n]; $iTot+=$i; $xTot+=$x; $pyTot+=$py; $apTot+=$apv; $netTot+=$n; }
+        // tax_deduction column removed; default tax totals to zero to avoid query error
+        $taxMonthMap = [];
+        $pnlTable=[]; $iTot=0.0;$xTot=0.0;$pyTot=0.0;$apTot=0.0;$netTot=0.0; $payrollSeries=[]; $taxSeries=[]; $taxTot=0.0; 
+        foreach ($months as $m) { 
+            $i=(float)($incomeMap[$m]??0); 
+            $x=(float)($expenseMap[$m]??0); 
+            $py=(float)($payrollPaidMap[$m]??0); 
+            $apv=(float)($apPaidMap[$m]??0); 
+            $n=$i-($x+$py+$apv); 
+            $pnlTable[]=['month'=>$m,'income'=>$i,'expense'=>$x,'payroll'=>$py,'ap_payments'=>$apv,'net'=>$n]; 
+            $payrollSeries[]=['ym'=>$m,'paid'=>$py]; 
+            $t=(float)($taxMonthMap[$m]??0); $taxSeries[]=['ym'=>$m,'tax'=>$t]; $taxTot+=$t; 
+            $iTot+=$i; $xTot+=$x; $pyTot+=$py; $apTot+=$apv; $netTot+=$n; 
+        }
         $pnl = ['table'=>$pnlTable,'totals'=>['income'=>$iTot,'expense'=>$xTot,'payroll'=>$pyTot,'ap_payments'=>$apTot,'net'=>$netTot]];
+        $metrics = [
+            'revenue' => $iTot,
+            'expenses' => $xTot,
+            'payroll' => $pyTot,
+            'net' => $netTot,
+            'profit_margin' => $iTot > 0 ? ($netTot / $iTot) * 100 : 0
+        ];
 
         if ($request->filled('export') && $request->filled('type')) {
             $fmt = strtolower((string)$request->get('export'));
@@ -463,8 +512,7 @@ class FinanceController extends Controller
             return response()->download($zipPath, $zipBase.'.zip')->deleteFileAfterSend(true);
         }
 
-        return view('home', [
-            'reportsMode' => true,
+        return view('finance.reports.index', [
             'start' => $s,
             'end' => $e,
             'revenue' => $revenue,
@@ -474,6 +522,9 @@ class FinanceController extends Controller
             'cash' => $cash,
             'payroll' => $payroll,
             'pnl' => $pnl,
+            'payroll_series' => $payrollSeries,
+            'tax' => ['series'=>$taxSeries,'totals'=>['tax_total'=>$taxTot]],
+            'metrics' => $metrics,
         ]);
     }
 }

@@ -12,7 +12,7 @@ class PaymentsReceivedSeeder extends Seeder
 {
     public function run(): void
     {
-        $ars = AccountsReceivable::inRandomOrder()->limit(30)->get();
+        $ars = AccountsReceivable::inRandomOrder()->limit(100)->get();
         foreach ($ars as $ar) {
             // Create 0-2 payments per AR
             $paymentsCount = rand(0, 2);

@@ -26,4 +26,6 @@ class AppServiceProvider extends ServiceProvider
         ServiceRequest::observe(ServiceRequestObserver::class);
         PurchaseOrder::observe(PurchaseOrderObserver::class);
     }
+
+    
 }

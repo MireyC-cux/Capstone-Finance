@@ -13,7 +13,7 @@ class EventServiceProvider extends ServiceProvider
      */
     protected $listen = [
         \App\Events\BillingCreated::class => [
-            \App\Listeners\GenerateInvoiceListener::class,
+            // \App\Listeners\GenerateInvoiceListener::class,
         ],
     ];
 

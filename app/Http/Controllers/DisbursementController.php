@@ -144,7 +144,9 @@ public function disburseSalary(Request $request)
         // Preferred: public disk (storage/app/public/proofs)
         $path = 'proofs/' . $filename;
         if (Storage::disk('public')->exists($path)) {
-            return Storage::disk('public')->response($path);
+            // Resolve the absolute path on the public disk and return a file response
+            $fullPath = Storage::disk('public')->path($path);
+            return response()->file($fullPath);
         }
 
         // Fallback: legacy path if files were stored under storage/public/proofs

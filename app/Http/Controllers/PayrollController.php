@@ -24,23 +24,34 @@ class PayrollController extends Controller
 
 public function dashboard(Request $request)
 {
-    // ✅ Determine current semi-monthly pay period automatically
-    $today = now();
-    $year = $today->year;
-    $month = $today->month;
-    $day = $today->day;
-
-    if ($day <= 15) {
-        $period_start = now()->setDate($year, $month, 1)->format('Y-m-d');
-        $period_end   = now()->setDate($year, $month, 15)->format('Y-m-d');
-    } else {
-        $period_start = now()->setDate($year, $month, 16)->format('Y-m-d');
-        $period_end   = now()->endOfMonth()->format('Y-m-d');
-    }
-
-    // ✅ Fetch filter values from the request
+    // ✅ Filters
     $employeeFilter = $request->input('employee');
     $positionFilter = $request->input('position');
+    $filterType = $request->input('filter_type', 'period');
+    $periodStartInput = $request->input('period_start');
+    $periodEndInput = $request->input('period_end');
+    $monthInput = $request->input('month'); // format YYYY-MM
+
+    // ✅ Determine target range (pay period or whole month)
+    if ($filterType === 'month' && !empty($monthInput)) {
+        $start = Carbon::createFromFormat('Y-m', $monthInput)->startOfMonth();
+        $end = Carbon::createFromFormat('Y-m', $monthInput)->endOfMonth();
+    } elseif (!empty($periodStartInput) && !empty($periodEndInput)) {
+        $start = Carbon::parse($periodStartInput);
+        $end = Carbon::parse($periodEndInput);
+    } else {
+        // default to current semi-monthly
+      $today = now();
+
+if ($today->day <= 15) {
+    $start = $today->copy()->startOfMonth();
+    $end   = $today->copy()->setDay(15);
+} else {
+    $start = $today->copy()->setDay(16);
+    $end   = $today->copy()->endOfMonth();
+}
+
+    }
 
     // ✅ Query payrolls with related employee profiles
     $query = Payroll::with('employeeprofiles');
@@ -59,36 +70,34 @@ public function dashboard(Request $request)
         });
     }
 
-  // ✅ Get only the latest payroll per employee (latest pay period)
-$payrolls = $query->select('payrolls.*')
-    ->join(DB::raw('(SELECT employeeprofiles_id, MAX(payroll_id) as latest_id FROM payrolls GROUP BY employeeprofiles_id) as latest'),
-        function ($join) {
-            $join->on('payrolls.payroll_id', '=', 'latest.latest_id');
-        })
-    ->get();
+    // ✅ If a range is provided/derived, use it; otherwise fallback to latest per employee
+    $query->whereDate('pay_period_start', '>=', $start->toDateString())
+          ->whereDate('pay_period_end', '<=', $end->toDateString());
 
+    $payrolls = $query->orderBy('pay_period_start')->get();
 
     // ✅ Convert payrolls into $rows array for your Blade view
-    $rows = $payrolls->map(function ($payroll) use ($period_start, $period_end) {
+    $rows = $payrolls->map(function ($payroll) {
         $employee = $payroll->employeeprofiles;
+        $ps = Carbon::parse($payroll->pay_period_start);
+        $pe = Carbon::parse($payroll->pay_period_end);
 
-        // ✅ Fetch total approved OT hours from overtime_requests table for this employee & pay period
+        // ✅ Fetch total approved OT hours from overtime_requests table for this employee & payroll's own period
         $totalOtHours = OvertimeRequest::where('employeeprofiles_id', $employee->employeeprofiles_id)
             ->where('status', 'Approved')
-            ->whereBetween('approved_date', [$period_start, $period_end])
-            ->sum('hours'); // replace with your column name (e.g., 'ot_hours' or 'hours')
+            ->whereBetween('approved_date', [$ps->toDateString(), $pe->toDateString()])
+            ->sum('hours');
 
-        // ✅ Compute OT pay (optional)
-        $hourlyRate = $employee->daily_rate ? $employee->daily_rate / 8 : 0;
+        // ✅ Compute OT pay from approved records within the payroll period
         $otPay = OvertimeRequest::where('employeeprofiles_id', $employee->employeeprofiles_id)
             ->where('status', 'Approved')
-            ->whereBetween('approved_date', [$period_start, $period_end])
+            ->whereBetween('approved_date', [$ps->toDateString(), $pe->toDateString()])
             ->sum('amount');
 
         return [
             'employee' => $employee,
             'position' => $employee->position ?? 'N/A',
-            'period' => $payroll->pay_period ?? "{$period_start} - {$period_end}",
+            'period' => $payroll->pay_period ?? ($ps->toDateString().' - '.$pe->toDateString()),
             'days_worked' => $payroll->total_days_of_work ?? 0,
             'ot_hours' => $totalOtHours,
             'ot_pay' => $otPay,
@@ -101,17 +110,20 @@ $payrolls = $query->select('payrolls.*')
     });
     $approvalStatus = \App\Models\Expenses::latest()->value('admin_approval');
 
-
     // ✅ Return everything to the Blade view
     return view('finance.payroll.index', [
         'rows' => $rows,
         'filters' => [
             'employee' => $employeeFilter,
             'position' => $positionFilter,
+            'filter_type' => $filterType,
+            'period_start' => $start->toDateString(),
+            'period_end' => $end->toDateString(),
+            'month' => $monthInput,
         ],
-        'period_start' => $period_start,
-        'period_end' => $period_end,
-         'approvalStatus' => $approvalStatus,
+        'period_start' => $start->toDateString(),
+        'period_end' => $end->toDateString(),
+        'approvalStatus' => $approvalStatus,
     ]);
 }
 
@@ -124,9 +136,9 @@ $payrolls = $query->select('payrolls.*')
             'employee_ids' => 'array',
             'employee_ids.*' => 'integer',
         ]);
+$start = Carbon::parse($request->period_start)->startOfDay();
+$end   = Carbon::parse($request->period_end)->endOfDay();
 
-        $start = Carbon::parse($request->input('period_start'));
-        $end = Carbon::parse($request->input('period_end'));
 
         $employees = EmployeeProfile::query()
             ->when($request->filled('employee_ids'), function ($q) use ($request) {
@@ -181,31 +193,16 @@ $payrolls = $query->select('payrolls.*')
 
     public function downloadPayslip(Payroll $payroll)
     {
-        $emp = $payroll->employeeProfile;
-        // Compute deduction breakdown within payroll period
-        $startDate = $payroll->pay_period_start ?? $payroll->start_date ?? null;
-        $endDate = $payroll->pay_period_end ?? $payroll->end_date ?? null;
-        $deductions = ['income_tax' => 0, 'sss' => 0, 'philhealth' => 0, 'pagibig' => 0];
-        if ($startDate && $endDate) {
-            $sum = DB::table('deductions')
-                ->selectRaw('COALESCE(SUM(income_tax),0) as income_tax, COALESCE(SUM(sss),0) as sss, COALESCE(SUM(philhealth),0) as philhealth, COALESCE(SUM(pagibig),0) as pagibig')
-                ->where('employeeprofiles_id', $emp->employeeprofiles_id)
-                ->whereBetween('created_at', [Carbon::parse($startDate)->startOfDay(), Carbon::parse($endDate)->endOfDay()])
-                ->first();
-            if ($sum) {
-                $deductions = [
-                    'income_tax' => (float)$sum->income_tax,
-                    'sss' => (float)$sum->sss,
-                    'philhealth' => (float)$sum->philhealth,
-                    'pagibig' => (float)$sum->pagibig,
-                ];
-            }
+        $emp = $payroll->employeeprofiles;
+        if (!$emp) {
+            $emp = \App\Models\Employeeprofiles::find($payroll->employeeprofiles_id);
         }
-
+        if (!$emp) {
+            abort(404, 'Employee profile not found for this payroll');
+        }
         $data = [
             'employee' => $emp,
             'payroll' => $payroll,
-            'deductions' => $deductions,
         ];
 
         $pdf = Pdf::setOptions([
@@ -234,47 +231,54 @@ $payrolls = $query->select('payrolls.*')
     {
         [$start, $end] = $this->resolvePeriod($request);
 
-        $query = EmployeeProfile::query();
-        if ($request->filled('employee')) {
-            $query->where(function($q) use ($request) {
-                $q->where('first_name', 'like', '%'.$request->employee.'%')
-                  ->orWhere('last_name', 'like', '%'.$request->employee.'%');
+        // Mirror the dashboard filters on Payroll model
+        $employeeFilter = $request->input('employee');
+        $positionFilter = $request->input('position');
+
+        $query = Payroll::with('employeeprofiles')
+            ->whereDate('pay_period_start', '>=', $start->toDateString())
+            ->whereDate('pay_period_end', '<=', $end->toDateString());
+
+        if (!empty($employeeFilter)) {
+            $query->whereHas('employeeprofiles', function ($q) use ($employeeFilter) {
+                $q->where('first_name', 'like', '%'.$employeeFilter.'%')
+                  ->orWhere('last_name', 'like', '%'.$employeeFilter.'%');
             });
         }
-        if ($request->filled('position')) {
-            $query->where('position', $request->position);
+        if (!empty($positionFilter)) {
+            $query->whereHas('employeeprofiles', function ($q) use ($positionFilter) {
+                $q->where('position', 'like', '%'.$positionFilter.'%');
+            });
         }
-        $employees = $query->orderBy('last_name')->get();
 
-        $rows = $employees->map(function (EmployeeProfile $emp) use ($start, $end) {
-            $daysWorked = $this->getDaysWorked($emp, $start, $end);
-            $totalDaysInSemiMonth = $start->diffInDays($end) + 1;
-            $rate = $this->getEffectiveDailyRate($emp, $start);
-            $otHours = $this->getApprovedOtHours($emp, $start, $end);
-            $otCap = min($otHours, 5 * $daysWorked);
-            $otPay = ($rate / 8) * $otCap;
-            $base = $rate * $daysWorked;
-            $deductions = $this->getStatutoryDeductions($emp, $start, $end);
-            $cashAdvanceTotal = $this->getApprovedCashAdvanceTotal($emp, $start, $end);
-            $cashAdvanceApplied = $cashAdvanceTotal * ($daysWorked / max($totalDaysInSemiMonth, 1));
-            $net = $base + $otPay - $deductions - $cashAdvanceApplied;
+        $payrolls = $query->orderBy('pay_period_start')->get();
 
-            $existingPayroll = Payroll::where('employeeprofiles_id', $emp->employeeprofiles_id)
-                ->whereDate('pay_period_start', $start)
-                ->whereDate('pay_period_end', $end)
-                ->first();
+        $rows = $payrolls->map(function (Payroll $payroll) {
+            $emp = $payroll->employeeprofiles;
+            $ps = Carbon::parse($payroll->pay_period_start);
+            $pe = Carbon::parse($payroll->pay_period_end);
+
+            $otHours = OvertimeRequest::where('employeeprofiles_id', $emp->employeeprofiles_id)
+                ->where('status', 'Approved')
+                ->whereBetween('approved_date', [$ps->toDateString(), $pe->toDateString()])
+                ->sum('hours');
+            $otPay = OvertimeRequest::where('employeeprofiles_id', $emp->employeeprofiles_id)
+                ->where('status', 'Approved')
+                ->whereBetween('approved_date', [$ps->toDateString(), $pe->toDateString()])
+                ->sum('amount');
 
             return [
                 'employee' => $emp,
                 'position' => $emp->position,
-                'period' => $this->formatPayPeriod($start, $end),
-                'days_worked' => $daysWorked,
+                'salary_rate' => $payroll->salary_rate ?? 0,
+                'period' => $payroll->pay_period ?? ($ps->toDateString().' - '.$pe->toDateString()),
+                'days_worked' => $payroll->total_days_of_work ?? 0,
                 'ot_hours' => $otHours,
                 'ot_pay' => round($otPay, 2),
-                'deductions' => round($deductions, 2),
-                'cash_advance' => round($cashAdvanceApplied, 2),
-                'net' => round($net, 2),
-                'status' => $existingPayroll?->status ?? 'Not Generated',
+                'deductions' => round($payroll->deductions ?? 0, 2),
+                'cash_advance' => round($payroll->cash_advance ?? 0, 2),
+                'net' => round($payroll->net_pay ?? 0, 2),
+                'status' => $payroll->status ?? 'N/A',
             ];
         });
 
@@ -308,18 +312,25 @@ $payrolls = $query->select('payrolls.*')
     // ===== Helpers =====
     protected function resolvePeriod(Request $request): array
     {
+        if ($request->input('filter_type') === 'month' && $request->filled('month')) {
+            $m = Carbon::createFromFormat('Y-m', $request->input('month'));
+            return [$m->copy()->startOfMonth(), $m->copy()->endOfMonth()];
+        }
         if ($request->filled(['period_start','period_end'])) {
             return [Carbon::parse($request->period_start), Carbon::parse($request->period_end)];
         }
-        $today = Carbon::today();
-        if ($today->day <= 15) {
-            $start = $today->copy()->startOfMonth();
-            $end = $today->copy()->startOfMonth()->addDays(14);
-        } else {
-            $start = $today->copy()->startOfMonth()->addDays(15);
-            $end = $today->copy()->endOfMonth();
-        }
-        return [$start, $end];
+       $today = Carbon::today();
+
+if ($today->day <= 15) {
+    $start = $today->copy()->startOfMonth();
+    $end   = $today->copy()->setDay(15);
+} else {
+    $start = $today->copy()->setDay(16);
+    $end   = $today->copy()->endOfMonth();
+}
+
+return [$start, $end];
+
     }
 
     protected function formatPayPeriod(Carbon $start, Carbon $end): string

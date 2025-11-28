@@ -51,24 +51,8 @@
         <div class="title">Deductions</div>
         <table>
             <tr>
-                <th>Income Tax</th>
-                <td class="right">PHP {{ number_format(($deductions['income_tax'] ?? 0), 2) }}</td>
-            </tr>
-            <tr>
-                <th>SSS</th>
-                <td class="right">PHP {{ number_format(($deductions['sss'] ?? 0), 2) }}</td>
-            </tr>
-            <tr>
-                <th>PhilHealth</th>
-                <td class="right">PHP {{ number_format(($deductions['philhealth'] ?? 0), 2) }}</td>
-            </tr>
-            <tr>
-                <th>Pag-IBIG</th>
-                <td class="right">PHP {{ number_format(($deductions['pagibig'] ?? 0), 2) }}</td>
-            </tr>
-            <tr>
                 <th style="border-top:1px solid #e5e7eb">Total Deductions</th>
-                <td class="right" style="border-top:1px solid #e5e7eb">PHP {{ number_format(array_sum($deductions ?? []), 2) }}</td>
+                <td class="right" style="border-top:1px solid #e5e7eb">PHP {{ number_format($payroll->deductions ?? 0, 2) }}</td>
             </tr>
             <tr>
                 <th>Cash Advance</th>

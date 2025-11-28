@@ -46,6 +46,18 @@
 
         <nav class="sidebar-menu" aria-label="Finance navigation">
             <ul>
+                 @php
+                // use Illuminate\Support\Facades\DB;
+                $userPosition = session('user_position');
+                $permissionKey = 'employeeProfile';
+
+                $hasPermission = DB::table('position_permissions')
+                    ->where('position', $userPosition)
+                    ->where('permission_id', $permissionKey)
+                    ->where('is_allowed', 1)
+                    ->exists();
+            @endphp   
+            
                 <!-- DASHBOARD -->
                 <li class="menu-title"><i class="fa-solid fa-gauge"></i> Dashboard</li>
                 <hr class="section-divider" />
@@ -54,7 +66,11 @@
                         <i class="fas fa-home"></i><span class="label">Finance Dashboard</span>
                     </a>
                 </li>
-
+  @php
+                $userPosition = session('user_position');
+                $hasPermission = session('permission_key')['evaluationResults']->is_allowed ?? false;
+            @endphp
+                 @if ($userPosition === 'Finance manager' || ($userPosition === 'Administrative Manager' && $hasPermission))
                 <!-- BILLING & INVOICES -->
                 <li class="menu-group" x-data="{ open: {{ (request()->routeIs('finance.billing.*') || request()->routeIs('invoices.*') || request()->routeIs('finance.accounts-receivable') || request()->routeIs('finance.ar.aging')) ? 'true' : 'false' }} }">
                     <button class="menu-header" @click="open = !open">
@@ -82,7 +98,9 @@
                         <a class="menu-item {{ request()->routeIs('accounts-payable.index') ? 'active' : '' }}" href="{{ route('accounts-payable.index') }}"><i class="fa-solid fa-credit-card"></i><span class="label">Accounts Payable</span></a>
                     </div>
                 </li>
+@endif
 
+    @if (in_array(session('user_position'), ['Finance manager']))   
                 <!-- PAYROLL -->
                 <li class="menu-group" x-data="{ open: {{ (request()->routeIs('finance.payroll*')) ? 'true' : 'false' }} }">
                     <button class="menu-header" @click="open = !open">
@@ -104,12 +122,18 @@
                     </button>
                     <hr class="section-divider" />
                     <div class="submenu" x-show="open" x-transition>
+                          @php
+                $userPosition = session('user_position');
+                $hasPermission = session('permission_key')['evaluationResults']->is_allowed ?? false;
+            @endphp
                         <a class="menu-item {{ request()->routeIs('finance.cashflow') ? 'active' : '' }}" href="{{ route('finance.cashflow') }}"><i class="fa-solid fa-sack-dollar"></i><span class="label">Cash Flow</span></a>
+                           @if ($userPosition === 'Finance manager' || ($userPosition === 'Administrative Manager' && $hasPermission))
                         <a class="menu-item {{ request()->routeIs('finance.inventory.dashboard') ? 'active' : '' }}" href="{{ route('finance.inventory.dashboard') }}"><i class="fa-solid fa-chart-bar"></i><span class="label">Inventory Dashboard</span></a>
-                        <a class="menu-item {{ request()->routeIs('finance.reports.hub') ? 'active' : '' }}" href="{{ route('finance.reports.hub') }}"><i class="fa-solid fa-coins"></i><span class="label">Finance Reports</span></a>
+                        @endif
+                        <a class="menu-item {{ request()->routeIs('finance.reports.hub') ? 'active' : '' }}" href="{{ route('finance.reports.hub') }}"><i class="fa-solid fa-coins"></i><span class="label">Finance Reports</span></a> 
                     </div>
                 </li>
-
+@endif
 
                 <!-- ACCOUNT -->
                 <li class="menu-group" x-data="{ open: false }">

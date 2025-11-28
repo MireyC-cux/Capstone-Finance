@@ -25,6 +25,7 @@ use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\CashFlowController;
 use App\Http\Controllers\CapitalController;
 use App\Http\Controllers\ForecastController;
+use App\Http\Controllers\FinancialReportController;
 
 // =======================================================
 // 🔐 AUTH / DEFAULT REDIRECTS
@@ -228,6 +229,22 @@ Route::post('/finance/payroll/send-approval', [PayrollController::class, 'sendAp
     ->name('finance.payroll.sendApproval');
 
     Route::get('payroll/check-approval-status', [PayrollController::class, 'checkApprovalStatus'])->name('finance.payroll.checkApprovalStatus');
+    
+    // =======================================================
+    // 📊 ADMIN FINANCIAL REPORT DASHBOARD (JSON APIs)
+    // =======================================================
+    Route::prefix('admin/financial-report')->name('admin.financial_report.')->group(function () {
+        Route::get('/', [FinancialReportController::class, 'index'])->name('index');
+        Route::get('/data/kpis', [FinancialReportController::class, 'getKpis'])->name('data.kpis');
+        Route::get('/data/revenue-trend', [FinancialReportController::class, 'getRevenueTrend'])->name('data.revenue_trend');
+        Route::get('/data/expense-breakdown', [FinancialReportController::class, 'getExpenseBreakdown'])->name('data.expense_breakdown');
+        Route::get('/data/payroll-summary', [FinancialReportController::class, 'getPayrollSummary'])->name('data.payroll_summary');
+        Route::get('/data/net-profit', [FinancialReportController::class, 'getNetProfitData'])->name('data.net_profit');
+        Route::get('/data/cash-flow', [FinancialReportController::class, 'getCashFlowData'])->name('data.cash_flow');
+        Route::get('/data/tax-summary', [FinancialReportController::class, 'getTaxSummary'])->name('data.tax_summary');
+        Route::get('/data/payment-status', [FinancialReportController::class, 'getPaymentStatusSummary'])->name('data.payment_status');
+        Route::get('/data/supplier-spending', [FinancialReportController::class, 'getSupplierSpending'])->name('data.supplier_spending');
+    });
 // =======================================================
 // 📗 ACCOUNTS PAYABLE & PURCHASE ORDERS
 // =======================================================
